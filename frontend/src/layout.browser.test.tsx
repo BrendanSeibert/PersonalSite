@@ -6,11 +6,16 @@ import { routes } from './routes';
 import { renderWithProviders } from './test/renderWithProviders';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS, type Layout } from './test/viewports';
 
-async function renderApp() {
-  const router = createMemoryRouter(routes, { initialEntries: ['/'] });
+async function renderApp(url = '/') {
+  const router = createMemoryRouter(routes, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  await screen.findByText('API ok, database up'); // let the layout settle into its final content
+  // Let the layout settle into its final content.
+  if (url === '/') await screen.findByText('API ok, database up');
+  else await screen.findByRole('heading', { level: 2 });
 }
+
+// The nav's items: the links and the About button alike.
+const navItems = () => [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-button')];
 
 function columns() {
   const middle = screen.getByRole('main');
@@ -54,8 +59,28 @@ function expectColumnOrder(layout: Layout) {
 
 function expectNavbarTitleAndButtonsApart() {
   const title = rect(screen.getByRole('heading', { level: 1 }));
-  for (const button of within(screen.getByRole('banner')).getAllByRole('button')) {
-    expect(overlaps(title, rect(button)), `title overlaps "${button.textContent}"`).toBe(false);
+  for (const item of navItems()) {
+    expect(overlaps(title, rect(item)), `title overlaps "${item.textContent}"`).toBe(false);
+  }
+}
+
+function expectNavbarPinnedOnOneRow() {
+  const header = screen.getByRole('banner');
+  const style = getComputedStyle(header);
+  const box = rect(header);
+  const contentLeft = box.left + parseFloat(style.paddingLeft);
+  const contentRight = box.right - parseFloat(style.paddingRight);
+
+  const title = rect(screen.getByRole('heading', { level: 1 }));
+  const items = navItems().map(rect);
+
+  expect(items).toHaveLength(2); // the current page's link is hidden
+  expect(title.left).toBeCloseTo(contentLeft, 0);
+  expect(items.at(-1)!.right).toBeCloseTo(contentRight, 0);
+  expectNavbarTitleAndButtonsApart();
+  for (const item of items) {
+    expect(item.top).toBeCloseTo(items[0].top, 0);
+    expect(item.height).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
   }
 }
 
@@ -110,23 +135,51 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     expectNoHorizontalScroll();
   });
 
-  it('pins the title to the left and the buttons to the right, on one row', () => {
-    const header = screen.getByRole('banner');
-    const style = getComputedStyle(header);
-    const box = rect(header);
-    const contentLeft = box.left + parseFloat(style.paddingLeft);
-    const contentRight = box.right - parseFloat(style.paddingRight);
+  if (layout === 'columns') {
+    it('fills the viewport height with the columns, and the page does not scroll', () => {
+      const pad = parseFloat(getComputedStyle(document.querySelector('.column-layout')!).paddingBottom);
+      expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
+      for (const column of Object.values(columns())) {
+        expect(Math.abs(rect(column).bottom - (window.innerHeight - pad))).toBeLessThanOrEqual(1);
+      }
+    });
+  } else {
+    it('sizes each row to its content', () => {
+      for (const column of Object.values(columns())) {
+        const style = getComputedStyle(column);
+        const contentBottom =
+          rect(column.lastElementChild!).bottom + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+        expect(Math.abs(rect(column).bottom - contentBottom)).toBeLessThanOrEqual(1);
+      }
+    });
+  }
 
-    const title = rect(screen.getByRole('heading', { level: 1 }));
-    const buttons = within(header).getAllByRole('button').map(rect);
+  it('pins the title to the left and the nav items to the right, on one row', () => {
+    expectNavbarPinnedOnOneRow();
+  });
+});
 
-    expect(title.left).toBeCloseTo(contentLeft, 0);
-    expect(buttons.at(-1)!.right).toBeCloseTo(contentRight, 0);
-    expectNavbarTitleAndButtonsApart();
-    for (const button of buttons) {
-      expect(button.top).toBeCloseTo(buttons[0].top, 0);
-      expect(button.height).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
+// The nav has different items on each page, so its layout is checked on both.
+describe.each(VIEWPORTS)('the nav bar on /frog-library at %i × %i (%s)', (width, height) => {
+  beforeEach(async () => {
+    await page.viewport(width, height);
+    await renderApp('/frog-library');
+  });
+
+  it('pins the title to the left and the nav items to the right, on one row', () => {
+    expectNavbarPinnedOnOneRow();
+  });
+
+  it('draws the links exactly like the About button, without an underline', () => {
+    const [link, about] = navItems();
+    expect(link.tagName).toBe('A');
+    expect(about.tagName).toBe('BUTTON');
+    const [a, b] = [getComputedStyle(link), getComputedStyle(about)];
+    expect(a.textDecorationLine).toBe('none');
+    for (const property of ['color', 'backgroundColor', 'borderTopColor', 'fontSize', 'fontWeight', 'paddingLeft'] as const) {
+      expect(a[property], property).toBe(b[property]);
     }
+    expect(rect(link).height).toBeCloseTo(rect(about).height, 0);
   });
 });
 
@@ -160,10 +213,10 @@ describe.each([375, 1280])('with very large text (root font size doubled) at %i 
     expectNoHorizontalScroll();
 
     if (width === 1280) {
-      // Cards are now narrower than 14rem (in the doubled rem), so the image slot gives way.
+      // Cards are now narrower than 9.5rem (in the doubled rem), so the image slot gives way.
       const card = document.querySelector('.frog-spinner-row .frog-card')!;
       const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
-      expect(rect(card).width).toBeLessThan(14 * remPx);
+      expect(card.clientWidth).toBeLessThan(9.5 * remPx);
       expect(getComputedStyle(card.querySelector('.frog-card-image')!).display).toBe('none');
     }
   });

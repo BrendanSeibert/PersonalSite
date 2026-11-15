@@ -5,7 +5,8 @@ export function NotFoundPage() {
   const { t } = useI18n();
 
   return (
-    <main className="d-not-found-page not-found-page">
+    // tabIndex -1: AppLayout focuses <main> after a navigation; never a Tab stop.
+    <main className="d-not-found-page not-found-page" tabIndex={-1}>
       <h2>{t('notFound.heading')}</h2>
     </main>
   );

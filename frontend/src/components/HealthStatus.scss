@@ -2,7 +2,7 @@
 @use "../styles/tokens" as t;
 
 .d-health-status {
-    --text-color-health-status: #{p.$blue-700};
+    --text-color-health-status: #{p.$sky-700};
 }
 
 .health-status {

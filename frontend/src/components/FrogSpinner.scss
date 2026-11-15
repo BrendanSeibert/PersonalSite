@@ -7,16 +7,16 @@ $spin-duration: 3s;
 $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, like a real reel
 
 .d-frog-spinner {
-    --surface-color-frog-spinner-window: #{p.$cream-50};
+    --surface-color-frog-spinner-window: #{p.$sand-50};
     --surface-color-frog-spinner-fade: #{p.$transparent};
-    --border-color-frog-spinner-window: #{p.$green-300};
-    --border-color-frog-spinner-payline: #{p.$green-700};
-    --surface-color-frog-spinner-button: #{p.$green-800};
-    --border-color-frog-spinner-button: #{p.$green-800};
-    --text-color-frog-spinner-button: #{p.$cream-50};
-    --surface-color-frog-spinner-button-hover: #{p.$green-700};
-    --border-color-frog-spinner-button-hover: #{p.$green-700};
-    --text-color-frog-spinner-result: #{p.$green-700};
+    --border-color-frog-spinner-window: #{p.$sage-500};
+    --border-color-frog-spinner-payline: #{p.$sienna-750};
+    --surface-color-frog-spinner-button: #{p.$sienna-750};
+    --border-color-frog-spinner-button: #{p.$sienna-750};
+    --text-color-frog-spinner-button: #{p.$sand-50};
+    --surface-color-frog-spinner-button-hover: #{p.$sienna-800};
+    --border-color-frog-spinner-button-hover: #{p.$sienna-800};
+    --text-color-frog-spinner-result: #{p.$sage-800};
 }
 
 .frog-spinner {

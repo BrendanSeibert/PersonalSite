@@ -1,0 +1,53 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+// The same colour roles as the home page's middle column, so its README contrast pairings apply.
+.d-frog-library-page {
+    --surface-color-frog-library-page: #{p.$sand-150};
+    --border-color-frog-library-page: #{p.$sand-300};
+    --text-color-frog-library-page-heading: #{p.$sienna-750};
+}
+
+.frog-library-page {
+    flex: 1; // fill the height left under the nav bar, like the home page's layout
+    width: 100%;
+    max-width: t.$stacked-max-width;
+    margin-inline: auto;
+    padding: t.$gutter;
+
+    @include t.wide-layout {
+        max-width: t.$page-max-width;
+    }
+
+    .frog-library-page-panel {
+        padding: t.$space-5;
+        border: t.$border-width solid var(--border-color-frog-library-page);
+        border-radius: t.$radius-lg;
+        background-color: var(--surface-color-frog-library-page);
+        overflow-wrap: anywhere; // a long word wraps instead of widening the panel, as in the home columns
+        text-align: center; // heading and intro centred, like the home columns; cards align their own text
+
+        // Same edge-margin rule as .column-layout-column, so the two panels have the same insets.
+        > :first-child { margin-top: 0; }
+        > :last-child { margin-bottom: 0; }
+
+        h2 {
+            font-size: t.$font-size-lg;
+            color: var(--text-color-frog-library-page-heading);
+        }
+    }
+
+    // One column, in en.json order, when stacked; three when wide.
+    .frog-library-page-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: t.$space-5;
+        margin: t.$space-5 0 0;
+        padding: 0;
+        list-style: none;
+
+        @include t.wide-layout {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+}

@@ -2,15 +2,15 @@
 @use "../styles/tokens" as t;
 
 .d-column-layout {
-    --surface-color-column-layout-middle: #{p.$cream-100};
-    --surface-color-column-layout-left: #{p.$green-50};
-    --surface-color-column-layout-right: #{p.$blue-50};
-    --border-color-column-layout-middle: #{p.$cream-300};
-    --border-color-column-layout-left: #{p.$green-300};
-    --border-color-column-layout-right: #{p.$blue-300};
-    --text-color-column-layout-heading-middle: #{p.$green-700};
-    --text-color-column-layout-heading-left: #{p.$green-700};
-    --text-color-column-layout-heading-right: #{p.$blue-700};
+    --surface-color-column-layout-middle: #{p.$sand-150};
+    --surface-color-column-layout-left: #{p.$sage-100};
+    --surface-color-column-layout-right: #{p.$sky-100};
+    --border-color-column-layout-middle: #{p.$sand-300};
+    --border-color-column-layout-left: #{p.$sage-300};
+    --border-color-column-layout-right: #{p.$sky-300};
+    --text-color-column-layout-heading-middle: #{p.$sienna-750};
+    --text-color-column-layout-heading-left: #{p.$sage-800};
+    --text-color-column-layout-heading-right: #{p.$sky-800};
 }
 
 .column-layout {

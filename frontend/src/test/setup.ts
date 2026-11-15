@@ -5,6 +5,9 @@ import { server } from './server';
 
 // jsdom has no scrollIntoView. A no-op that tests can spy on.
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
+// jsdom's scrollTo exists but only logs "Not implemented", so this must be a plain assignment:
+// `??=` (as used for scrollIntoView above) would keep jsdom's version.
+window.scrollTo = () => {};
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {

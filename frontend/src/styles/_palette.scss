@@ -1,26 +1,40 @@
 // Central colour palette. Raw values only, named by colour rather than by use.
 // Components map these to roles inside their `.d-<name>` block; no other file may
 // contain a colour literal (enforced by styleConventions.test.ts).
+//
+// Four anchor colours (marked "anchor"), with lighter and darker shades made by changing only
+// their HSL lightness (and, for the greyish sky and sage, raising saturation at the ends so the
+// hue survives). Steps run from 50 (palest) to 900 (darkest). Every text pairing the site uses
+// meets WCAG AA (4.5:1) and every focus ring, border-as-control and payline meets 3:1; see the
+// "Colour" section of the README for the pairings and their ratios.
 
-// Creamy yellow: page and middle-column surfaces, text on the dark nav.
-$cream-50: #fffcf0;
-$cream-100: #fbf3d5;
-$cream-200: #f4e6b3;
-$cream-300: #e9d48a;
+// Burnt sienna: the nav bar, buttons, the payline, middle-column headings. Derived from the anchor
+// #984216 (sienna-600), which is not used directly: the site uses two darker steps.
+$sienna-750: #743211;
+$sienna-800: #622b0e; // hover
 
-// Green: the nav bar, the left column, headings.
-$green-50: #ebf5ee;
-$green-100: #d5ebdc; // card tone "meadow"
-$green-300: #8fc4a1;
-$green-700: #235f3b;
-$green-800: #1a4a2e;
+// Ivory sand: page and middle-column surfaces, text on the sienna nav and buttons.
+$sand-50: #fbf9f6; // the spinner window and the empty image slot
+$sand-100: #f5f0ea; // the page
+$sand-150: #f0e9e0; // the middle column
+$sand-200: #e4d6c5; // anchor
+$sand-300: #d8c4ab;
 
-// Blue: body text, the right column, the page focus ring.
-$blue-50: #eaf2f9;
-$blue-100: #d4e4f2; // card tone "sky"
-$blue-300: #8db4d8;
-$blue-700: #224d72;
-$blue-900: #132b40;
+// Stormy sky: body text, the right column, focus rings.
+$sky-100: #ebf2f4;
+$sky-200: #d5e2e7;
+$sky-300: #b1cad3;
+$sky-500: #78898f; // anchor
+$sky-700: #3e5056;
+$sky-800: #2f3d42;
+$sky-900: #20292d;
 
-$shadow: rgba(19, 43, 64, 0.12); // blue-900 at 12%
+// Sage green: the left column (and the spinner in it).
+$sage-100: #f1f4eb;
+$sage-200: #e1e8d4;
+$sage-300: #c7d4b0;
+$sage-500: #8d957e; // anchor
+$sage-800: #3b422e;
+
+$shadow: rgba(32, 41, 45, 0.12); // sky-900 at 12%
 $transparent: transparent;

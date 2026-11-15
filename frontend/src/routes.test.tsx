@@ -17,6 +17,13 @@ describe('routes', () => {
     await screen.findByText('API ok, database up');
   });
 
+  it('renders the nav bar and the Frog Library at /frog-library', () => {
+    renderAt('/frog-library');
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Frog Library' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Frog Library' })).toBeInTheDocument();
+  });
+
   it('renders the nav bar and a not-found page for an unknown URL', () => {
     renderAt('/does-not-exist');
     expect(screen.getByRole('banner')).toBeInTheDocument();

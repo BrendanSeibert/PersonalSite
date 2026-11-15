@@ -3,7 +3,7 @@ import en from '../i18n/en.json';
 export type EntryId = keyof typeof en.frogSpinner.entries;
 
 // Named by mood, not colour: bare colour words like "green" are flagged by styleConventions.test.ts.
-export const TONES = ['sand', 'meadow', 'sky'] as const;
+export const TONES = ['sand', 'sage', 'sky'] as const;
 export type Tone = (typeof TONES)[number];
 
 export type FrogEntry = {

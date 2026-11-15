@@ -5,7 +5,7 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { FrogCard } from './FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
 
-const entry: FrogEntry = FROG_ENTRIES[1]; // "Dolor sit amet", tone "meadow"
+const entry: FrogEntry = FROG_ENTRIES[1]; // "Dolor sit amet", tone "sage"
 
 function renderCard(props: Partial<Parameters<typeof FrogCard>[0]> = {}) {
   const { container } = renderWithProviders(<FrogCard entry={entry} {...props} />, { withRouter: false });
@@ -74,5 +74,45 @@ describe('FrogCard', () => {
   it('has the convention classes', () => {
     const card = renderCard();
     expect(card).toHaveClass('d-frog-card', 'frog-card');
+  });
+
+  describe('full (the Frog Library card)', () => {
+    it('is an always-open article with an <h3> title and the description, and nothing to click', () => {
+      const card = renderCard({ full: true });
+      expect(card.tagName).toBe('ARTICLE');
+      expect(card).toHaveClass('d-frog-card', 'frog-card', 'frog-card-full', `frog-card-tone-${entry.tone}`);
+      expect(card).toHaveAttribute('data-entry-id', entry.id);
+      expect(screen.getByRole('heading', { level: 3, name: 'Dolor sit amet' })).toBeInTheDocument();
+      const blurb = card.querySelector('.frog-card-blurb')!;
+      expect(blurb.textContent).toMatch(/^Sed cursus ante dapibus diam/);
+      expect(blurb).toBeVisible();
+      expect(screen.queryByRole('button')).toBeNull();
+      expect(card.querySelector('[aria-expanded]')).toBeNull();
+    });
+
+    it('has no expansion state, so the landed card’s floating rules never apply', () => {
+      const card = renderCard({ full: true });
+      expect(card).not.toHaveAttribute('data-expanded');
+    });
+
+    it('shows a decorative image when the entry has one', () => {
+      const card = renderCard({ entry: { ...entry, image: '/test.png' }, full: true });
+      const image = card.querySelector('img')!;
+      expect(image).toHaveAttribute('src', '/test.png');
+      expect(image).toHaveAttribute('alt', '');
+      expect(card.querySelector('.frog-card-image-empty')).toBeNull();
+    });
+
+    it('shows the empty image slot when the entry has no image', () => {
+      const card = renderCard({ full: true });
+      expect(card.querySelector('img')).toBeNull();
+      expect(card.querySelector('.frog-card-image-empty')).not.toBeNull();
+    });
+
+    it('cannot be combined with concealed or expansion (checked by the compiler)', () => {
+      // @ts-expect-error: `full` and `concealed` together are meaningless, so the props forbid it.
+      const bad = <FrogCard entry={entry} full concealed />;
+      expect(bad).toBeTruthy();
+    });
   });
 });

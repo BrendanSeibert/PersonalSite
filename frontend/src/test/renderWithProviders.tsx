@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { StrictMode, type ReactElement } from 'react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
@@ -9,18 +9,22 @@ type Options = {
   route?: string; // the pretend URL to start at (default '/')
   withRouter?: boolean; // set to false when the thing you render brings its own router
   dictionary?: Dictionary; // swap in another dictionary (default: the real English one)
+  // Wrap everything in <StrictMode>, outermost, as main.tsx does. React only re-runs effects on
+  // mount when StrictMode is at the root, so wrapping just the router inside would not do it.
+  strict?: boolean;
 };
 
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/', withRouter = true, dictionary }: Options = {},
+  { route = '/', withRouter = true, dictionary, strict = false }: Options = {},
 ) {
   // A brand-new QueryClient per test, so no test sees data cached by another one.
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const content = withRouter ? <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter> : ui;
-  return render(
+  const tree = (
     <I18nProvider dictionary={dictionary}>
       <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
-    </I18nProvider>,
+    </I18nProvider>
   );
+  return render(strict ? <StrictMode>{tree}</StrictMode> : tree);
 }

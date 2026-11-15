@@ -32,6 +32,11 @@ describe('ColumnLayout', () => {
     expect(screen.getByRole('complementary', { name: 'Right side' })).toHaveClass('column-layout-right');
   });
 
+  it('lets the main landmark take focus by script, but not by Tab', () => {
+    renderLayout();
+    expect(screen.getByRole('main')).toHaveAttribute('tabIndex', '-1');
+  });
+
   it('renders each prop inside its own column', () => {
     renderLayout();
     expect(within(screen.getByRole('main')).getByText('middle content')).toBeInTheDocument();

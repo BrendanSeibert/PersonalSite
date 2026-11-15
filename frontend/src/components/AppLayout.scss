@@ -2,9 +2,9 @@
 @use "../styles/tokens" as t;
 
 .d-app-layout {
-    --surface-color-app-layout: #{p.$cream-50};
-    --text-color-app-layout: #{p.$blue-900};
-    --border-color-app-layout-focus: #{p.$blue-700};
+    --surface-color-app-layout: #{p.$sand-100};
+    --text-color-app-layout: #{p.$sky-900};
+    --border-color-app-layout-focus: #{p.$sky-700};
 }
 
 *,
@@ -29,6 +29,12 @@ body {
 
     :focus-visible {
         @include t.focus-ring(var(--border-color-app-layout-focus));
+    }
+
+    // Focused by script after navigating (AppLayout.tsx): a landmark, not a control, so no ring.
+    // More specific than `.app-layout :focus-visible`, so it wins whatever order the CSS loads in.
+    main[tabindex="-1"]:focus {
+        outline: none;
     }
 }
 

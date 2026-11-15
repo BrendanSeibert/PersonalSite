@@ -49,6 +49,7 @@ afterEach(() => {
 
 it.each([
   ['/', '⟦health.ok⟧'],
+  ['/frog-library', '⟦frogLibrary.heading⟧'],
   ['/does-not-exist', '⟦notFound.heading⟧'],
 ])('every visible string on %s comes from en.json', async (url, settledText) => {
   renderMarkedUp(url);

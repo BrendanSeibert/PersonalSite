@@ -2,16 +2,16 @@
 @use "../styles/tokens" as t;
 
 .d-navbar {
-    --surface-color-navbar: #{p.$green-800};
+    --surface-color-navbar: #{p.$sienna-750};
     --shadow-color-navbar: #{p.$shadow};
-    --text-color-navbar-title: #{p.$cream-50};
-    --text-color-navbar-button: #{p.$cream-100};
+    --text-color-navbar-title: #{p.$sand-50};
+    --text-color-navbar-button: #{p.$sand-100};
     --surface-color-navbar-button: #{p.$transparent};
-    --border-color-navbar-button: #{p.$cream-300};
-    --text-color-navbar-button-hover: #{p.$green-800};
-    --surface-color-navbar-button-hover: #{p.$cream-200};
-    --border-color-navbar-button-hover: #{p.$cream-200};
-    --border-color-navbar-focus: #{p.$cream-300};
+    --border-color-navbar-button: #{p.$sand-300};
+    --text-color-navbar-button-hover: #{p.$sienna-800};
+    --surface-color-navbar-button-hover: #{p.$sand-200};
+    --border-color-navbar-button-hover: #{p.$sand-200};
+    --border-color-navbar-focus: #{p.$sand-300};
 }
 
 .navbar {
@@ -51,6 +51,7 @@
         background-color: var(--surface-color-navbar-button);
         border-color: var(--border-color-navbar-button);
         color: var(--text-color-navbar-button);
+        text-decoration: none; // Home and Frog Library are links: no underline, so they match About
 
         &:hover,
         &:focus-visible {

@@ -14,7 +14,10 @@ type Props = {
 export function ColumnLayout({ middle, left, right, leftLabel, rightLabel }: Props) {
   return (
     <div className="d-column-layout column-layout">
-      <main className="column-layout-column column-layout-middle">{middle}</main>
+      {/* tabIndex -1: AppLayout focuses <main> after a navigation; never a Tab stop. */}
+      <main className="column-layout-column column-layout-middle" tabIndex={-1}>
+        {middle}
+      </main>
       <aside className="column-layout-column column-layout-left" aria-label={leftLabel}>
         {left}
       </aside>
