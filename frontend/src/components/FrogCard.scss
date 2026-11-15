@@ -10,6 +10,9 @@ $image-size: 3.5rem;
     --border-color-frog-card-sand: #{p.$cream-300};
     --border-color-frog-card-meadow: #{p.$green-300};
     --border-color-frog-card-sky: #{p.$blue-300};
+    --surface-color-frog-card-sand-concealed: #{p.$cream-300};
+    --surface-color-frog-card-meadow-concealed: #{p.$green-300};
+    --surface-color-frog-card-sky-concealed: #{p.$blue-300};
     --surface-color-frog-card-image: #{p.$cream-50};
     --border-color-frog-card-image: #{p.$blue-300};
     --text-color-frog-card: #{p.$blue-900};
@@ -23,6 +26,7 @@ $image-size: 3.5rem;
     border: t.$border-width solid;
     border-radius: t.$radius-lg;
     color: var(--text-color-frog-card);
+    text-align: start; // the image slot, title and description read as one left-aligned unit
 
     .frog-card-face {
         display: flex;
@@ -58,6 +62,18 @@ $image-size: 3.5rem;
     .frog-card-image-empty {
         border: t.$border-width dashed var(--border-color-frog-card-image);
         background-color: var(--surface-color-frog-card-image);
+    }
+
+    // A concealed card's shapes, in a deeper shade of its tone (set per tone below).
+    .frog-card-image-concealed,
+    .frog-card-title-concealed {
+        background-color: var(--frog-card-concealed-color);
+    }
+
+    .frog-card-title-concealed {
+        flex: 0 1 60%;
+        height: 0.875rem;
+        border-radius: t.$radius-sm;
     }
 
     // Too narrow for a picture and a readable title: keep the title.
@@ -101,5 +117,6 @@ $image-size: 3.5rem;
     .frog-card-tone-#{$tone} {
         background-color: var(--surface-color-frog-card-#{$tone});
         border-color: var(--border-color-frog-card-#{$tone});
+        --frog-card-concealed-color: var(--surface-color-frog-card-#{$tone}-concealed);
     }
 }

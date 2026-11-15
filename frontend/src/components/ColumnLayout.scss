@@ -42,6 +42,7 @@
         border: t.$border-width solid;
         border-radius: t.$radius-lg;
         overflow-wrap: anywhere; // a long URL or word wraps instead of widening the column
+        text-align: center; // every column's content is centred horizontally
 
         > :first-child { margin-top: 0; }
         > :last-child { margin-bottom: 0; }

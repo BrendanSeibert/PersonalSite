@@ -131,7 +131,20 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
   });
 
   it('rests on the first entry', () => {
-    expect(paylineCard()).toHaveTextContent(title(0));
+    expect(paylineCard().dataset.entryId).toBe(FROG_ENTRIES[0].id);
+  });
+
+  it('centres the spinner and the column text horizontally', () => {
+    const { left, heading, reel, status } = parts();
+    const column = left.getBoundingClientRect();
+    const style = getComputedStyle(left);
+    const contentLeft = column.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+    const contentRight = column.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
+    const box = reel.getBoundingClientRect();
+    expect(Math.abs(box.left - contentLeft - (contentRight - box.right))).toBeLessThanOrEqual(1);
+    for (const element of [heading, status, screen.getByRole('main'), screen.getByRole('complementary', { name: 'Get in touch' })]) {
+      expect(getComputedStyle(element).textAlign).toBe('center');
+    }
   });
 
   it('draws rounded cards, with neighbours in different colours', () => {
@@ -158,18 +171,20 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     expect(shown).toBe(rect(card).width >= IMAGE_MIN_CARD_PX);
   });
 
-  it('keeps every visible title within two lines and inside its card', () => {
+  it('conceals every reel card: no text or picture, a title bar in a deeper shade of its tone', () => {
     const { window: win } = parts();
-    const visible = rect(win);
-    for (const card of win.querySelectorAll('.frog-card')) {
-      const box = rect(card);
-      if (box.bottom < visible.top || box.top > visible.bottom) continue;
-      const titleEl = card.querySelector('.frog-card-title')!;
-      const lineHeight = parseFloat(getComputedStyle(titleEl).lineHeight);
-      expect(rect(titleEl).height).toBeLessThanOrEqual(2 * lineHeight + 1);
-      expect(rect(titleEl).right).toBeLessThanOrEqual(box.right + 1);
-      expect(rect(titleEl).bottom).toBeLessThanOrEqual(box.bottom + 1);
-    }
+    expect(win.textContent).toBe('');
+    expect(win.querySelector('img')).toBeNull();
+    const card = paylineCard();
+    const bar = card.querySelector('.frog-card-title-concealed')!;
+    const barBox = rect(bar);
+    expect(barBox.width).toBeGreaterThan(0);
+    expect(barBox.height).toBeGreaterThan(0);
+    expect(barBox.left).toBeGreaterThanOrEqual(rect(card).left - 1);
+    expect(barBox.right).toBeLessThanOrEqual(rect(card).right + 1);
+    const barColour = getComputedStyle(bar).backgroundColor;
+    expect(barColour).not.toBe('rgba(0, 0, 0, 0)');
+    expect(barColour).not.toBe(getComputedStyle(card).backgroundColor);
   });
 
   it('never scrolls horizontally', () => {
@@ -215,7 +230,7 @@ describe.each([
     // moves the strip back to its resting copy (a capture listener on window runs before React's).
     let stoppedOn = '';
     const onEnd = (event: TransitionEvent) => {
-      if (event.target === parts().strip) stoppedOn = paylineCard().textContent ?? '';
+      if (event.target === parts().strip) stoppedOn = paylineCard().dataset.entryId ?? '';
     };
     window.addEventListener('transitionend', onEnd, true);
     try {
@@ -223,9 +238,13 @@ describe.each([
     } finally {
       window.removeEventListener('transitionend', onEnd, true);
     }
-    expect(stoppedOn).toBe(title(first));
-    expect(paylineCard()).toHaveTextContent(title(first));
+    expect(stoppedOn).toBe(FROG_ENTRIES[first].id);
+    expect(paylineCard().dataset.entryId).toBe(FROG_ENTRIES[first].id);
+    expect(landedCard().dataset.entryId).toBe(FROG_ENTRIES[first].id);
     expect(landedCard()).toHaveTextContent(title(first));
+    // The landed title stays within two lines while collapsed.
+    const titleEl = landedCard().querySelector('.frog-card-title')!;
+    expect(rect(titleEl).height).toBeLessThanOrEqual(2 * parseFloat(getComputedStyle(titleEl).lineHeight) + 1);
     expectClose(rect(landedCard()), rect(paylineCard()));
   });
 
@@ -349,7 +368,7 @@ describe.each([
       expect(isOpen()).toBe(true);
       await spinAndLand(title(second));
       expect(isOpen()).toBe(false);
-      expect(paylineCard()).toHaveTextContent(title(second));
+      expect(paylineCard().dataset.entryId).toBe(FROG_ENTRIES[second].id);
       expectClose(rect(landedCard()), rect(paylineCard()));
     });
 

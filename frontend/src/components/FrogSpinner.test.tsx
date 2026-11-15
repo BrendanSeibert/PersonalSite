@@ -52,7 +52,11 @@ describe('FrogSpinner', () => {
     expect(container.querySelector('.frog-spinner-window')).toHaveAttribute('aria-hidden', 'true');
     const rows = strip.querySelectorAll('.frog-spinner-row');
     expect(rows).toHaveLength(20 * REPEATS);
-    rows.forEach((row, index) => expect(row).toHaveTextContent(titles[index % 20]));
+    // Concealed: the reel cycles through the entries in en.json order, but shows no text.
+    rows.forEach((row, index) =>
+      expect(row.querySelector('.frog-card')).toHaveAttribute('data-entry-id', FROG_ENTRIES[index % 20].id),
+    );
+    expect(strip.textContent).toBe('');
     expect(offset(strip)).toBe('20');
     expect(screen.queryByRole('button', { name: 'Lorem ipsum' })).toBeNull();
   });

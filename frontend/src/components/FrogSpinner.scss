@@ -25,7 +25,9 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
     display: flex;
     flex-direction: column;
     gap: t.$space-3;
+    width: 100%;
     max-width: $max-width;
+    margin-inline: auto; // centred in its column once the column is wider than the cap
 
     // Short screens (phones in landscape): half a row peeks in, so the reel, the button and
     // the result fit on screen together.

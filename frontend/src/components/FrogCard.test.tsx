@@ -61,6 +61,16 @@ describe('FrogCard', () => {
     expect(onActivate).toHaveBeenCalledTimes(1);
   });
 
+  it('draws a concealed card as a skeleton, with no title or picture', () => {
+    const card = renderCard({ entry: { ...entry, image: '/test.png' }, concealed: true });
+    expect(card.textContent).toBe('');
+    expect(card.querySelector('img')).toBeNull();
+    expect(card.querySelector('.frog-card-image-concealed')).not.toBeNull();
+    expect(card.querySelector('.frog-card-title-concealed')).not.toBeNull();
+    expect(card).toHaveClass(`frog-card-tone-${entry.tone}`);
+    expect(card).toHaveAttribute('data-entry-id', entry.id);
+  });
+
   it('has the convention classes', () => {
     const card = renderCard();
     expect(card).toHaveClass('d-frog-card', 'frog-card');

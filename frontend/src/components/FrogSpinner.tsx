@@ -101,7 +101,7 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
           >
             {strip.map((entry, row) => (
               <li key={row} className="frog-spinner-row">
-                <FrogCard entry={entry} />
+                <FrogCard entry={entry} concealed />
               </li>
             ))}
           </ul>
