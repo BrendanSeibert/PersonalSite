@@ -13,7 +13,29 @@ import { pickNextIndex } from './frogReel';
 const ROW_PX = 88; // one reel row: $frog-card-height (5rem) + 2 × 0.25rem, at 16px text
 const GAP_PX = 12; // the spinner's flex gap, $space-3
 const CARD_RADIUS_PX = 12; // $radius-lg
-const IMAGE_MIN_CARD_PX = 224; // 14rem: below this the image slot is hidden
+// Card widths are measured inside the border, as the stylesheet's container queries measure them.
+const IMAGE_MIN_CARD_PX = 152; // 9.5rem: below this the image slot is hidden
+const IMAGE_FULL_CARD_PX = 192; // 12rem: from here the image slot is full size
+const IMAGE_COLLAPSED_PX = 56; // 3.5rem: the image slot on a collapsed card
+const IMAGE_SMALL_PX = 40; // 2.5rem: the image slot on a card narrower than 12rem
+
+// The image slot a collapsed card of this width should show: full, small, or none (0).
+const expectedImagePx = (cardWidth: number) =>
+  cardWidth >= IMAGE_FULL_CARD_PX ? IMAGE_COLLAPSED_PX : cardWidth >= IMAGE_MIN_CARD_PX ? IMAGE_SMALL_PX : 0;
+
+function expectImageSlotFits(card: HTMLElement) {
+  const image = card.querySelector('.frog-card-image')!;
+  const expected = expectedImagePx(card.clientWidth);
+  if (expected === 0) {
+    expect(getComputedStyle(image).display).toBe('none');
+    return;
+  }
+  const box = image.getBoundingClientRect();
+  expect(box.width).toBeCloseTo(expected, 0);
+  expect(box.height).toBeCloseTo(expected, 0);
+  expect(box.right).toBeLessThanOrEqual(card.getBoundingClientRect().right);
+}
+const IMAGE_EXPANDED_MAX_PX = 192; // 12rem: the largest image on an expanded card
 const SPIN_TIMEOUT = 6000; // the spin is 3s; allow for a slow CI machine
 
 const title = (index: number) => translate(en, FROG_ENTRIES[index].titleKey);
@@ -49,8 +71,8 @@ function parts() {
 function paylineCard() {
   const { window: win, strip } = parts();
   const border = parseFloat(getComputedStyle(win).borderTopWidth);
-  const paylineTop = parseFloat(getComputedStyle(win, '::after').top); // the payline frame, in px
-  const y = rect(win).top + border + paylineTop + ROW_PX / 2;
+  const peek = (win.clientHeight - ROW_PX) / 2; // the window is a payline row plus a peek above and below
+  const y = rect(win).top + border + peek + ROW_PX / 2;
   const row = [...strip.querySelectorAll('.frog-spinner-row')].find((li) => {
     const box = rect(li);
     return box.top <= y && y < box.bottom;
@@ -165,10 +187,10 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     for (const c of [above, on, below, next]) expect(c).not.toBe('rgba(0, 0, 0, 0)');
   });
 
-  it('shows the image slot exactly when the card is wide enough', () => {
-    const card = paylineCard();
-    const shown = getComputedStyle(card.querySelector('.frog-card-image')!).display !== 'none';
-    expect(shown).toBe(rect(card).width >= IMAGE_MIN_CARD_PX);
+  it('sizes the image slot to the card: full, smaller on narrow cards, none only when very narrow', () => {
+    expectImageSlotFits(paylineCard());
+    // At the default text size every layout has room for at least the small image.
+    expect(expectedImagePx(paylineCard().clientWidth)).toBeGreaterThan(0);
   });
 
   it('conceals every reel card: no text or picture, a title bar in a deeper shade of its tone', () => {
@@ -215,14 +237,18 @@ describe.each([
     window.scrollTo(0, 0);
   });
 
-  it('really animates', async () => {
-    const { strip, status } = parts();
+  it('really animates, showing the payline frame only while spinning', async () => {
+    const { strip, status, window: win } = parts();
+    const payline = () => getComputedStyle(win, '::after').display;
+    expect(payline()).toBe('none');
     await userEvent.click(parts().button);
     expect(status).toHaveTextContent('Spinning...');
+    expect(payline()).not.toBe('none');
     const before = getComputedStyle(strip).transform;
     await wait(200);
     expect(getComputedStyle(strip).transform).not.toBe(before);
     await waitForLanding(title(first)); // no second click: Playwright would wait for aria-disabled to clear
+    expect(payline()).toBe('none');
   });
 
   it('lands where it says: the announced card is the payline card is the landed card', async () => {
@@ -242,9 +268,12 @@ describe.each([
     expect(paylineCard().dataset.entryId).toBe(FROG_ENTRIES[first].id);
     expect(landedCard().dataset.entryId).toBe(FROG_ENTRIES[first].id);
     expect(landedCard()).toHaveTextContent(title(first));
-    // The landed title stays within two lines while collapsed.
+    // The landed card shows its small image and keeps its title within two lines while collapsed.
+    expectImageSlotFits(landedCard());
+    expect(expectedImagePx(landedCard().clientWidth)).toBeGreaterThan(0); // shown at these sizes
     const titleEl = landedCard().querySelector('.frog-card-title')!;
     expect(rect(titleEl).height).toBeLessThanOrEqual(2 * parseFloat(getComputedStyle(titleEl).lineHeight) + 1);
+    expect(rect(titleEl).right).toBeLessThanOrEqual(rect(landedCard()).right);
     expectClose(rect(landedCard()), rect(paylineCard()));
   });
 
@@ -253,36 +282,75 @@ describe.each([
       await spinAndLand(title(first));
     }, SPIN_TIMEOUT * 2);
 
-    it('expands on hover and pushes the button down, never covering it', async () => {
-      const { left, button, status } = parts();
+    it('opens over the page on click, without moving or resizing anything', async () => {
+      const { left, window: win, button, status } = parts();
+      const layout = document.querySelector('.column-layout')!;
+      const columns = [screen.getByRole('main'), left, screen.getByRole('complementary', { name: 'Get in touch' })];
+      const before = [rect(win), rect(button), rect(status), rect(layout), ...columns.map(rect)];
+      const pageHeight = document.documentElement.scrollHeight;
       const cardBefore = rect(landedCard());
-      const buttonBefore = rect(button);
-      await userEvent.hover(landedFace());
+
+      await userEvent.click(landedFace());
       expect(isOpen()).toBe(true);
       expect(landedCard().querySelector('.frog-card-blurb')).toBeVisible();
+
+      // It grows downwards only, from where it was.
       const card = rect(landedCard());
-      const grown = card.height - cardBefore.height;
-      expect(grown).toBeGreaterThan(0);
-      expect(rect(button).top - buttonBefore.top).toBeCloseTo(grown, 0);
-      expect(card.bottom).toBeLessThanOrEqual(rect(button).top + 1);
-      expect(rect(button).bottom).toBeLessThanOrEqual(rect(status).top + 1);
-      expect(card.left).toBeGreaterThanOrEqual(rect(left).left - 1);
-      expect(card.right).toBeLessThanOrEqual(rect(left).right + 1);
-      expect(card.bottom).toBeLessThanOrEqual(rect(left).bottom + 1);
+      expect(card.height).toBeGreaterThan(cardBefore.height + 1);
+      expect(Math.abs(card.top - cardBefore.top)).toBeLessThanOrEqual(1);
+      expect(Math.abs(card.left - cardBefore.left)).toBeLessThanOrEqual(1);
+      expect(Math.abs(card.width - cardBefore.width)).toBeLessThanOrEqual(1);
+
+      // Nothing else moves or changes size: not the reel, the button, the status, or any column.
+      const after = [rect(win), rect(button), rect(status), rect(layout), ...columns.map(rect)];
+      before.forEach((box, i) => expectClose(after[i], box));
+      expect(document.documentElement.scrollHeight).toBe(pageHeight);
       expectNoHorizontalScroll();
+
+      // It lies over the button: what is drawn there is the card.
+      const viewportCard = landedCard().getBoundingClientRect();
+      const viewportButton = button.getBoundingClientRect();
+      expect(viewportCard.bottom).toBeGreaterThan(viewportButton.top);
+      // Probe in the middle: the card is inset from the reel's sides, so the button's edges show beside it.
+      const hit = document.elementFromPoint(viewportButton.left + viewportButton.width / 2, viewportButton.top + 4);
+      expect(hit?.closest('.frog-spinner-pick')).not.toBeNull();
     });
 
-    it('collapses on unhover, putting everything back', async () => {
+    it('shows a larger, square image above the title when expanded, even on a narrow card', async () => {
+      const image = () => landedCard().querySelector('.frog-card-image')!;
+      const collapsedWidth = image().getBoundingClientRect().width; // 0 when hidden on a narrow card
+      await userEvent.click(landedFace());
+      expect(isOpen()).toBe(true);
+      const box = rect(image());
+      const card = rect(landedCard());
+      expect(getComputedStyle(image()).display).not.toBe('none');
+      expect(box.width).toBeGreaterThan(Math.max(collapsedWidth, IMAGE_COLLAPSED_PX) + 1);
+      expect(box.width).toBeLessThanOrEqual(IMAGE_EXPANDED_MAX_PX + 1);
+      expect(Math.abs(box.height - box.width)).toBeLessThanOrEqual(1);
+      expect(box.left).toBeGreaterThanOrEqual(card.left - 1);
+      expect(box.right).toBeLessThanOrEqual(card.right + 1);
+      const title = rect(landedCard().querySelector('.frog-card-title')!);
+      expect(title.top).toBeGreaterThanOrEqual(box.bottom - 1);
+    });
+
+    it('does not open on hover', async () => {
+      await userEvent.hover(landedFace());
+      expect(isOpen()).toBe(false);
+      expect(landedCard().querySelector('.frog-card-blurb')).not.toBeVisible();
+    });
+
+    it('collapses back to exactly where it was', async () => {
       const { button, status } = parts();
       const before = [rect(landedCard()), rect(button), rect(status)];
-      await userEvent.hover(landedFace());
-      await moveMouseAway();
+      await userEvent.click(landedFace());
+      expect(isOpen()).toBe(true);
+      await userEvent.click(landedFace());
       expect(isOpen()).toBe(false);
       const after = [rect(landedCard()), rect(button), rect(status)];
       before.forEach((box, i) => expectClose(after[i], box));
     });
 
-    it('pins on click', async () => {
+    it('opens on click and stays open when the mouse moves away', async () => {
       await userEvent.click(landedFace());
       expect(isOpen()).toBe(true);
       await moveMouseAway();
@@ -316,6 +384,35 @@ describe.each([
       expect(isOpen()).toBe(false);
     });
 
+    it('rings the whole card, description included, when the keyboard focuses it', async () => {
+      const ringed = (element: Element) => getComputedStyle(element).outlineStyle !== 'none';
+      parts().button.focus();
+      await userEvent.tab({ shift: true }); // keyboard navigation, so :focus-visible applies
+      expect(landedFace()).toHaveFocus();
+      expect(ringed(landedCard())).toBe(true);
+      expect(ringed(landedFace())).toBe(false);
+
+      await userEvent.keyboard('{Enter}');
+      expect(isOpen()).toBe(true);
+      expect(ringed(landedCard())).toBe(true);
+      expect(ringed(landedFace())).toBe(false);
+      // The ring follows the card's edge, so it encloses the open description.
+      const card = rect(landedCard());
+      const blurb = rect(landedCard().querySelector('.frog-card-blurb')!);
+      expect(blurb.top).toBeGreaterThanOrEqual(card.top);
+      expect(blurb.bottom).toBeLessThanOrEqual(card.bottom + 1);
+      // Nothing clips the ring: the ring's outer edge stays inside the reel's grid cell.
+      const outer = parseFloat(getComputedStyle(landedCard()).outlineOffset) + parseFloat(getComputedStyle(landedCard()).outlineWidth);
+      expect(card.left - outer).toBeGreaterThanOrEqual(rect(parts().reel).left - 1);
+      expect(card.right + outer).toBeLessThanOrEqual(rect(parts().reel).right + 1);
+    });
+
+    it('shows no ring when the card is clicked with a mouse', async () => {
+      await userEvent.click(landedFace());
+      expect(isOpen()).toBe(true);
+      expect(getComputedStyle(landedCard()).outlineStyle).toBe('none');
+    });
+
     it('closes on Escape, keeping focus on the card', async () => {
       landedFace().focus();
       await userEvent.keyboard('{Enter}');
@@ -327,9 +424,11 @@ describe.each([
 
     it('opens on a tap, stays open on a second tap, and closes on a tap outside', async () => {
       const buttonBefore = rect(parts().button);
+      const cardBefore = rect(landedCard());
       await tap(landedFace());
       expect(isOpen()).toBe(true);
-      expect(rect(parts().button).top).toBeGreaterThan(buttonBefore.top + 1);
+      expect(rect(landedCard()).height).toBeGreaterThan(cardBefore.height + 1);
+      expectClose(rect(parts().button), buttonBefore); // overlaid, not pushed down
       await tap(landedFace());
       expect(isOpen()).toBe(true);
       await tap(parts().heading);
@@ -347,7 +446,7 @@ describe.each([
       expect(isOpen()).toBe(true);
     });
 
-    it('keeps a long description inside the column', async () => {
+    it('keeps a long description within the column width, and on screen on desktop', async () => {
       // Land on entry12, the long blurb: one more spin from `first`.
       const target = FROG_ENTRIES.findIndex((entry) => entry.id === 'entry12');
       const choice = target > first ? target - 1 : target;
@@ -359,14 +458,24 @@ describe.each([
       const column = rect(parts().left);
       expect(card.left).toBeGreaterThanOrEqual(column.left - 1);
       expect(card.right).toBeLessThanOrEqual(column.right + 1);
-      expect(card.bottom).toBeLessThanOrEqual(column.bottom + 1);
       expectNoHorizontalScroll();
+
+      if (window.matchMedia('(width > 64rem)').matches) {
+        // The page doesn't scroll on desktop, so the card stops above the screen's bottom edge
+        // and scrolls inside itself.
+        expect(landedCard().getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+        expect(landedCard().scrollHeight).toBeGreaterThan(landedCard().clientHeight);
+        expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
+      }
     });
 
     it('closes the card and lands on a new entry on a second spin', async () => {
       await userEvent.click(landedFace());
       expect(isOpen()).toBe(true);
-      await spinAndLand(title(second));
+      // The open card lies over "Get a frog", so start the spin from the keyboard.
+      parts().button.focus();
+      await userEvent.keyboard('{Enter}');
+      await waitForLanding(title(second));
       expect(isOpen()).toBe(false);
       expect(paylineCard().dataset.entryId).toBe(FROG_ENTRIES[second].id);
       expectClose(rect(landedCard()), rect(paylineCard()));

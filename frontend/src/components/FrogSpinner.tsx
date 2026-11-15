@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { useI18n } from '../context/I18nContext';
 import { FrogCard } from './FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
@@ -29,10 +29,28 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
   const lastPointerType = useRef(''); // set on pointerdown, read by the click that follows
   const pressing = useRef(false); // a pointer is down somewhere on the page while the card is open
 
-  // A card pinned open by click or tap may open below the fold on a phone: bring it into view.
-  // Never on mouse hover, which would scroll the page under the pointer.
+  // An opened card may reach below the fold on a phone: bring it into view.
   useEffect(() => {
-    if (expansion === 'pinned') pickRef.current?.scrollIntoView({ block: 'nearest' });
+    if (expansion === 'open') pickRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [expansion]);
+
+  // The open card overlays the page instead of growing it. On desktop the page doesn't scroll, so
+  // tell the stylesheet how much room is left below the card (to the viewport's bottom, less 1rem);
+  // the card scrolls inside itself beyond that. The stylesheet ignores it on phones, which scroll.
+  useLayoutEffect(() => {
+    const pick = pickRef.current;
+    if (expansion === 'closed' || !pick) return;
+    const measure = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const space = document.documentElement.clientHeight - pick.getBoundingClientRect().top - rem;
+      pick.style.setProperty('--frog-spinner-pick-space', `${Math.max(space, 0)}px`);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      pick.style.removeProperty('--frog-spinner-pick-space');
+    };
   }, [expansion]);
 
   // While the card is open, a click or tap outside it returns it to collapsed. It counts only if the
@@ -89,7 +107,7 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
 
   return (
     <div className="d-frog-spinner frog-spinner">
-      <div className="frog-spinner-reel">
+      <div className="frog-spinner-reel" data-phase={phase}>
         {/* Decorative: screen readers get the result from the status line and the landed card. */}
         <div className="frog-spinner-window" aria-hidden="true">
           <ul
@@ -116,8 +134,6 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
             onPointerDown={(event) => {
               lastPointerType.current = event.pointerType;
             }}
-            onPointerEnter={(event) => dispatch({ type: 'pointerEnter', pointerType: event.pointerType })}
-            onPointerLeave={(event) => dispatch({ type: 'pointerLeave', pointerType: event.pointerType })}
             onKeyDown={(event) => {
               if (event.key === 'Escape') dispatch({ type: 'dismiss' });
             }}

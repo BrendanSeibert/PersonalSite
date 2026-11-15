@@ -35,14 +35,10 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
         --frog-spinner-peek: #{$row * 0.5};
     }
 
-    // The window and the landed card share one grid cell, so a growing card makes the cell taller
-    // and pushes the button down (Decision 4). No JavaScript measuring.
+    // The landed card is laid over the window, out of flow: opening it never changes the spinner's
+    // size, so its column keeps its size and the open card spills over whatever is below it.
     .frog-spinner-reel {
-        display: grid;
-
-        > * {
-            grid-area: 1 / 1;
-        }
+        position: relative;
     }
 
     // Grid stretches the window to the landed card's height when it expands; the minimum is
@@ -71,9 +67,10 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
             pointer-events: none;
         }
 
-        // The payline: a frame around the centre row, where the reel stops.
+        // The payline: a frame around the centre row, where the reel stops. Shown only while spinning.
         &::after {
             content: "";
+            display: none;
             position: absolute;
             inset-inline: 0;
             top: var(--frog-spinner-peek);
@@ -82,6 +79,10 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
             border-block: t.$focus-width solid var(--border-color-frog-spinner-payline);
             pointer-events: none;
         }
+    }
+
+    .frog-spinner-reel[data-phase="spinning"] .frog-spinner-window::after {
+        display: block;
     }
 
     // Out of flow, so its 100 rows never size the window; the window clips it.
@@ -107,16 +108,25 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
     }
 
     // Sits exactly on the payline card (the strip starts inside the window's border, hence the
-    // border width); above the fade and the payline frame.
+    // border width). Out of flow and above the rest of the page, so an open card overlays the button,
+    // the status line and anything below instead of pushing them down.
     .frog-spinner-pick {
-        position: relative;
-        z-index: 3;
-        align-self: start;
-        margin-block: calc(var(--frog-spinner-peek) + #{t.$space-1} + #{t.$border-width});
-        margin-inline: calc(#{t.$space-2} + #{t.$border-width});
+        position: absolute;
+        z-index: 10;
+        top: calc(var(--frog-spinner-peek) + #{t.$space-1} + #{t.$border-width});
+        inset-inline: calc(#{t.$space-2} + #{t.$border-width});
 
         &:focus {
             outline: none; // focusable only so presses on the text keep focus inside; the face shows the ring
+        }
+
+        // Desktop: the page doesn't scroll, so an open card that would run past the bottom of the
+        // screen scrolls inside itself instead. FrogSpinner measures the space below the card.
+        @include t.wide-layout {
+            .frog-card[data-expanded="true"] {
+                max-height: var(--frog-spinner-pick-space, none);
+                overflow-y: auto;
+            }
         }
     }
 

@@ -2,6 +2,8 @@
 @use "../styles/tokens" as t;
 
 $image-size: 3.5rem;
+$image-size-small: 2.5rem; // on cards narrower than 12rem
+$image-size-expanded: 12rem; // the open card's image: the card's full width, up to this
 
 .d-frog-card {
     --surface-color-frog-card-sand: #{p.$cream-200};
@@ -16,6 +18,7 @@ $image-size: 3.5rem;
     --surface-color-frog-card-image: #{p.$cream-50};
     --border-color-frog-card-image: #{p.$blue-300};
     --text-color-frog-card: #{p.$blue-900};
+    --border-color-frog-card-focus: #{p.$blue-700}; // the page's focus ring colour
     --shadow-color-frog-card-expanded: #{p.$shadow};
 }
 
@@ -45,10 +48,16 @@ $image-size: 3.5rem;
     button.frog-card-face {
         cursor: pointer;
 
-        // The card clips its overflow, so draw the page's focus ring inside the edge.
+        // The ring goes round the whole card instead (below), so an open card's description is inside it.
         &:focus-visible {
-            outline-offset: calc(-2 * #{t.$focus-width});
+            outline: none;
         }
+    }
+
+    // Keyboard focus on the face rings the whole card, collapsed or open. The card's own outline
+    // isn't clipped by its overflow, and sits just outside its edge like the page's other rings.
+    &:has(> .frog-card-face:focus-visible) {
+        @include t.focus-ring(var(--border-color-frog-card-focus));
     }
 
     .frog-card-image {
@@ -76,8 +85,25 @@ $image-size: 3.5rem;
         border-radius: t.$radius-sm;
     }
 
-    // Too narrow for a picture and a readable title: keep the title.
-    @container (width < 14rem) {
+    // Narrower cards (the desktop columns) keep a smaller picture with tighter spacing, so the
+    // title still has room. Only when even that won't fit (very large text) is the picture dropped.
+    @container (width < 12rem) {
+        .frog-card-face {
+            gap: t.$space-2;
+            padding: t.$space-3 t.$space-2;
+        }
+
+        .frog-card-image {
+            width: $image-size-small;
+            height: $image-size-small;
+        }
+
+        .frog-card-title {
+            font-size: t.$font-size-sm;
+        }
+    }
+
+    @container (width < 9.5rem) {
         .frog-card-image {
             display: none;
         }
@@ -102,13 +128,26 @@ $image-size: 3.5rem;
         height: auto;
         box-shadow: 0 0.25rem 0.75rem var(--shadow-color-frog-card-expanded);
 
+        // Stacked: a large image on top, then the title. The card only grows downwards, so its
+        // top edge stays on the payline and a hovering mouse stays over it.
         .frog-card-face {
+            flex-direction: column;
+            align-items: flex-start;
             height: auto;
             min-height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width});
         }
 
+        // Shown even on narrow cards: stacked, it no longer competes with the title for width.
+        .frog-card-image {
+            display: block;
+            width: min(100%, #{$image-size-expanded});
+            height: auto;
+            aspect-ratio: 1;
+        }
+
         .frog-card-title {
             -webkit-line-clamp: unset; // the full title once open
+            font-size: t.$font-size-md; // full size again, even on a narrow card
         }
     }
 }

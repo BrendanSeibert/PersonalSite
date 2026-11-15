@@ -87,7 +87,7 @@ describe('FrogSpinner', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    expect(status()).toHaveTextContent('You got: Dolor sit amet. Tap or hover over the card to read more.');
+    expect(status()).toHaveTextContent('You got: Dolor sit amet. Tap or click the card to read more.');
     expect(button()).toHaveAttribute('aria-disabled', 'false');
     expect(strip).not.toHaveClass('frog-spinner-strip-spinning');
     expect(offset(strip)).toBe('21');
@@ -108,13 +108,13 @@ describe('FrogSpinner', () => {
     expect(strip).toHaveClass('frog-spinner-strip-spinning');
   });
 
-  it('opens on mouse hover and closes on unhover', async () => {
+  it('does not open on mouse hover', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
     await user.hover(cardButton());
-    expect(isOpen()).toBe(true);
-    expect(screen.getByText(DOLOR_BLURB)).toBeVisible();
+    expect(isOpen()).toBe(false);
+    expect(screen.getByText(DOLOR_BLURB)).not.toBeVisible();
     await user.unhover(cardButton());
     expect(isOpen()).toBe(false);
   });
@@ -141,7 +141,7 @@ describe('FrogSpinner', () => {
       expect(isOpen()).toBe(true);
     });
 
-    it('does not open when a touch on the card turns into a scroll (a touch "hover" is ignored)', async () => {
+    it('does not open when a touch on the card turns into a scroll (no click)', async () => {
       const user = userEvent.setup();
       const { strip } = renderSpinner();
       await spinAndLand(user, strip);
@@ -174,7 +174,7 @@ describe('FrogSpinner', () => {
     });
   });
 
-  it('pins on click: stays open after unhover, closes on a second click', async () => {
+  it('opens on click, stays open when the mouse moves away, closes on a second click', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
@@ -186,22 +186,13 @@ describe('FrogSpinner', () => {
     expect(isOpen()).toBe(false);
   });
 
-  it('closes on a click outside, whether pinned or hovered', async () => {
+  it('closes on a click outside', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    const heading = screen.getByRole('heading', { name: 'Outside heading' });
-
     await user.click(cardButton());
     expect(isOpen()).toBe(true);
-    await user.click(heading);
-    expect(isOpen()).toBe(false);
-
-    await user.hover(cardButton());
-    expect(isOpen()).toBe(true);
-    // Dispatched directly: user.click would first move the mouse off the card and unhover it.
-    fireEvent.pointerDown(heading, { pointerType: 'mouse' });
-    fireEvent.click(heading);
+    await user.click(screen.getByRole('heading', { name: 'Outside heading' }));
     expect(isOpen()).toBe(false);
   });
 
@@ -236,12 +227,11 @@ describe('FrogSpinner', () => {
       expect(isOpen()).toBe(false);
     });
 
-    it('closes a hover-opened card when focus leaves', async () => {
+    it('closes a click-opened card when focus then leaves by keyboard', async () => {
       const user = userEvent.setup();
       const { strip } = renderSpinner();
       await spinAndLand(user, strip);
-      await user.hover(cardButton());
-      act(() => cardButton().focus());
+      await user.click(cardButton());
       expect(isOpen()).toBe(true);
       await user.tab();
       expect(isOpen()).toBe(false);
@@ -314,15 +304,16 @@ describe('FrogSpinner', () => {
     expect(remove).toHaveBeenCalledWith('click', expect.any(Function), true);
   });
 
-  it('scrolls a pinned card into view, but never on hover', async () => {
+  it('scrolls an opened card into view, and nothing happens on hover', async () => {
     const user = userEvent.setup();
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
     await user.hover(cardButton());
-    expect(isOpen()).toBe(true);
+    expect(isOpen()).toBe(false);
     expect(scroll).not.toHaveBeenCalled();
-    await user.click(cardButton()); // hovered → pinned
+    await user.click(cardButton());
+    expect(isOpen()).toBe(true);
     expect(scroll).toHaveBeenCalledTimes(1);
     expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
   });
@@ -353,6 +344,37 @@ describe('FrogSpinner', () => {
     expect(isOpen()).toBe(true);
     await user.pointer({ keys: '[/MouseLeft]', target: button() });
     expect(status()).toHaveTextContent('Spinning...');
+  });
+
+  it('marks the reel with its phase, which the stylesheet uses to show the payline only while spinning', async () => {
+    const user = userEvent.setup();
+    const { strip, container } = renderSpinner();
+    const reel = container.querySelector('.frog-spinner-reel')!;
+    expect(reel).toHaveAttribute('data-phase', 'idle');
+    await user.click(button());
+    expect(reel).toHaveAttribute('data-phase', 'spinning');
+    fireEvent.transitionEnd(strip);
+    expect(reel).toHaveAttribute('data-phase', 'landed');
+  });
+
+  it('tells the stylesheet the room below an open card, and updates it on resize', async () => {
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    await spinAndLand(user, strip);
+    const space = () => pick().style.getPropertyValue('--frog-spinner-pick-space');
+    expect(space()).toBe('');
+
+    vi.spyOn(pick(), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 200, 80));
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(700);
+    await user.click(cardButton());
+    expect(space()).toBe('584px'); // 700 - 100 - 16 (1rem)
+
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(50);
+    fireEvent(window, new Event('resize'));
+    expect(space()).toBe('0px'); // never negative
+
+    await user.click(cardButton()); // closed
+    expect(space()).toBe('');
   });
 
   it('never lands on the same entry twice in a row', async () => {
