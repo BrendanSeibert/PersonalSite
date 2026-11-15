@@ -1,0 +1,41 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+.d-app-layout {
+    --surface-color-app-layout: #{p.$cream-50};
+    --text-color-app-layout: #{p.$blue-900};
+    --border-color-app-layout-focus: #{p.$blue-700};
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: t.$font-family;
+    font-size: t.$font-size-md;
+    line-height: t.$line-height;
+}
+
+.app-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh; // dvh: the visible height on mobile, excluding the browser's address bar
+    background-color: var(--surface-color-app-layout);
+    color: var(--text-color-app-layout);
+
+    :focus-visible {
+        @include t.focus-ring(var(--border-color-app-layout-focus));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+    }
+}

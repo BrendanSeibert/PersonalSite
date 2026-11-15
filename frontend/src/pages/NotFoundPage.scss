@@ -1,0 +1,19 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+.d-not-found-page {
+    --text-color-not-found-page-heading: #{p.$green-700};
+}
+
+.not-found-page {
+    width: 100%;
+    max-width: t.$stacked-max-width;
+    margin-inline: auto;
+    padding: t.$gutter;
+
+    h2 {
+        margin-top: 0;
+        font-size: t.$font-size-lg;
+        color: var(--text-color-not-found-page-heading);
+    }
+}

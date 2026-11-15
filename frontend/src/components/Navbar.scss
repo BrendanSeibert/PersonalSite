@@ -1,0 +1,68 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+.d-navbar {
+    --surface-color-navbar: #{p.$green-800};
+    --shadow-color-navbar: #{p.$shadow};
+    --text-color-navbar-title: #{p.$cream-50};
+    --text-color-navbar-button: #{p.$cream-100};
+    --surface-color-navbar-button: #{p.$transparent};
+    --border-color-navbar-button: #{p.$cream-300};
+    --text-color-navbar-button-hover: #{p.$green-800};
+    --surface-color-navbar-button-hover: #{p.$cream-200};
+    --border-color-navbar-button-hover: #{p.$cream-200};
+    --border-color-navbar-focus: #{p.$cream-300};
+}
+
+.navbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: t.$space-3 t.$space-5;
+    padding: t.$space-3 t.$gutter;
+    background-color: var(--surface-color-navbar);
+    box-shadow: 0 0.125rem 0.5rem var(--shadow-color-navbar);
+
+    .navbar-title {
+        margin: 0;
+        font-size: t.$font-size-title;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text-color-navbar-title);
+    }
+
+    .navbar-links {
+        margin-inline-start: auto; // stays at the far right, also after wrapping to its own line
+    }
+
+    .navbar-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: t.$space-2;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .navbar-button {
+        @include t.button-shape;
+        background-color: var(--surface-color-navbar-button);
+        border-color: var(--border-color-navbar-button);
+        color: var(--text-color-navbar-button);
+
+        &:hover,
+        &:focus-visible {
+            background-color: var(--surface-color-navbar-button-hover);
+            border-color: var(--border-color-navbar-button-hover);
+            color: var(--text-color-navbar-button-hover);
+        }
+
+        // The page-wide blue ring would be hard to see on dark green. This selector is more
+        // specific than `.app-layout :focus-visible`, so it wins whatever order the CSS loads in.
+        &:focus-visible {
+            @include t.focus-ring(var(--border-color-navbar-focus));
+        }
+    }
+}

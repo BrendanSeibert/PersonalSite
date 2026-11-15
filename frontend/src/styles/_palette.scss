@@ -1,0 +1,26 @@
+// Central colour palette. Raw values only, named by colour rather than by use.
+// Components map these to roles inside their `.d-<name>` block; no other file may
+// contain a colour literal (enforced by styleConventions.test.ts).
+
+// Creamy yellow: page and middle-column surfaces, text on the dark nav.
+$cream-50: #fffcf0;
+$cream-100: #fbf3d5;
+$cream-200: #f4e6b3;
+$cream-300: #e9d48a;
+
+// Green: the nav bar, the left column, headings.
+$green-50: #ebf5ee;
+$green-100: #d5ebdc; // card tone "meadow"
+$green-300: #8fc4a1;
+$green-700: #235f3b;
+$green-800: #1a4a2e;
+
+// Blue: body text, the right column, the page focus ring.
+$blue-50: #eaf2f9;
+$blue-100: #d4e4f2; // card tone "sky"
+$blue-300: #8db4d8;
+$blue-700: #224d72;
+$blue-900: #132b40;
+
+$shadow: rgba(19, 43, 64, 0.12); // blue-900 at 12%
+$transparent: transparent;

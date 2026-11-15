@@ -1,0 +1,105 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+$image-size: 3.5rem;
+
+.d-frog-card {
+    --surface-color-frog-card-sand: #{p.$cream-200};
+    --surface-color-frog-card-meadow: #{p.$green-100};
+    --surface-color-frog-card-sky: #{p.$blue-100};
+    --border-color-frog-card-sand: #{p.$cream-300};
+    --border-color-frog-card-meadow: #{p.$green-300};
+    --border-color-frog-card-sky: #{p.$blue-300};
+    --surface-color-frog-card-image: #{p.$cream-50};
+    --border-color-frog-card-image: #{p.$blue-300};
+    --text-color-frog-card: #{p.$blue-900};
+    --shadow-color-frog-card-expanded: #{p.$shadow};
+}
+
+.frog-card {
+    container-type: inline-size; // lets the image slot respond to the card's own width
+    height: 100%;
+    overflow: hidden;
+    border: t.$border-width solid;
+    border-radius: t.$radius-lg;
+    color: var(--text-color-frog-card);
+
+    .frog-card-face {
+        display: flex;
+        align-items: center;
+        gap: t.$space-3;
+        width: 100%;
+        height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width}); // same outer height on the strip and when landed
+        padding: t.$space-3;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: start;
+    }
+
+    button.frog-card-face {
+        cursor: pointer;
+
+        // The card clips its overflow, so draw the page's focus ring inside the edge.
+        &:focus-visible {
+            outline-offset: calc(-2 * #{t.$focus-width});
+        }
+    }
+
+    .frog-card-image {
+        flex: none;
+        width: $image-size;
+        height: $image-size;
+        border-radius: t.$radius-md;
+        object-fit: cover;
+    }
+
+    .frog-card-image-empty {
+        border: t.$border-width dashed var(--border-color-frog-card-image);
+        background-color: var(--surface-color-frog-card-image);
+    }
+
+    // Too narrow for a picture and a readable title: keep the title.
+    @container (width < 14rem) {
+        .frog-card-image {
+            display: none;
+        }
+    }
+
+    .frog-card-title {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2; // at most two lines on the reel, ending in "…"
+        font-weight: 600;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .frog-card-blurb {
+        margin: 0;
+        padding: 0 t.$space-3 t.$space-3;
+    }
+
+    &[data-expanded="true"] {
+        height: auto;
+        box-shadow: 0 0.25rem 0.75rem var(--shadow-color-frog-card-expanded);
+
+        .frog-card-face {
+            height: auto;
+            min-height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width});
+        }
+
+        .frog-card-title {
+            -webkit-line-clamp: unset; // the full title once open
+        }
+    }
+}
+
+@each $tone in sand, meadow, sky {
+    .frog-card-tone-#{$tone} {
+        background-color: var(--surface-color-frog-card-#{$tone});
+        border-color: var(--border-color-frog-card-#{$tone});
+    }
+}

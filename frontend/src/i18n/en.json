@@ -1,0 +1,62 @@
+{
+  "app": {
+    "lang": "en",
+    "title": "Brendan Seibert"
+  },
+  "navbar": {
+    "title": "Brendan Seibert",
+    "label": "Main",
+    "home": "Home",
+    "pickAFrog": "Pick a Frog",
+    "about": "About"
+  },
+  "home": {
+    "middle": {
+      "heading": "Hello, world",
+      "intro": "I'm a software engineer, and this is my corner of the web. It's under construction."
+    },
+    "left": {
+      "heading": "Highlights"
+    },
+    "right": {
+      "heading": "Get in touch",
+      "body": "Coming soon."
+    }
+  },
+  "frogSpinner": {
+    "button": "Get a frog",
+    "prompt": "Press the button to get a frog.",
+    "spinning": "Spinning...",
+    "result": "You got: {title}. Tap or hover over the card to read more.",
+    "entries": {
+      "entry01": { "title": "Lorem ipsum", "blurb": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio praesent libero." },
+      "entry02": { "title": "Dolor sit amet", "blurb": "Sed cursus ante dapibus diam. Sed nisi nulla quis sem at nibh elementum imperdiet." },
+      "entry03": { "title": "Consectetur", "blurb": "Duis sagittis ipsum. Praesent mauris fusce nec tellus sed augue semper porta." },
+      "entry04": { "title": "Adipiscing elit", "blurb": "Mauris massa vestibulum lacinia arcu eget nulla. Class aptent taciti sociosqu ad litora torquent." },
+      "entry05": { "title": "Sed do eiusmod", "blurb": "Curabitur sodales ligula in libero. Sed dignissim lacinia nunc." },
+      "entry06": { "title": "Tempor incididunt", "blurb": "Curabitur tortor pellentesque nibh. Aenean quam in scelerisque sem at dolor maecenas mattis." },
+      "entry07": { "title": "Ut labore", "blurb": "Sed convallis tristique sem. Proin ut ligula vel nunc egestas porttitor." },
+      "entry08": { "title": "Et dolore magna", "blurb": "Morbi lectus risus, iaculis vel, suscipit quis, luctus non, massa. Fusce ac turpis quis ligula lacinia aliquet." },
+      "entry09": { "title": "Aliqua enim", "blurb": "Mauris ipsum nulla metus metus, ullamcorper vel, tincidunt sed, euismod in, nibh." },
+      "entry10": { "title": "Minim veniam", "blurb": "Quisque volutpat condimentum velit. Class aptent taciti sociosqu ad litora torquent per conubia nostra." },
+      "entry11": { "title": "Quis nostrud", "blurb": "Nam nec ante. Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam." },
+      "entry12": { "title": "Exercitation ullamco", "blurb": "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum, praesent mauris. Fusce nec tellus sed augue semper porta. Mauris massa, vestibulum lacinia arcu eget nulla, class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos." },
+      "entry13": { "title": "Laboris nisi", "blurb": "Curabitur sodales ligula in libero. Sed dignissim lacinia nunc, curabitur tortor." },
+      "entry14": { "title": "Ut aliquip", "blurb": "Pellentesque nibh. Aenean quam. In scelerisque sem at dolor." },
+      "entry15": { "title": "Ex ea commodo", "blurb": "Maecenas mattis. Sed convallis tristique sem. Proin ut ligula vel nunc egestas porttitor." },
+      "entry16": { "title": "Consequat duis", "blurb": "Morbi lectus risus, iaculis vel, suscipit quis, luctus non, massa." },
+      "entry17": { "title": "Aute irure", "blurb": "Fusce ac turpis quis ligula lacinia aliquet. Mauris ipsum." },
+      "entry18": { "title": "Dolor in reprehenderit", "blurb": "Nulla metus metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Quisque volutpat condimentum velit." },
+      "entry19": { "title": "Voluptate velit", "blurb": "Nam nec ante. Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam, a cursus ipsum ante quis turpis." },
+      "entry20": { "title": "Esse cillum", "blurb": "Nulla facilisi. Ut fringilla. Suspendisse potenti. Nunc feugiat mi a tellus consequat imperdiet." }
+    }
+  },
+  "health": {
+    "checking": "Checking...",
+    "ok": "API ok, database up",
+    "unavailable": "API unavailable"
+  },
+  "notFound": {
+    "heading": "Page not found"
+  }
+}

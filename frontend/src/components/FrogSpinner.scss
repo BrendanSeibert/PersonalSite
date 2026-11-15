@@ -1,0 +1,144 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+$row: t.$frog-card-height + 2 * t.$space-1; // one reel row: a card plus a 0.25rem gap above and below
+$max-width: 30rem; // keeps cards from becoming long strips on a tablet in portrait
+$spin-duration: 3s;
+$spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, like a real reel
+
+.d-frog-spinner {
+    --surface-color-frog-spinner-window: #{p.$cream-50};
+    --surface-color-frog-spinner-fade: #{p.$transparent};
+    --border-color-frog-spinner-window: #{p.$green-300};
+    --border-color-frog-spinner-payline: #{p.$green-700};
+    --surface-color-frog-spinner-button: #{p.$green-800};
+    --border-color-frog-spinner-button: #{p.$green-800};
+    --text-color-frog-spinner-button: #{p.$cream-50};
+    --surface-color-frog-spinner-button-hover: #{p.$green-700};
+    --border-color-frog-spinner-button-hover: #{p.$green-700};
+    --text-color-frog-spinner-result: #{p.$green-700};
+}
+
+.frog-spinner {
+    --frog-spinner-row: #{$row};
+    --frog-spinner-peek: #{$row}; // how much of the neighbouring rows shows above and below the payline
+    display: flex;
+    flex-direction: column;
+    gap: t.$space-3;
+    max-width: $max-width;
+
+    // Short screens (phones in landscape): half a row peeks in, so the reel, the button and
+    // the result fit on screen together.
+    @media (height <= 30rem) {
+        --frog-spinner-peek: #{$row * 0.5};
+    }
+
+    // The window and the landed card share one grid cell, so a growing card makes the cell taller
+    // and pushes the button down (Decision 4). No JavaScript measuring.
+    .frog-spinner-reel {
+        display: grid;
+
+        > * {
+            grid-area: 1 / 1;
+        }
+    }
+
+    // Grid stretches the window to the landed card's height when it expands; the minimum is
+    // the payline row plus a peek above and below, inside the border.
+    .frog-spinner-window {
+        position: relative;
+        min-height: calc(var(--frog-spinner-row) + 2 * var(--frog-spinner-peek) + 2 * #{t.$border-width});
+        overflow: hidden;
+        contain: paint;
+        border: t.$border-width solid var(--border-color-frog-spinner-window);
+        border-radius: t.$radius-lg;
+        background-color: var(--surface-color-frog-spinner-window);
+
+        // Fade the peeking rows into the window background.
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(
+                var(--surface-color-frog-spinner-window),
+                var(--surface-color-frog-spinner-fade) var(--frog-spinner-peek),
+                var(--surface-color-frog-spinner-fade) calc(100% - var(--frog-spinner-peek)),
+                var(--surface-color-frog-spinner-window)
+            );
+            pointer-events: none;
+        }
+
+        // The payline: a frame around the centre row, where the reel stops.
+        &::after {
+            content: "";
+            position: absolute;
+            inset-inline: 0;
+            top: var(--frog-spinner-peek);
+            height: var(--frog-spinner-row);
+            z-index: 2;
+            border-block: t.$focus-width solid var(--border-color-frog-spinner-payline);
+            pointer-events: none;
+        }
+    }
+
+    // Out of flow, so its 100 rows never size the window; the window clips it.
+    .frog-spinner-strip {
+        position: absolute;
+        inset-inline: 0;
+        top: 0;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        // Put row `offset` on the payline.
+        transform: translateY(calc(var(--frog-spinner-peek) - var(--frog-spinner-offset) * var(--frog-spinner-row)));
+    }
+
+    .frog-spinner-strip-spinning {
+        transition: transform $spin-duration $spin-easing;
+        will-change: transform; // only while spinning: a permanent layer would cost phone memory
+    }
+
+    .frog-spinner-row {
+        height: var(--frog-spinner-row);
+        padding: t.$space-1 t.$space-2;
+    }
+
+    // Sits exactly on the payline card (the strip starts inside the window's border, hence the
+    // border width); above the fade and the payline frame.
+    .frog-spinner-pick {
+        position: relative;
+        z-index: 3;
+        align-self: start;
+        margin-block: calc(var(--frog-spinner-peek) + #{t.$space-1} + #{t.$border-width});
+        margin-inline: calc(#{t.$space-2} + #{t.$border-width});
+
+        &:focus {
+            outline: none; // focusable only so presses on the text keep focus inside; the face shows the ring
+        }
+    }
+
+    .frog-spinner-button {
+        @include t.button-shape;
+        width: 100%;
+        background-color: var(--surface-color-frog-spinner-button);
+        border-color: var(--border-color-frog-spinner-button);
+        color: var(--text-color-frog-spinner-button);
+
+        &:hover,
+        &:focus-visible {
+            background-color: var(--surface-color-frog-spinner-button-hover);
+            border-color: var(--border-color-frog-spinner-button-hover);
+        }
+
+        &[aria-disabled="true"] {
+            cursor: progress;
+        }
+    }
+
+    .frog-spinner-result {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-color-frog-spinner-result);
+    }
+}

@@ -1,0 +1,9 @@
+@use "../styles/tokens" as t;
+
+// No colours of its own yet; keep the block so future colour roles have one place to go.
+.d-home-page {
+}
+
+.home-page-intro {
+    font-size: t.$font-size-lg;
+}

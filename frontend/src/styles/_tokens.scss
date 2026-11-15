@@ -1,0 +1,70 @@
+// Shared non-colour design tokens and shape mixins. Everything is in rem so the layout
+// scales with the visitor's text size. Mixins set shape only; the caller supplies colour.
+$font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-size-sm: 0.875rem;
+$font-size-md: 1rem;
+$font-size-lg: 1.25rem;
+$font-size-title: clamp(1.25rem, 1rem + 1vw, 1.75rem); // grows smoothly from phone to desktop
+$line-height: 1.5;
+
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-5: 1.5rem;
+$space-6: 2rem;
+$space-7: 3rem;
+$gutter: clamp($space-4, 3vw, $space-7); // page side padding: 1rem on phones, up to 3rem
+
+$radius-sm: 0.25rem;
+$radius-md: 0.375rem;
+$radius-lg: 0.75rem;
+
+$border-width: 1px; // the one px value: a hairline should stay one device pixel at any text size
+$focus-width: 0.125rem;
+$tap-target: 2.75rem; // 44px at default text size: the minimum comfortable touch target
+$frog-card-height: 5rem; // one collapsed card: a 3.5rem image slot plus 0.75rem padding above and below
+
+$page-max-width: 80rem; // three-column mode
+$stacked-max-width: 48rem; // stacked mode: keeps lines readable on a tablet or half-width window
+
+$transition: 0.15s ease;
+
+// Three columns only when the screen is wider than 64rem (1024px at default text size).
+// At 64rem or less (phones, tablets in portrait, narrow windows) the columns stack.
+// Width only, by design: see Decision 1 in the plan.
+@mixin wide-layout {
+    @media (width > 64rem) {
+        @content;
+    }
+}
+
+@mixin transitions {
+    transition:
+        color $transition,
+        background-color $transition,
+        border-color $transition;
+}
+
+// A text button. The caller sets background-color, border-color and color.
+@mixin button-shape {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $tap-target;
+    padding: $space-2 $space-4;
+    border: $border-width solid;
+    border-radius: $radius-md;
+    font: inherit;
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+    cursor: pointer;
+    @include transitions;
+}
+
+// The keyboard focus outline; the caller supplies the colour.
+@mixin focus-ring($color) {
+    outline: $focus-width solid $color;
+    outline-offset: $focus-width;
+}

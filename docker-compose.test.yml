@@ -1,0 +1,23 @@
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    tmpfs:
+      - /var/lib/postgresql/data    # in memory: fast, and nothing persists
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U test -d test"]   # TCP check
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  backend-tests:
+    build: ./backend
+    command: npm run test:integration
+    environment:
+      DATABASE_URL: postgres://test:test@db-test:5432/test
+    depends_on:
+      db-test:
+        condition: service_healthy
