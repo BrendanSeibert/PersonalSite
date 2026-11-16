@@ -46,7 +46,7 @@ const componentSheets = Object.entries(sources).filter(([path]) => /\/src\/(comp
 
 describe.each(componentSheets)('%s', (path, raw) => {
   const name = kebab(path.split('/').pop()!.replace('.scss', ''));
-  // The block body may contain Sass interpolations (`#{p.$sienna-600}`), whose `}` must not end the block.
+  // The block body may contain Sass interpolations (`#{p.$sage-800}`), whose `}` must not end the block.
   const block = new RegExp(`\\.d-${name}\\s*\\{((?:[^{}]|#\\{[^{}]*\\})*)\\}`).exec(stripComments(raw));
 
   it(`has a .d-${name} block`, () => {

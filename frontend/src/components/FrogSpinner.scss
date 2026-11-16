@@ -10,12 +10,12 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
     --surface-color-frog-spinner-window: #{p.$sand-50};
     --surface-color-frog-spinner-fade: #{p.$transparent};
     --border-color-frog-spinner-window: #{p.$sage-500};
-    --border-color-frog-spinner-payline: #{p.$sienna-750};
-    --surface-color-frog-spinner-button: #{p.$sienna-750};
-    --border-color-frog-spinner-button: #{p.$sienna-750};
+    --border-color-frog-spinner-payline: #{p.$sage-800};
+    --surface-color-frog-spinner-button: #{p.$sage-800};
+    --border-color-frog-spinner-button: #{p.$sage-800};
     --text-color-frog-spinner-button: #{p.$sand-50};
-    --surface-color-frog-spinner-button-hover: #{p.$sienna-800};
-    --border-color-frog-spinner-button-hover: #{p.$sienna-800};
+    --surface-color-frog-spinner-button-hover: #{p.$sage-900};
+    --border-color-frog-spinner-button-hover: #{p.$sage-900};
     --text-color-frog-spinner-result: #{p.$sage-800};
 }
 

@@ -150,6 +150,10 @@ describe.each(VIEWPORTS)('the Frog Library at %i × %i (%s)', (width, height) =>
     const style = getComputedStyle(panel());
     expect(parseFloat(style.borderTopLeftRadius)).toBe(PANEL_RADIUS_PX);
     expect(style.backgroundColor).toBe(homeBackground);
+    // The heading is the main green, sage-800, like the home page's middle column.
+    expect(getComputedStyle(screen.getByRole('heading', { level: 2, name: 'Frog Library' })).color).toBe(
+      'rgb(59, 66, 46)',
+    );
 
     const main = rect(screen.getByRole('main'));
     expect(main.width).toBeLessThanOrEqual((layout === 'rows' ? STACKED_MAX_PX : PAGE_MAX_PX) + 1);
@@ -269,8 +273,8 @@ describe.each([
     expect(screen.getByRole('main')).toHaveFocus();
 
     await userEvent.keyboard('{Tab}');
-    const highlights = within(screen.getByRole('complementary', { name: 'Highlights' }));
-    expect(highlights.getByRole('button', { name: 'Get a frog' })).toHaveFocus();
+    const spinnerColumn = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
+    expect(spinnerColumn.getByRole('button', { name: 'Get a frog' })).toHaveFocus();
   });
 
   it('library to home: shows the home page, focuses its <main>, hides the Home link', async () => {

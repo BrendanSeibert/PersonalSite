@@ -48,7 +48,7 @@ describe('routes', () => {
 
     await act(() => router.navigate('/'));
     const panel = within(screen.getByRole('complementary', { name: 'Favorites' }));
-    const list = await panel.findByRole('list', { name: 'Your Favorites' });
+    const list = await within(await panel.findByRole('tabpanel', { name: 'Your Favorites' })).findByRole('list');
     expect(within(list).getByRole('button', { name: 'Consectetur' })).toBeInTheDocument();
     expect(within(list).getByRole('button', { name: 'Favorite Consectetur' })).toHaveAttribute('aria-pressed', 'true');
 

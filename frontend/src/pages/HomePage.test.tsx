@@ -13,21 +13,21 @@ describe('HomePage', () => {
     expect(await main.findByText('API ok, database up')).toBeInTheDocument();
   });
 
-  it('puts "Highlights" and the frog spinner in the aside named "Highlights"', async () => {
+  it('puts the frog spinner under its "Frog Spinner" heading, in the aside of the same name', async () => {
     renderWithProviders(<HomePage />);
-    const left = within(screen.getByRole('complementary', { name: 'Highlights' }));
-    expect(left.getByRole('heading', { name: 'Highlights' })).toBeInTheDocument();
+    const left = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
+    expect(left.getByRole('heading', { name: 'Frog Spinner' })).toBeInTheDocument();
     expect(left.getByRole('button', { name: 'Get a frog' })).toBeInTheDocument();
     expect(left.getByRole('status')).toHaveTextContent('Press the button to get a frog.');
     expect(left.queryByText('Coming soon.')).toBeNull();
     await screen.findByText('API ok, database up');
   });
 
-  it('shows the landed card in the "Highlights" aside, not in main', async () => {
+  it('shows the landed card in the "Frog Spinner" aside, not in main', async () => {
     const user = userEvent.setup();
     const { container } = renderWithProviders(<HomePage />);
     await screen.findByText('API ok, database up');
-    const aside = screen.getByRole('complementary', { name: 'Highlights' });
+    const aside = screen.getByRole('complementary', { name: 'Frog Spinner' });
     await user.click(within(aside).getByRole('button', { name: 'Get a frog' }));
     fireEvent.transitionEnd(container.querySelector('.frog-spinner-strip')!);
     const landed = within(aside).getByRole('status').textContent!.match(/^You got: (.+?)\. /)![1];
@@ -38,8 +38,11 @@ describe('HomePage', () => {
   it('puts the favorites panel in the aside named "Favorites", where "Get in touch" was', async () => {
     renderWithProviders(<HomePage />);
     const right = within(screen.getByRole('complementary', { name: 'Favorites' }));
-    expect(right.getByRole('heading', { level: 2, name: 'Your Favorites' })).toBeInTheDocument();
-    expect(right.getByRole('switch', { name: 'All time' })).toHaveAttribute('aria-checked', 'false');
+    expect(right.getByRole('heading', { level: 2, name: 'Favorites' })).toHaveClass('visually-hidden'); // the tabs are the header
+    const tablist = right.getByRole('tablist', { name: 'Favorites' });
+    expect(within(tablist).getByRole('tab', { name: 'Your Favorites' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(tablist).getByRole('tab', { name: 'All Time Favorites' })).toHaveAttribute('aria-selected', 'false');
+    expect(right.queryByRole('switch')).toBeNull();
     expect(await right.findByText(/No favorites yet/)).toBeInTheDocument();
     expect(screen.queryByText('Get in touch')).toBeNull();
     expect(screen.queryByText('Coming soon.')).toBeNull();

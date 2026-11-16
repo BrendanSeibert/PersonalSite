@@ -1,21 +1,18 @@
 @use "../styles/palette" as p;
 @use "../styles/tokens" as t;
 
-// The switch's track outline is sky-500 on the column's sky-100 (3.2:1, needs 3:1 for a control).
+// Tabs: unselected text sky-700 on sky-100 (7.5:1) and on its sky-200 hover (6.4:1); selected text
+// sky-900 (13.1:1) above a sage-800 bar (9.2:1, needs 3:1 as the state indicator).
 .d-favorites-panel {
-    --text-color-favorites-panel-switch: #{p.$sky-900};
-    --border-color-favorites-panel-switch: #{p.$sky-500};
-    --surface-color-favorites-panel-switch: #{p.$sand-50};
-    --surface-color-favorites-panel-switch-knob: #{p.$sky-500};
-    --border-color-favorites-panel-switch-on: #{p.$sky-700};
-    --surface-color-favorites-panel-switch-on: #{p.$sky-700};
-    --surface-color-favorites-panel-switch-knob-on: #{p.$sand-50};
+    --border-color-favorites-panel-tabs: #{p.$sky-300}; // the hairline under the tabs: decoration only
+    --text-color-favorites-panel-tab: #{p.$sky-700};
+    --surface-color-favorites-panel-tab: #{p.$transparent};
+    --surface-color-favorites-panel-tab-hover: #{p.$sky-200};
+    --text-color-favorites-panel-tab-selected: #{p.$sky-900};
+    --border-color-favorites-panel-tab-selected: #{p.$sage-800};
 }
 
-$track-width: 2.5rem;
-$track-height: 1.5rem;
-$knob-size: 1rem;
-$knob-inset: calc((#{$track-height} - #{$knob-size}) / 2 - #{t.$border-width}); // inside the border
+$tab-bar: 0.1875rem; // the selected tab's bar
 
 .favorites-panel {
     display: flex;
@@ -32,79 +29,63 @@ $knob-inset: calc((#{$track-height} - #{$knob-size}) / 2 - #{t.$border-width}); 
         max-height: none;
     }
 
-    // The heading and the switch share a row while the heading has at least 5rem (it wraps onto
-    // two lines in a narrow column). With less room, wrap-reverse puts the switch on a row of its
-    // own *above* the heading, so it always stays in the panel's top-right corner, and the heading
-    // still comes first for screen readers.
-    .favorites-panel-header {
+    // The panel's <h2> is visually hidden (position: absolute), so it takes no row in this flex
+    // column: the tabs start at the top of the panel, where the other columns show their heading.
+    .favorites-panel-tabs {
         display: flex;
-        flex-wrap: wrap-reverse;
-        align-items: center;
-        gap: t.$space-2 t.$space-3;
-        text-align: start;
-
-        h2 {
-            flex: 1 1 0;
-            min-width: 5rem;
-            margin: 0;
-        }
-    }
-
-    .favorites-panel-switch {
-        display: inline-flex;
         flex: none;
-        align-items: center;
-        gap: t.$space-2;
-        max-width: 100%; // never wider than the panel, even with very large text
-        min-height: t.$tap-target;
-        margin-inline-start: auto;
-        padding: 0 t.$space-1;
-        border: 0;
-        border-radius: t.$radius-md;
-        background: none;
-        font: inherit;
-        font-weight: 500;
-        color: var(--text-color-favorites-panel-switch);
-        text-align: end;
-        cursor: pointer;
+        border-bottom: t.$border-width solid var(--border-color-favorites-panel-tabs);
     }
 
-    // The label wraps ("All / time") only when the switch would otherwise overflow a narrow column.
-    .favorites-panel-switch-label {
+    .favorites-panel-tab {
+        flex: 1 1 0; // two equal tabs, whatever their labels
         min-width: 0;
-    }
+        min-height: t.$tap-target;
+        margin-bottom: calc(-1 * #{t.$border-width}); // the bar sits on the hairline, not under it
+        padding: t.$space-2;
+        // No bottom border at all when unselected, not a transparent one: forced-colours mode paints
+        // every border, transparent included, so both tabs would show a bar. The padding takes the
+        // bar's place, so both labels sit at the same height.
+        padding-bottom: calc(#{t.$space-2} + #{$tab-bar});
+        border: 0;
+        border-radius: t.$radius-md t.$radius-md 0 0;
+        background-color: var(--surface-color-favorites-panel-tab);
+        font: inherit;
+        font-weight: 500; // the same in both states, so selecting never shifts the labels
+        line-height: 1.25;
+        color: var(--text-color-favorites-panel-tab);
+        cursor: pointer;
+        // Not the shared `transitions` mixin: the bar is added and removed, not recoloured, so
+        // fading border-color would only fade it in from the text colour. It appears at once.
+        transition:
+            color t.$transition,
+            background-color t.$transition;
 
-    .favorites-panel-switch-track {
-        position: relative;
-        flex: none;
-        width: $track-width;
-        height: $track-height;
-        border: t.$border-width solid var(--border-color-favorites-panel-switch);
-        border-radius: calc(#{$track-height} / 2);
-        background-color: var(--surface-color-favorites-panel-switch);
-        @include t.transitions;
+        &:hover {
+            background-color: var(--surface-color-favorites-panel-tab-hover);
+        }
 
-        // The knob: left when off, right when on.
-        &::after {
-            content: "";
-            position: absolute;
-            top: $knob-inset;
-            left: $knob-inset;
-            width: $knob-size;
-            height: $knob-size;
-            border-radius: 50%;
-            background-color: var(--surface-color-favorites-panel-switch-knob);
-            transition: transform t.$transition; // off under prefers-reduced-motion (AppLayout.scss)
+        &[aria-selected="true"] {
+            padding-bottom: t.$space-2;
+            border-bottom: $tab-bar solid var(--border-color-favorites-panel-tab-selected);
+            color: var(--text-color-favorites-panel-tab-selected);
+            cursor: default;
         }
     }
 
-    .favorites-panel-switch[aria-checked="true"] .favorites-panel-switch-track {
-        border-color: var(--border-color-favorites-panel-switch-on);
-        background-color: var(--surface-color-favorites-panel-switch-on);
+    // The selected panel takes the height left under the tabs; the list inside it scrolls.
+    .favorites-panel-tabpanel {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
 
-        &::after {
-            background-color: var(--surface-color-favorites-panel-switch-knob-on);
-            transform: translateX(calc(#{$track-width} - #{$knob-size} - 2 * #{$knob-inset} - 2 * #{t.$border-width}));
+        &[hidden] {
+            display: none; // `display: flex` above would otherwise override the hidden attribute
+        }
+
+        &:focus-visible {
+            outline-offset: calc(-1 * #{t.$focus-width}); // inside the scroll edge, never clipped
         }
     }
 

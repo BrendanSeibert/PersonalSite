@@ -79,16 +79,21 @@ it('every string on / comes from en.json after a spin, with the landed card open
 });
 
 describe('with favorites', () => {
-  // Every heart's name, the switch, the headings and the counts come from en.json too.
+  // Every heart's name, the panel's heading, the tabs and the counts come from en.json too.
   it.each([
-    ['Your Favorites', false, '⟦favorites.mine.heading⟧'],
-    ['All Time Favorites (counts shown and spoken)', true, '⟦favorites.allTime.heading⟧'],
-  ])('every string on / comes from en.json in %s', async (_mode, allTime, heading) => {
+    ['Your Favorites', false, '⟦favorites.mine.tab⟧'],
+    ['All Time Favorites (counts shown and spoken)', true, '⟦favorites.allTime.tab⟧'],
+  ])('every string on / comes from en.json in %s', async (_mode, allTime, selectedTab) => {
     seedFavorites({ mine: ['entry02', 'entry07'], counts: { entry02: 1, entry07: 12, entry03: 4 } });
     if (allTime) localStorage.setItem(MODE_STORAGE_KEY, 'allTime');
     const { container } = renderMarkedUp('/');
     await screen.findByText('⟦health.ok⟧');
-    await screen.findByRole('heading', { name: heading });
+    await screen.findByRole('heading', { name: '⟦favorites.label⟧' });
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
+      '⟦favorites.mine.tab⟧',
+      '⟦favorites.allTime.tab⟧',
+    ]);
+    expect(screen.getByRole('tab', { name: selectedTab })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(container.querySelectorAll('.favorites-panel-item')).toHaveLength(allTime ? 3 : 2));
     if (allTime) {
       expect(container.querySelector('.frog-card-likes [aria-hidden="true"]')!.textContent).toBe('⟦favorites.countShort⟧');

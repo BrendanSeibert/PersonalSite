@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page, userEvent } from 'vitest/browser';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../routes';
 import { seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
@@ -36,17 +36,80 @@ const list = () => document.querySelector<HTMLElement>('.favorites-panel-list')!
 const cards = () => [...list().querySelectorAll<HTMLElement>(':scope > li > div > .frog-card')];
 const px = (value: string) => parseFloat(value);
 
-function expectSwitchInCorner() {
-  const toggle = rect(screen.getByRole('switch', { name: 'All time' }));
-  const heading = rect(within(panel()).getByRole('heading', { level: 2 }));
+const SAGE_800 = 'rgb(59, 66, 46)';
+const SKY_700 = 'rgb(62, 80, 86)';
+const MINE = 'Your Favorites';
+const ALL_TIME = 'All Time Favorites';
+const tab = (name: string) => screen.getByRole('tab', { name });
+const tabpanel = (name: string) => screen.getByRole('tabpanel', { name });
+
+// A label's lines of text: their count, and the top of the first, wherever the padding puts it.
+function textLines(element: Element) {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  const rects = [...range.getClientRects()];
+  return { count: new Set(rects.map((r) => Math.round(r.top))).size, top: rects[0].top };
+}
+
+// The tabs as the panel's header, at its very top; the selected tab's panel under them. The
+// "Favorites" heading is there for screen readers only and is never drawn.
+function expectTabsAsHeader() {
   const box = rect(panel());
-  expect(Math.abs(toggle.right - box.right), 'right edge').toBeLessThanOrEqual(1);
-  expect(toggle.height).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
-  // Either beside the heading, on the same row and to its right, or on a row of its own above it.
-  const beside = toggle.top < heading.bottom && heading.top < toggle.bottom && toggle.left >= heading.right - 1;
-  const above = toggle.bottom <= heading.top + 1;
-  expect(beside || above, 'switch beside or above the heading, never over it').toBe(true);
-  expect(Math.abs(toggle.top - box.top) <= 1 || beside, 'switch at the top of the panel').toBe(true);
+  const headingEl = within(panel()).getByRole('heading', { level: 2, name: 'Favorites' });
+  const heading = rect(headingEl);
+  expect(heading.width, 'heading not drawn').toBeLessThanOrEqual(1);
+  expect(heading.height, 'heading not drawn').toBeLessThanOrEqual(1);
+  expect(getComputedStyle(headingEl).position, 'heading takes no row').toBe('absolute');
+
+  const tablistEl = screen.getByRole('tablist', { name: 'Favorites' });
+  const tablist = rect(tablistEl);
+  expect(Math.abs(tablist.top - box.top), 'tabs at the top of the panel').toBeLessThanOrEqual(1);
+  // The panel is the column's content, so the tabs sit where the other columns' headings start.
+  const col = getComputedStyle(column());
+  const contentTop = rect(column()).top + px(col.borderTopWidth) + px(col.paddingTop);
+  expect(Math.abs(tablist.top - contentTop), 'tabs at the top of the column').toBeLessThanOrEqual(1);
+  expect(Math.abs(tablist.left - box.left), 'tablist left edge').toBeLessThanOrEqual(1);
+  expect(Math.abs(tablist.right - box.right), 'tablist right edge').toBeLessThanOrEqual(1);
+
+  const [first, second] = within(tablistEl).getAllByRole('tab');
+  const [a, b] = [rect(first), rect(second)];
+  expect(Math.abs(a.top - b.top), 'tabs level').toBeLessThanOrEqual(1);
+  expect(Math.abs(a.height - b.height), 'tabs the same height').toBeLessThanOrEqual(1);
+  expect(a.height).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
+  expect(Math.abs(a.width - b.width), 'tabs the same width').toBeLessThanOrEqual(1);
+  expect(a.right, 'side by side, no overlap').toBeLessThanOrEqual(b.left + 1);
+  for (const el of [first, second]) {
+    expect(el.scrollWidth, `${el.textContent} fits across`).toBeLessThanOrEqual(el.clientWidth);
+    expect(el.scrollHeight, `${el.textContent} fits down`).toBeLessThanOrEqual(el.clientHeight);
+  }
+
+  // The bar: only the selected tab has a bottom border, so forced colours can't paint a second.
+  const selected = [first, second].find((el) => el.getAttribute('aria-selected') === 'true')!;
+  const other = selected === first ? second : first;
+  const style = getComputedStyle(selected);
+  const bar = 0.1875 * px(getComputedStyle(document.documentElement).fontSize); // 3px at default text size
+  expect(`${style.borderBottomWidth} ${style.borderBottomStyle} ${style.borderBottomColor}`).toBe(
+    `${bar}px solid ${SAGE_800}`,
+  );
+  expect(getComputedStyle(other).borderBottomWidth).toBe('0px');
+  // The padding takes the bar's place, so both tabs keep the same space under their labels.
+  const underLabel = (el: Element) => {
+    const s = getComputedStyle(el);
+    return px(s.paddingBottom) + px(s.borderBottomWidth);
+  };
+  expect(Math.abs(underLabel(first) - underLabel(second)), 'same space under both labels').toBeLessThanOrEqual(0.5);
+  // When both labels take the same number of lines, their text is level too.
+  const [lines1, lines2] = [textLines(first), textLines(second)];
+  if (lines1.count === lines2.count) {
+    expect(Math.abs(lines1.top - lines2.top), 'labels level').toBeLessThanOrEqual(1);
+  }
+
+  // One panel shown, under the tabs.
+  const shown = tabpanel(selected.textContent!);
+  expect(shown).toBeVisible();
+  expect(rect(shown).top).toBeGreaterThanOrEqual(tablist.bottom - 1);
+  const hidden = document.getElementById(other.getAttribute('aria-controls')!)!;
+  expect(getComputedStyle(hidden).display).toBe('none');
 }
 
 function expectNoHorizontalScroll() {
@@ -81,8 +144,31 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
       await renderHome();
     });
 
-    it('keeps the switch in the top-right corner', () => {
-      expectSwitchInCorner();
+    it('makes the tabs the header, at the top of the panel, with the heading for screen readers only', () => {
+      expectTabsAsHeader();
+    });
+
+    it('switches tabs with the arrow keys, and the focused tab shows the focus ring', async () => {
+      tab(MINE).focus();
+      await userEvent.keyboard('{ArrowRight}');
+      await waitFor(() => expect(within(tabpanel(ALL_TIME)).getAllByRole('listitem')).toHaveLength(10));
+      expect(tab(ALL_TIME)).toHaveFocus();
+      expect(tab(ALL_TIME)).toHaveAttribute('aria-selected', 'true');
+      expect(tab(ALL_TIME).matches(':focus-visible')).toBe(true);
+      const ring = getComputedStyle(tab(ALL_TIME));
+      expect(`${ring.outlineStyle} ${ring.outlineColor}`).toBe(`solid ${SKY_700}`);
+      expectTabsAsHeader();
+    });
+
+    it('tabs from the selected tab to the panel, whose ring is drawn inside its edge', async () => {
+      tab(MINE).focus();
+      await userEvent.tab();
+      const panelEl = tabpanel(MINE);
+      expect(panelEl).toHaveFocus();
+      expect(panelEl.matches(':focus-visible')).toBe(true);
+      const ring = getComputedStyle(panelEl);
+      expect(`${ring.outlineStyle} ${ring.outlineColor}`).toBe(`solid ${SKY_700}`);
+      expect(px(ring.outlineOffset)).toBeCloseTo(-px(ring.outlineWidth), 1);
     });
 
     it('scrolls the list inside the panel instead of growing', async () => {
@@ -102,7 +188,7 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
       it('never makes the desktop page scroll; the columns still end one gutter above the bottom', () => {
         expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
         const pad = px(getComputedStyle(document.querySelector('.column-layout')!).paddingBottom);
-        for (const name of ['Highlights', 'Favorites']) {
+        for (const name of ['Frog Spinner', 'Favorites']) {
           const bottom = rect(screen.getByRole('complementary', { name })).bottom;
           expect(Math.abs(bottom - (window.innerHeight - pad))).toBeLessThanOrEqual(1);
         }
@@ -169,7 +255,7 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
         expect(count.top).toBeLessThan(heart.bottom);
         expect(count.bottom).toBeGreaterThan(heart.top);
       }
-      expectSwitchInCorner();
+      expectTabsAsHeader();
     });
   });
 
@@ -188,7 +274,7 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
         expect(Math.abs(rect(list()).bottom - contentBottom)).toBeLessThanOrEqual(1);
         expect(rect(panel()).height).toBeLessThan(stackedCap());
       }
-      expectSwitchInCorner();
+      expectTabsAsHeader();
     });
   });
 });
@@ -201,8 +287,8 @@ describe.each([375, 1280])('the favorites panel with very large text (root font 
     await renderHome();
   });
 
-  it('keeps the switch in the corner, scrolls the list inside its column, and never scrolls sideways', () => {
-    expectSwitchInCorner();
+  it('keeps the tabs on top as the header, scrolls the list inside its column, and never scrolls sideways', () => {
+    expectTabsAsHeader();
     expect(list().scrollHeight).toBeGreaterThan(list().clientHeight);
     expectNoHorizontalScroll();
     // (The desktop page itself may scroll at this text size: the spinner column grows too.)
@@ -210,5 +296,41 @@ describe.each([375, 1280])('the favorites panel with very large text (root font 
     const colStyle = getComputedStyle(col);
     const contentBottom = rect(col).bottom - px(colStyle.paddingBottom) - px(colStyle.borderBottomWidth);
     expect(rect(panel()).bottom).toBeLessThanOrEqual(contentBottom + 1);
+  });
+
+  it('keeps the tabs on top as the header in All Time Favorites too', async () => {
+    await userEvent.click(tab(ALL_TIME));
+    await waitFor(() => expect(within(tabpanel(ALL_TIME)).getAllByRole('listitem')).toHaveLength(10));
+    expectTabsAsHeader();
+    expectNoHorizontalScroll();
+  });
+});
+
+describe('the favorites panel while its list loads', () => {
+  beforeEach(async () => {
+    await page.viewport(1280, 800);
+  });
+
+  it('keeps focus on the panel when the list arrives while the panel has focus', async () => {
+    seedFavorites({ mine: ['entry01'] });
+    // Hold the Your Favorites request until the panel has focus.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const answer = vi.mocked(window.fetch).getMockImplementation()!;
+    vi.mocked(window.fetch).mockImplementation(async (input, init) => {
+      if (String(input instanceof Request ? input.url : input).includes('/api/favorites/mine')) await held;
+      return answer(input, init);
+    });
+    const router = createMemoryRouter(routes, { initialEntries: ['/'] });
+    renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
+    await screen.findByText('Loading favorites...');
+
+    tab(MINE).focus();
+    await userEvent.tab();
+    const panelEl = tabpanel(MINE);
+    expect(panelEl).toHaveFocus();
+    release();
+    await waitFor(() => expect(within(panelEl).getAllByRole('listitem')).toHaveLength(1));
+    expect(panelEl, 'focus is not dropped to <body>').toHaveFocus();
   });
 });

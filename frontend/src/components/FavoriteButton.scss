@@ -2,7 +2,7 @@
 @use "../styles/tokens" as t;
 
 .d-favorite-button {
-    --text-color-favorite-button: #{p.$sienna-750}; // outline and fill, on every card tone
+    --text-color-favorite-button: #{p.$sage-800}; // outline and fill, on every card tone (7.3:1 or more)
     --surface-color-favorite-button-hover: #{p.$sand-50};
 }
 

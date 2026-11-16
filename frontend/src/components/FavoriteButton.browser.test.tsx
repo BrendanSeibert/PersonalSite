@@ -10,7 +10,7 @@ import { VIEWPORTS } from '../test/viewports';
 const INSET_PX = 4; // $space-1: the heart's distance from the card's top and right edges
 const HEART_PX = 32; // $favorite-size (2rem); Playwright's Chromium reports a fine pointer
 const MIN_TITLE_PX = 48; // 3rem: a title always keeps at least this much width
-const SIENNA_750 = 'rgb(116, 50, 17)';
+const SAGE_800 = 'rgb(59, 66, 46)';
 
 async function renderApp(url: string) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
@@ -86,7 +86,7 @@ describe.each(VIEWPORTS)('hearts at %i × %i (%s)', (width, height) => {
     await waitFor(() => expect(panelCards()).toHaveLength(2));
     for (const card of panelCards()) expectHeartInCorner(card);
 
-    await userEvent.click(screen.getByRole('switch', { name: 'All time' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'All Time Favorites' }));
     await waitFor(() => expect(document.querySelector('.favorites-panel-list .frog-card-likes')).not.toBeNull());
     for (const card of panelCards()) {
       expectHeartInCorner(card);
@@ -117,14 +117,14 @@ describe.each([
     expectRingInside(heart);
   });
 
-  it('fills in sienna when pressed, and keeps the same outline colour', async () => {
+  it('fills in green when pressed, and keeps the same outline colour', async () => {
     const heart = screen.getByRole('button', { name: 'Favorite Lorem ipsum' });
     const strokeBefore = pathOf(heart).stroke;
     expect(pathOf(heart).fill).toBe('none');
     await userEvent.click(heart);
-    await waitFor(() => expect(pathOf(heart).fill).toBe(SIENNA_750));
+    await waitFor(() => expect(pathOf(heart).fill).toBe(SAGE_800));
     expect(pathOf(heart).stroke).toBe(strokeBefore);
-    expect(strokeBefore).toBe(SIENNA_750);
+    expect(strokeBefore).toBe(SAGE_800);
     await userEvent.click(heart);
     await waitFor(() => expect(pathOf(heart).fill).toBe('none'));
   });

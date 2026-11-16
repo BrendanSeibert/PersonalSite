@@ -6,14 +6,16 @@
 // their HSL lightness (and, for the greyish sky and sage, raising saturation at the ends so the
 // hue survives). Steps run from 50 (palest) to 900 (darkest). Every text pairing the site uses
 // meets WCAG AA (4.5:1) and every focus ring, border-as-control and payline meets 3:1; see the
-// "Colour" section of the README for the pairings and their ratios.
+// "Colour" section of the README for the pairings and their ratios (contrast.test.ts checks them).
+// Burnt sienna is kept although nothing uses it at the moment; it is the one exception to keeping
+// only the shades the site uses.
 
-// Burnt sienna: the nav bar, buttons, the payline, middle-column headings. Derived from the anchor
-// #984216 (sienna-600), which is not used directly: the site uses two darker steps.
+// Burnt sienna: not used at the moment, kept so it can come back (for example as an accent).
+// Derived from the anchor #984216 (sienna-600), which is not used directly.
 $sienna-750: #743211;
-$sienna-800: #622b0e; // hover
+$sienna-800: #622b0e;
 
-// Ivory sand: page and middle-column surfaces, text on the sienna nav and buttons.
+// Ivory sand: page and middle-column surfaces, text on the green nav and buttons.
 $sand-50: #fbf9f6; // the spinner window and the empty image slot
 $sand-100: #f5f0ea; // the page
 $sand-150: #f0e9e0; // the middle column
@@ -29,12 +31,14 @@ $sky-700: #3e5056;
 $sky-800: #2f3d42;
 $sky-900: #20292d;
 
-// Sage green: the left column (and the spinner in it).
+// Sage green: the main colour (the nav bar, buttons, the payline, hearts, headings, the selected
+// tab) and the left column (and the spinner in it).
 $sage-100: #f1f4eb;
 $sage-200: #e1e8d4;
 $sage-300: #c7d4b0;
 $sage-500: #8d957e; // anchor
-$sage-800: #3b422e;
+$sage-800: #3b422e; // the main colour
+$sage-900: #292f1e; // hover on the main colour: hsl(81 22% 15%)
 
 $shadow: rgba(32, 41, 45, 0.12); // sky-900 at 12%
 $transparent: transparent;

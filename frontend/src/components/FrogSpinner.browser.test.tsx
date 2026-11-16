@@ -54,11 +54,11 @@ const rect = (element: Element) => {
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function parts() {
-  const left = screen.getByRole('complementary', { name: 'Highlights' });
+  const left = screen.getByRole('complementary', { name: 'Frog Spinner' });
   const scope = within(left);
   return {
     left,
-    heading: scope.getByRole('heading', { name: 'Highlights' }),
+    heading: scope.getByRole('heading', { name: 'Frog Spinner' }),
     reel: left.querySelector('.frog-spinner-reel')!,
     window: left.querySelector<HTMLElement>('.frog-spinner-window')!,
     strip: left.querySelector<HTMLElement>('.frog-spinner-strip')!,

@@ -16,12 +16,11 @@
       "intro": "I'm a software engineer, and this is my corner of the web. It's under construction."
     },
     "left": {
-      "heading": "Highlights"
+      "heading": "Frog Spinner"
     }
   },
   "favorites": {
     "label": "Favorites",
-    "switch": "All time",
     "toggle": "Favorite {title}",
     "countShort": "{count}",
     "likes": { "one": "{count} like", "other": "{count} likes" },
@@ -29,11 +28,11 @@
     "unavailable": "Favorites are unavailable right now.",
     "saveFailed": "Couldn't save your favorite. Please try again.",
     "mine": {
-      "heading": "Your Favorites",
+      "tab": "Your Favorites",
       "empty": "No favorites yet. Tap the heart on any frog to add it here."
     },
     "allTime": {
-      "heading": "All Time Favorites",
+      "tab": "All Time Favorites",
       "empty": "No frogs have been liked yet."
     }
   },

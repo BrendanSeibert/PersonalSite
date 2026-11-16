@@ -2,13 +2,13 @@
 @use "../styles/tokens" as t;
 
 .d-navbar {
-    --surface-color-navbar: #{p.$sienna-750};
+    --surface-color-navbar: #{p.$sage-800};
     --shadow-color-navbar: #{p.$shadow};
     --text-color-navbar-title: #{p.$sand-50};
     --text-color-navbar-link: #{p.$sand-100};
     --surface-color-navbar-link: #{p.$transparent};
     --border-color-navbar-link: #{p.$sand-300};
-    --text-color-navbar-link-hover: #{p.$sienna-800};
+    --text-color-navbar-link-hover: #{p.$sage-900};
     --surface-color-navbar-link-hover: #{p.$sand-200};
     --border-color-navbar-link-hover: #{p.$sand-200};
     --border-color-navbar-focus: #{p.$sand-300};

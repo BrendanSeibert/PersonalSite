@@ -19,7 +19,7 @@ const navItems = () => [...screen.getByRole('banner').querySelectorAll<HTMLEleme
 
 function columns() {
   const middle = screen.getByRole('main');
-  const left = screen.getByRole('complementary', { name: 'Highlights' });
+  const left = screen.getByRole('complementary', { name: 'Frog Spinner' });
   const right = screen.getByRole('complementary', { name: 'Favorites' });
   return { middle, left, right };
 }
@@ -113,8 +113,8 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     for (const column of [middle, left, right]) {
       const box = rect(column);
       // The reel strip is meant to run past its clipping window, and the favorites list scrolls;
-      // the window and the list themselves are still checked.
-      for (const child of column.querySelectorAll('*:not(.frog-spinner-window *):not(.favorites-panel-list *)')) {
+      // the window and the list themselves are still checked. The hidden tabpanel has no box to check.
+      for (const child of column.querySelectorAll('*:not(.frog-spinner-window *):not(.favorites-panel-list *):not([hidden]):not([hidden] *)')) {
         const inner = rect(child);
         expect(inner.left).toBeGreaterThanOrEqual(box.left - 1);
         expect(inner.right).toBeLessThanOrEqual(box.right + 1);
@@ -125,16 +125,28 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     expect(within(middle).getByRole('heading', { name: 'Hello, world' })).toBeVisible();
     expect(within(middle).getByText(/this is my corner of the web/)).toBeVisible();
     expect(within(middle).getByRole('status')).toHaveTextContent('API ok, database up');
-    expect(within(left).getByRole('heading', { name: 'Highlights' })).toBeVisible();
+    expect(within(left).getByRole('heading', { name: 'Frog Spinner' })).toBeVisible();
     expect(within(left).getByRole('button', { name: 'Get a frog' })).toBeVisible();
     expect(within(left).getByRole('status')).toHaveTextContent('Press the button to get a frog.');
-    expect(within(right).getByRole('heading', { name: 'Your Favorites' })).toBeVisible();
-    expect(within(right).getByRole('switch', { name: 'All time' })).toBeVisible();
+    // The tabs are the right column's visible header; its heading is for screen readers only.
+    expect(within(right).getByRole('heading', { name: 'Favorites' })).toHaveClass('visually-hidden');
+    expect(within(right).getByRole('tab', { name: 'All Time Favorites' })).toBeVisible();
+    expect(within(right).getByRole('tab', { name: 'Your Favorites' })).toBeVisible();
   });
 
   it('never scrolls horizontally', () => {
     expectNoHorizontalScroll();
   });
+
+  if (width === 375 || width === 1280) {
+    it('draws the nav bar, the "Get a frog" button and the middle heading in the main green (sage-800)', () => {
+      const SAGE_800 = 'rgb(59, 66, 46)';
+      expect(getComputedStyle(document.querySelector('.navbar')!).backgroundColor).toBe(SAGE_800);
+      expect(getComputedStyle(screen.getByRole('button', { name: 'Get a frog' })).backgroundColor).toBe(SAGE_800);
+      const heading = within(columns().middle).getByRole('heading', { level: 2 });
+      expect(getComputedStyle(heading).color).toBe(SAGE_800);
+    });
+  }
 
   if (layout === 'columns') {
     it('fills the viewport height with the columns, and the page does not scroll', () => {
@@ -208,8 +220,8 @@ describe.each([375, 1280])('with very large text (root font size doubled) at %i 
   });
 
   it('keeps the frog spinner inside the left column, in order', () => {
-    const left = within(screen.getByRole('complementary', { name: 'Highlights' }));
-    const column = rect(screen.getByRole('complementary', { name: 'Highlights' }));
+    const left = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
+    const column = rect(screen.getByRole('complementary', { name: 'Frog Spinner' }));
     const reel = rect(document.querySelector('.frog-spinner-reel')!);
     const button = rect(left.getByRole('button', { name: 'Get a frog' }));
     const status = rect(left.getByRole('status'));
