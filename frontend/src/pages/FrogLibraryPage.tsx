@@ -23,7 +23,7 @@ export function FrogLibraryPage({ entries = FROG_ENTRIES }: Props) {
         <ul className="frog-library-page-grid" role="list" aria-labelledby={headingId}>
           {entries.map((entry) => (
             <li key={entry.id} className="frog-library-page-item">
-              <FrogCard entry={entry} full />
+              <FrogCard entry={entry} full heart />
             </li>
           ))}
         </ul>

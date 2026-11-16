@@ -28,7 +28,7 @@ const rect = (element: Element) => element.getBoundingClientRect();
 const cards = () => [...document.querySelectorAll<HTMLElement>('.frog-library-page-grid > li > article')];
 const panel = () => document.querySelector<HTMLElement>('.frog-library-page-panel')!;
 const navItems = () =>
-  [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-button')].map((item) => item.textContent);
+  [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-link')].map((item) => item.textContent);
 
 function expectNoHorizontalScroll() {
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
@@ -241,7 +241,7 @@ describe.each([
     expect(navItems()).toEqual(['Home', 'About']);
   });
 
-  it('keyboard: Enter on the link focuses the library; Tab leaves the page, Shift+Tab reaches the nav', async () => {
+  it('keyboard: Enter on the link focuses the library; Tab reaches the first heart, Shift+Tab the nav', async () => {
     await renderApp('/');
     screen.getByRole('link', { name: 'Frog Library' }).focus();
     await userEvent.keyboard('{Enter}');
@@ -251,14 +251,14 @@ describe.each([
     expect(main).toHaveFocus();
     expect(window.scrollY).toBe(0);
 
-    // Nothing in the library is focusable, so Tab moves on past the page, never back to the nav.
+    // The hearts are the library's only controls: Tab goes forward to the first card's, never back to the nav.
     await userEvent.keyboard('{Tab}');
     expect(nav.contains(document.activeElement)).toBe(false);
-    expect(main.contains(document.activeElement) && document.activeElement !== main).toBe(false);
+    expect(screen.getByRole('button', { name: 'Favorite Lorem ipsum' })).toHaveFocus();
 
     main.focus();
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
-    expect(screen.getByRole('button', { name: 'About' })).toHaveFocus();
+    expect(screen.getByRole('link', { name: 'About' })).toHaveFocus();
   });
 
   it('keyboard into the home page: Tab goes on to the spinner, not back to the nav', async () => {

@@ -2,4 +2,5 @@
 export const PATHS = {
   home: '/',
   frogLibrary: '/frog-library',
+  about: '/about',
 } as const;

@@ -1,8 +1,10 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { routes } from '../routes';
+import { MODE_STORAGE_KEY } from '../components/FavoritesPanel';
+import { seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import en from './en.json';
 import type { Dictionary } from './translate';
@@ -50,6 +52,7 @@ afterEach(() => {
 it.each([
   ['/', '⟦health.ok⟧'],
   ['/frog-library', '⟦frogLibrary.heading⟧'],
+  ['/about', '⟦about.heading⟧'],
   ['/does-not-exist', '⟦notFound.heading⟧'],
 ])('every visible string on %s comes from en.json', async (url, settledText) => {
   renderMarkedUp(url);
@@ -73,4 +76,38 @@ it('every string on / comes from en.json after a spin, with the landed card open
   expect(container.querySelector('.frog-card-blurb')).toBeVisible();
   expect(container.querySelector('.frog-spinner-result')).toHaveTextContent('⟦frogSpinner.result⟧');
   expect(findHardcodedText()).toEqual([]);
+});
+
+describe('with favorites', () => {
+  // Every heart's name, the switch, the headings and the counts come from en.json too.
+  it.each([
+    ['Your Favorites', false, '⟦favorites.mine.heading⟧'],
+    ['All Time Favorites (counts shown and spoken)', true, '⟦favorites.allTime.heading⟧'],
+  ])('every string on / comes from en.json in %s', async (_mode, allTime, heading) => {
+    seedFavorites({ mine: ['entry02', 'entry07'], counts: { entry02: 1, entry07: 12, entry03: 4 } });
+    if (allTime) localStorage.setItem(MODE_STORAGE_KEY, 'allTime');
+    const { container } = renderMarkedUp('/');
+    await screen.findByText('⟦health.ok⟧');
+    await screen.findByRole('heading', { name: heading });
+    await waitFor(() => expect(container.querySelectorAll('.favorites-panel-item')).toHaveLength(allTime ? 3 : 2));
+    if (allTime) {
+      expect(container.querySelector('.frog-card-likes [aria-hidden="true"]')!.textContent).toBe('⟦favorites.countShort⟧');
+      expect([...container.querySelectorAll('.frog-card-likes .visually-hidden')].map((e) => e.textContent)).toEqual([
+        '⟦favorites.likes.other⟧',
+        '⟦favorites.likes.other⟧',
+        '⟦favorites.likes.one⟧',
+      ]);
+    }
+    for (const heart of container.querySelectorAll('.favorite-button')) {
+      expect(heart).toHaveAttribute('aria-label', '⟦favorites.toggle⟧');
+    }
+    expect(findHardcodedText()).toEqual([]);
+  });
+
+  it('every string on /frog-library comes from en.json, with a heart pressed', async () => {
+    seedFavorites({ mine: ['entry05'] });
+    const { container } = renderMarkedUp('/frog-library');
+    await waitFor(() => expect(container.querySelector('.favorite-button[aria-pressed="true"]')).not.toBeNull());
+    expect(findHardcodedText()).toEqual([]);
+  });
 });

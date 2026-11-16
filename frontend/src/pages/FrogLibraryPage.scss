@@ -19,22 +19,13 @@
         max-width: t.$page-max-width;
     }
 
+    // The shared panel shape, as the home page's columns use; the cards align their own text.
     .frog-library-page-panel {
-        padding: t.$space-5;
-        border: t.$border-width solid var(--border-color-frog-library-page);
-        border-radius: t.$radius-lg;
+        @include t.panel;
         background-color: var(--surface-color-frog-library-page);
-        overflow-wrap: anywhere; // a long word wraps instead of widening the panel, as in the home columns
-        text-align: center; // heading and intro centred, like the home columns; cards align their own text
+        border-color: var(--border-color-frog-library-page);
 
-        // Same edge-margin rule as .column-layout-column, so the two panels have the same insets.
-        > :first-child { margin-top: 0; }
-        > :last-child { margin-bottom: 0; }
-
-        h2 {
-            font-size: t.$font-size-lg;
-            color: var(--text-color-frog-library-page-heading);
-        }
+        h2 { color: var(--text-color-frog-library-page-heading); }
     }
 
     // One column, in en.json order, when stacked; three when wide.

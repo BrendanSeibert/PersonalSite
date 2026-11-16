@@ -14,13 +14,13 @@ async function renderApp(url = '/') {
   else await screen.findByRole('heading', { level: 2 });
 }
 
-// The nav's items: the links and the About button alike.
-const navItems = () => [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-button')];
+// The nav's links.
+const navItems = () => [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-link')];
 
 function columns() {
   const middle = screen.getByRole('main');
   const left = screen.getByRole('complementary', { name: 'Highlights' });
-  const right = screen.getByRole('complementary', { name: 'Get in touch' });
+  const right = screen.getByRole('complementary', { name: 'Favorites' });
   return { middle, left, right };
 }
 
@@ -112,8 +112,9 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     const { middle, left, right } = columns();
     for (const column of [middle, left, right]) {
       const box = rect(column);
-      // The reel strip is meant to run past its clipping window; the window itself is still checked.
-      for (const child of column.querySelectorAll('*:not(.frog-spinner-window *)')) {
+      // The reel strip is meant to run past its clipping window, and the favorites list scrolls;
+      // the window and the list themselves are still checked.
+      for (const child of column.querySelectorAll('*:not(.frog-spinner-window *):not(.favorites-panel-list *)')) {
         const inner = rect(child);
         expect(inner.left).toBeGreaterThanOrEqual(box.left - 1);
         expect(inner.right).toBeLessThanOrEqual(box.right + 1);
@@ -127,8 +128,8 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     expect(within(left).getByRole('heading', { name: 'Highlights' })).toBeVisible();
     expect(within(left).getByRole('button', { name: 'Get a frog' })).toBeVisible();
     expect(within(left).getByRole('status')).toHaveTextContent('Press the button to get a frog.');
-    expect(within(right).getByRole('heading', { name: 'Get in touch' })).toBeVisible();
-    expect(within(right).getByText('Coming soon.')).toBeVisible();
+    expect(within(right).getByRole('heading', { name: 'Your Favorites' })).toBeVisible();
+    expect(within(right).getByRole('switch', { name: 'All time' })).toBeVisible();
   });
 
   it('never scrolls horizontally', () => {
@@ -160,26 +161,34 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
 });
 
 // The nav has different items on each page, so its layout is checked on both.
-describe.each(VIEWPORTS)('the nav bar on /frog-library at %i × %i (%s)', (width, height) => {
-  beforeEach(async () => {
-    await page.viewport(width, height);
-    await renderApp('/frog-library');
-  });
+// The nav has different links on each page, so its layout is checked on the other pages too.
+describe.each(['/frog-library', '/about'])('the nav bar on %s', (url) => {
+  describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
+    beforeEach(async () => {
+      await page.viewport(width, height);
+      await renderApp(url);
+    });
 
-  it('pins the title to the left and the nav items to the right, on one row', () => {
-    expectNavbarPinnedOnOneRow();
-  });
+    it('pins the title to the left and the nav items to the right, on one row', () => {
+      expectNavbarPinnedOnOneRow();
+    });
 
-  it('draws the links exactly like the About button, without an underline', () => {
-    const [link, about] = navItems();
-    expect(link.tagName).toBe('A');
-    expect(about.tagName).toBe('BUTTON');
-    const [a, b] = [getComputedStyle(link), getComputedStyle(about)];
-    expect(a.textDecorationLine).toBe('none');
-    for (const property of ['color', 'backgroundColor', 'borderTopColor', 'fontSize', 'fontWeight', 'paddingLeft'] as const) {
-      expect(a[property], property).toBe(b[property]);
-    }
-    expect(rect(link).height).toBeCloseTo(rect(about).height, 0);
+    it('draws every nav item the same way, as an outlined 44px box without an underline', () => {
+      const items = navItems();
+      const styles = items.map((item) => getComputedStyle(item));
+      for (const [i, item] of items.entries()) {
+        expect(item.tagName).toBe('A');
+        expect(styles[i].textDecorationLine).toBe('none');
+        // Fixed values, so "the same as each other" can't pass with every item equally wrong.
+        expect(parseFloat(styles[i].minHeight)).toBeCloseTo(TAP_TARGET_PX, 0);
+        expect(styles[i].borderTopWidth).toBe('1px');
+        expect(styles[i].borderTopStyle).toBe('solid');
+      }
+      for (const property of ['color', 'backgroundColor', 'borderTopColor', 'fontSize', 'fontWeight', 'paddingLeft'] as const) {
+        expect(styles[1][property], property).toBe(styles[0][property]);
+      }
+      expect(rect(items[1]).height).toBeCloseTo(rect(items[0]).height, 0);
+    });
   });
 });
 

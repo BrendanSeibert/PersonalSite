@@ -5,7 +5,28 @@ const URL = 'postgres://u:p@localhost:5432/db';
 
 describe('loadConfig', () => {
   it('parses a valid environment', () => {
-    expect(loadConfig({ DATABASE_URL: URL, PORT: '4000' })).toEqual({ DATABASE_URL: URL, PORT: 4000 });
+    expect(loadConfig({ DATABASE_URL: URL, PORT: '4000' })).toEqual({
+      DATABASE_URL: URL,
+      PORT: 4000,
+      COOKIE_SECURE: false,
+    });
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('reads COOKIE_SECURE=%s as %s', (value, expected) => {
+    expect(loadConfig({ DATABASE_URL: URL, COOKIE_SECURE: value }).COOKIE_SECURE).toBe(expected);
+  });
+
+  it('defaults COOKIE_SECURE to false for http://localhost', () => {
+    expect(loadConfig({ DATABASE_URL: URL }).COOKIE_SECURE).toBe(false);
+  });
+
+  it.each(['yes', '1', 'TRUE', ''])('throws for COOKIE_SECURE=%j instead of guessing', (value) => {
+    expect(() => loadConfig({ DATABASE_URL: URL, COOKIE_SECURE: value })).toThrow(
+      /Invalid environment variables: COOKIE_SECURE/,
+    );
   });
 
   it('throws when DATABASE_URL is missing', () => {

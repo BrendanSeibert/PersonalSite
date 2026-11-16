@@ -5,12 +5,12 @@
     --surface-color-navbar: #{p.$sienna-750};
     --shadow-color-navbar: #{p.$shadow};
     --text-color-navbar-title: #{p.$sand-50};
-    --text-color-navbar-button: #{p.$sand-100};
-    --surface-color-navbar-button: #{p.$transparent};
-    --border-color-navbar-button: #{p.$sand-300};
-    --text-color-navbar-button-hover: #{p.$sienna-800};
-    --surface-color-navbar-button-hover: #{p.$sand-200};
-    --border-color-navbar-button-hover: #{p.$sand-200};
+    --text-color-navbar-link: #{p.$sand-100};
+    --surface-color-navbar-link: #{p.$transparent};
+    --border-color-navbar-link: #{p.$sand-300};
+    --text-color-navbar-link-hover: #{p.$sienna-800};
+    --surface-color-navbar-link-hover: #{p.$sand-200};
+    --border-color-navbar-link-hover: #{p.$sand-200};
     --border-color-navbar-focus: #{p.$sand-300};
 }
 
@@ -46,18 +46,18 @@
         list-style: none;
     }
 
-    .navbar-button {
+    .navbar-link {
         @include t.button-shape;
-        background-color: var(--surface-color-navbar-button);
-        border-color: var(--border-color-navbar-button);
-        color: var(--text-color-navbar-button);
-        text-decoration: none; // Home and Frog Library are links: no underline, so they match About
+        background-color: var(--surface-color-navbar-link);
+        border-color: var(--border-color-navbar-link);
+        color: var(--text-color-navbar-link);
+        text-decoration: none; // nav items are links: no underline
 
         &:hover,
         &:focus-visible {
-            background-color: var(--surface-color-navbar-button-hover);
-            border-color: var(--border-color-navbar-button-hover);
-            color: var(--text-color-navbar-button-hover);
+            background-color: var(--surface-color-navbar-link-hover);
+            border-color: var(--border-color-navbar-link-hover);
+            color: var(--text-color-navbar-link-hover);
         }
 
         // The page-wide blue ring would be hard to see on dark green. This selector is more

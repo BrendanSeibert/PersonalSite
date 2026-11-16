@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from './routes';
@@ -7,6 +8,7 @@ import { renderWithProviders } from './test/renderWithProviders';
 function renderAt(url: string) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
+  return router;
 }
 
 describe('routes', () => {
@@ -24,9 +26,33 @@ describe('routes', () => {
     expect(screen.getByRole('list', { name: 'Frog Library' })).toBeInTheDocument();
   });
 
+  it('renders the nav bar and the About page at /about', () => {
+    renderAt('/about');
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'About' })).toBeInTheDocument();
+  });
+
   it('renders the nav bar and a not-found page for an unknown URL', () => {
     renderAt('/does-not-exist');
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+  });
+
+  it('shows a frog liked in the library in Your Favorites on the home page, pressed in both places', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/frog-library');
+    const heart = screen.getByRole('button', { name: 'Favorite Consectetur' });
+    await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
+    await user.click(heart);
+    expect(heart).toHaveAttribute('aria-pressed', 'true');
+
+    await act(() => router.navigate('/'));
+    const panel = within(screen.getByRole('complementary', { name: 'Favorites' }));
+    const list = await panel.findByRole('list', { name: 'Your Favorites' });
+    expect(within(list).getByRole('button', { name: 'Consectetur' })).toBeInTheDocument();
+    expect(within(list).getByRole('button', { name: 'Favorite Consectetur' })).toHaveAttribute('aria-pressed', 'true');
+
+    await act(() => router.navigate('/frog-library'));
+    expect(screen.getByRole('button', { name: 'Favorite Consectetur' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

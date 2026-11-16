@@ -1,8 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FROG_ENTRIES, type FrogEntry } from '../components/frogEntries';
 import en from '../i18n/en.json';
 import { translate } from '../i18n/translate';
+import { favoriteRequests } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { FrogLibraryPage } from './FrogLibraryPage';
 
@@ -39,11 +41,27 @@ describe('FrogLibraryPage', () => {
     });
   });
 
-  it('has nothing to click', () => {
+  it('has nothing to click but one heart per card, named after its frog', () => {
     renderWithProviders(<FrogLibraryPage />);
     const list = screen.getByRole('list', { name: 'Frog Library' });
-    expect(within(list).queryAllByRole('button')).toHaveLength(0);
+    const hearts = within(list).getAllByRole('button');
+    expect(hearts).toHaveLength(FROG_ENTRIES.length);
+    hearts.forEach((heart, i) => {
+      expect(heart).toHaveAccessibleName(`Favorite ${translate(en, FROG_ENTRIES[i].titleKey)}`);
+      expect(heart).toHaveAttribute('aria-pressed', 'false');
+      expect(heart.closest('.frog-card-corner')).not.toBeNull();
+    });
     expect(within(list).queryAllByRole('link')).toHaveLength(0);
+  });
+
+  it('favorites a frog when its heart is pressed', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<FrogLibraryPage />);
+    const heart = screen.getByRole('button', { name: 'Favorite Consectetur' });
+    await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
+    await user.click(heart);
+    expect(heart).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(favoriteRequests).toEqual(['PUT entry03']));
   });
 
   it('renders the entries it is given', () => {

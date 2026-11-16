@@ -24,6 +24,7 @@ $border-width: 1px; // the one px value: a hairline should stay one device pixel
 $focus-width: 0.125rem;
 $tap-target: 2.75rem; // 44px at default text size: the minimum comfortable touch target
 $frog-card-height: 5rem; // one collapsed card: a 3.5rem image slot plus 0.75rem padding above and below
+$favorite-size: 2rem; // the heart button for a mouse: above WCAG 2.2's 24px minimum
 
 $page-max-width: 80rem; // three-column mode
 $stacked-max-width: 48rem; // stacked mode: keeps lines readable on a tablet or half-width window
@@ -61,6 +62,22 @@ $transition: 0.15s ease;
     white-space: nowrap;
     cursor: pointer;
     @include transitions;
+}
+
+// A rounded, bordered content panel: the home page's columns, the Frog Library and About panels.
+// Shape only; the caller sets background-color, border-color and the heading colour.
+@mixin panel {
+    min-width: 0; // a grid item may shrink below its content's width, so long words wrap
+    padding: $space-5;
+    border: $border-width solid;
+    border-radius: $radius-lg;
+    overflow-wrap: anywhere; // a long URL or word wraps instead of widening the panel
+    text-align: center;
+
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+
+    h2 { font-size: $font-size-lg; }
 }
 
 // The keyboard focus outline; the caller supplies the colour.

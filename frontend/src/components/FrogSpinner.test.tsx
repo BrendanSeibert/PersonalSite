@@ -1,8 +1,9 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import en from '../i18n/en.json';
 import { translate } from '../i18n/translate';
+import { favoriteRequests, seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
 import { REPEATS, spinOffset } from './frogReel';
@@ -33,6 +34,7 @@ const offset = (strip: HTMLElement) => strip.style.getPropertyValue('--frog-spin
 const cardButton = (name = 'Dolor sit amet') => screen.getByRole('button', { name });
 const pick = () => document.querySelector('.frog-spinner-pick') as HTMLElement;
 const isOpen = (name = 'Dolor sit amet') => cardButton(name).getAttribute('aria-expanded') === 'true';
+const heart = (name = 'Dolor sit amet') => screen.getByRole('button', { name: `Favorite ${name}` });
 
 async function spinAndLand(user: ReturnType<typeof userEvent.setup>, strip: HTMLElement) {
   await user.click(button());
@@ -215,6 +217,9 @@ describe('FrogSpinner', () => {
       act(() => cardButton().focus());
       await user.keyboard('{Enter}');
       expect(isOpen()).toBe(true);
+      await user.tab(); // to the card's own heart: still inside the card
+      expect(heart()).toHaveFocus();
+      expect(isOpen()).toBe(true);
       await user.tab();
       expect(button()).toHaveFocus();
       expect(isOpen()).toBe(false);
@@ -232,6 +237,8 @@ describe('FrogSpinner', () => {
       const { strip } = renderSpinner();
       await spinAndLand(user, strip);
       await user.click(cardButton());
+      expect(isOpen()).toBe(true);
+      await user.tab(); // the heart, inside the card
       expect(isOpen()).toBe(true);
       await user.tab();
       expect(isOpen()).toBe(false);
@@ -263,6 +270,8 @@ describe('FrogSpinner', () => {
     fireEvent.transitionEnd(strip);
     expect(button()).toHaveFocus();
 
+    await user.tab({ shift: true }); // the landed card's heart comes after its face
+    expect(heart()).toHaveFocus();
     await user.tab({ shift: true });
     expect(cardButton()).toHaveFocus();
     await user.keyboard('{Enter}');
@@ -410,5 +419,74 @@ describe('FrogSpinner', () => {
   it('has the convention classes', () => {
     const { root } = renderSpinner();
     expect(root).toHaveClass('d-frog-spinner', 'frog-spinner');
+  });
+});
+
+describe('FrogSpinner favorites', () => {
+  const heartFor = (name: string) => screen.getByRole('button', { name: `Favorite ${name}` });
+  const ready = (name: string) => waitFor(() => expect(heartFor(name)).toHaveAttribute('aria-disabled', 'false'));
+
+  it('puts a heart on the landed card, collapsed and open, but none on the reel', async () => {
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    expect(strip.querySelector('.favorite-button')).toBeNull();
+    await spinAndLand(user, strip);
+    expect(strip.querySelector('.favorite-button')).toBeNull();
+
+    const card = pick().querySelector('.frog-card')!;
+    expect(card.querySelector('.frog-card-corner .favorite-button')).toBe(heartFor('Dolor sit amet'));
+    await user.click(cardButton());
+    expect(isOpen()).toBe(true);
+    expect(heartFor('Dolor sit amet')).toBeInTheDocument();
+  });
+
+  it('never favorites by landing, opening, closing or spinning again', async () => {
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    await spinAndLand(user, strip);
+    await ready('Dolor sit amet');
+    expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'false');
+    await user.click(cardButton());
+    await user.click(cardButton());
+    await spinAndLand(user, strip);
+    await ready('Lorem ipsum');
+    expect(heartFor('Lorem ipsum')).toHaveAttribute('aria-pressed', 'false');
+    expect(favoriteRequests).toEqual([]);
+  });
+
+  it('shows an earlier favorite as pressed when it lands, still sending nothing', async () => {
+    seedFavorites({ mine: ['entry02'] });
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    await spinAndLand(user, strip);
+    await waitFor(() => expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'true'));
+    expect(favoriteRequests).toEqual([]);
+  });
+
+  it('favorites only when the heart is pressed, exactly once, and the card stays as it was', async () => {
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    await spinAndLand(user, strip);
+    await ready('Dolor sit amet');
+    await user.click(cardButton());
+    expect(isOpen()).toBe(true);
+
+    await user.click(heartFor('Dolor sit amet'));
+    expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'true');
+    expect(isOpen()).toBe(true); // pressing the heart neither opens nor closes the card
+    await waitFor(() => expect(favoriteRequests).toEqual(['PUT entry02']));
+  });
+
+  it('keeps the card closed when the heart of a closed card is pressed, by keyboard too', async () => {
+    const user = userEvent.setup();
+    const { strip } = renderSpinner();
+    await spinAndLand(user, strip);
+    await ready('Dolor sit amet');
+    act(() => heartFor('Dolor sit amet').focus());
+    await user.keyboard('{Enter}');
+    expect(isOpen()).toBe(false);
+    await user.keyboard(' ');
+    expect(isOpen()).toBe(false);
+    await waitFor(() => expect(favoriteRequests).toEqual(['PUT entry02', 'DELETE entry02']));
   });
 });

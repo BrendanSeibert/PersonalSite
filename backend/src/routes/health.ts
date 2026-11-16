@@ -1,7 +1,5 @@
 import { Router } from 'express';
-
-// Anything with a query() function will do: the real pg.Pool, or a fake in tests.
-export type Db = { query: (sql: string) => Promise<unknown> };
+import type { Db } from '../db.js';
 
 export function healthRouter(db: Db): Router {
   const router = Router();

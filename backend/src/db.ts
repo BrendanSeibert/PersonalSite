@@ -1,5 +1,9 @@
 import pg from 'pg';
 
+// Anything with a query() function will do: the real pg.Pool, or a fake in tests.
+// Values always travel separately from the SQL ($1, $2, ...): never put them in the string.
+export type Db = { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
+
 export function createPool(databaseUrl: string): pg.Pool {
   const pool = new pg.Pool({
     connectionString: databaseUrl,

@@ -1,10 +1,21 @@
 import { loadConfig } from './config.js';
 import { createPool } from './db.js';
 import { createApp } from './app.js';
+import { migrate } from './migrate.js';
 
 const config = loadConfig(process.env);
 const pool = createPool(config.DATABASE_URL);
-const app = createApp({ db: pool });
+
+// The tables must exist before the first request. If a migration fails, stop: Docker shows the error.
+try {
+  await migrate(pool);
+} catch (err) {
+  console.error('Database migration failed, not starting:', err);
+  await pool.end().catch(() => {});
+  process.exit(1);
+}
+
+const app = createApp({ db: pool, cookieSecure: config.COOKIE_SECURE });
 
 const server = app.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`));
 

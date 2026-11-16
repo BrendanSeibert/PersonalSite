@@ -164,7 +164,7 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     const contentRight = column.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
     const box = reel.getBoundingClientRect();
     expect(Math.abs(box.left - contentLeft - (contentRight - box.right))).toBeLessThanOrEqual(1);
-    for (const element of [heading, status, screen.getByRole('main'), screen.getByRole('complementary', { name: 'Get in touch' })]) {
+    for (const element of [heading, status, screen.getByRole('main'), screen.getByRole('complementary', { name: 'Favorites' })]) {
       expect(getComputedStyle(element).textAlign).toBe('center');
     }
   });
@@ -244,6 +244,7 @@ describe.each([
     await userEvent.click(parts().button);
     expect(status).toHaveTextContent('Spinning...');
     expect(payline()).not.toBe('none');
+    expect(document.querySelector('.frog-spinner-strip .favorite-button')).toBeNull(); // no hearts on the reel
     const before = getComputedStyle(strip).transform;
     await wait(200);
     expect(getComputedStyle(strip).transform).not.toBe(before);
@@ -275,6 +276,13 @@ describe.each([
     expect(rect(titleEl).height).toBeLessThanOrEqual(2 * parseFloat(getComputedStyle(titleEl).lineHeight) + 1);
     expect(rect(titleEl).right).toBeLessThanOrEqual(rect(landedCard()).right);
     expectClose(rect(landedCard()), rect(paylineCard()));
+    // Its heart sits in the top-right corner, clear of the title, which keeps at least 3rem.
+    const heart = rect(landedCard().querySelector('.favorite-button')!);
+    const card = rect(landedCard());
+    expect(Math.abs(card.right - 1 - heart.right - 4)).toBeLessThanOrEqual(1); // 0.25rem in, inside the 1px border
+    expect(Math.abs(heart.top - card.top - 1 - 4)).toBeLessThanOrEqual(1);
+    expect(heart.left).toBeGreaterThanOrEqual(rect(titleEl).right - 1);
+    expect(rect(titleEl).width).toBeGreaterThanOrEqual(48);
   });
 
   describe('once landed', () => {
@@ -285,7 +293,7 @@ describe.each([
     it('opens over the page on click, without moving or resizing anything', async () => {
       const { left, window: win, button, status } = parts();
       const layout = document.querySelector('.column-layout')!;
-      const columns = [screen.getByRole('main'), left, screen.getByRole('complementary', { name: 'Get in touch' })];
+      const columns = [screen.getByRole('main'), left, screen.getByRole('complementary', { name: 'Favorites' })];
       const before = [rect(win), rect(button), rect(status), rect(layout), ...columns.map(rect)];
       const pageHeight = document.documentElement.scrollHeight;
       const cardBefore = rect(landedCard());
@@ -372,6 +380,9 @@ describe.each([
       landedFace().focus();
       await userEvent.keyboard('{Enter}');
       expect(isOpen()).toBe(true);
+      await userEvent.tab(); // the card's own heart: focus is still inside the card
+      expect(landedCard().querySelector('.favorite-button')).toHaveFocus();
+      expect(isOpen()).toBe(true);
       await userEvent.tab();
       expect(parts().button).toHaveFocus();
       expect(isOpen()).toBe(false);
@@ -388,6 +399,8 @@ describe.each([
       const ringed = (element: Element) => getComputedStyle(element).outlineStyle !== 'none';
       parts().button.focus();
       await userEvent.tab({ shift: true }); // keyboard navigation, so :focus-visible applies
+      expect(landedCard().querySelector('.favorite-button')).toHaveFocus(); // the heart comes after the face
+      await userEvent.tab({ shift: true });
       expect(landedFace()).toHaveFocus();
       expect(ringed(landedCard())).toBe(true);
       expect(ringed(landedFace())).toBe(false);

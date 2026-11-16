@@ -35,11 +35,14 @@ describe('HomePage', () => {
     expect(within(screen.getByRole('main')).queryByRole('button', { name: landed })).toBeNull();
   });
 
-  it('puts "Get in touch" and its body in the aside named "Get in touch"', async () => {
+  it('puts the favorites panel in the aside named "Favorites", where "Get in touch" was', async () => {
     renderWithProviders(<HomePage />);
-    const right = within(screen.getByRole('complementary', { name: 'Get in touch' }));
-    expect(right.getByRole('heading', { name: 'Get in touch' })).toBeInTheDocument();
-    expect(right.getByText('Coming soon.')).toBeInTheDocument();
+    const right = within(screen.getByRole('complementary', { name: 'Favorites' }));
+    expect(right.getByRole('heading', { level: 2, name: 'Your Favorites' })).toBeInTheDocument();
+    expect(right.getByRole('switch', { name: 'All time' })).toHaveAttribute('aria-checked', 'false');
+    expect(await right.findByText(/No favorites yet/)).toBeInTheDocument();
+    expect(screen.queryByText('Get in touch')).toBeNull();
+    expect(screen.queryByText('Coming soon.')).toBeNull();
     await screen.findByText('API ok, database up');
   });
 

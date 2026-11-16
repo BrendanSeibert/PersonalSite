@@ -1,12 +1,21 @@
 import { STATUS_CODES } from 'node:http';
 import express, { type ErrorRequestHandler, type Express } from 'express';
-import { healthRouter, type Db } from './routes/health.js';
+import type { Db } from './db.js';
+import { favoritesRouter } from './routes/favorites.js';
+import { healthRouter } from './routes/health.js';
 
-export function createApp({ db, extraRoutes }: { db: Db; extraRoutes?: (app: Express) => void }) {
+type AppOptions = {
+  db: Db;
+  cookieSecure?: boolean; // the visitor cookie's Secure flag (COOKIE_SECURE)
+  extraRoutes?: (app: Express) => void;
+};
+
+export function createApp({ db, cookieSecure = false, extraRoutes }: AppOptions) {
   const app = express();
   app.disable('x-powered-by'); // don't advertise "Express" in every response
   app.use(express.json()); // 1. parse JSON request bodies
   app.use('/api', healthRouter(db)); // 2. real routes
+  app.use('/api', favoritesRouter(db, { cookieSecure }));
   extraRoutes?.(app); // 3. test-only routes
 
   // 4. Not-found handler: only reached if no route above answered.

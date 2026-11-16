@@ -66,5 +66,5 @@ describe.each(componentSheets)('%s', (path, raw) => {
 
 it('finds the style sheets (guards against the glob silently matching nothing)', () => {
   expect(Object.keys(sources)).toContain('/src/styles/_palette.scss');
-  expect(componentSheets.length).toBeGreaterThanOrEqual(9);
+  expect(componentSheets.length).toBeGreaterThanOrEqual(12);
 });

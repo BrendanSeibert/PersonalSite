@@ -54,6 +54,17 @@ describe('AppLayout', () => {
   });
 });
 
+describe('AppLayout, the favorites status', () => {
+  it.each(['/', '/frog-library', '/about', '/does-not-exist'])('renders the save-failed status once on %s', async (url) => {
+    const router = createMemoryRouter(routes, { initialEntries: [url] });
+    const { container } = renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
+    if (url === '/') await screen.findByText('API ok, database up');
+    const statuses = container.querySelectorAll('.app-layout > p.visually-hidden[role="status"]');
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0].textContent).toBe('');
+  });
+});
+
 describe('AppLayout, on navigation', () => {
   it.each([false, true])('moves neither focus nor scroll on the first load (StrictMode: %s)', async (strict) => {
     const scrollTo = vi.spyOn(window, 'scrollTo');
@@ -80,6 +91,20 @@ describe('AppLayout, on navigation', () => {
     expect(home).toHaveClass('column-layout-middle');
     expect(home).toHaveFocus();
     expect(scrollTo).toHaveBeenCalledTimes(2);
+    scrollTo.mockRestore();
+  });
+
+  it('does the same for the About page, which renders one <main tabIndex={-1}>', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo');
+    const user = userEvent.setup();
+    await renderApp('/');
+
+    await user.click(screen.getByRole('link', { name: 'About' }));
+    const about = screen.getByRole('main');
+    expect(about).toHaveClass('about-page');
+    expect(about).toHaveFocus();
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
     scrollTo.mockRestore();
   });
 

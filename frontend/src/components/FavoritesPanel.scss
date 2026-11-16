@@ -1,0 +1,144 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+// The switch's track outline is sky-500 on the column's sky-100 (3.2:1, needs 3:1 for a control).
+.d-favorites-panel {
+    --text-color-favorites-panel-switch: #{p.$sky-900};
+    --border-color-favorites-panel-switch: #{p.$sky-500};
+    --surface-color-favorites-panel-switch: #{p.$sand-50};
+    --surface-color-favorites-panel-switch-knob: #{p.$sky-500};
+    --border-color-favorites-panel-switch-on: #{p.$sky-700};
+    --surface-color-favorites-panel-switch-on: #{p.$sky-700};
+    --surface-color-favorites-panel-switch-knob-on: #{p.$sand-50};
+}
+
+$track-width: 2.5rem;
+$track-height: 1.5rem;
+$knob-size: 1rem;
+$knob-inset: calc((#{$track-height} - #{$knob-size}) / 2 - #{t.$border-width}); // inside the border
+
+.favorites-panel {
+    display: flex;
+    flex-direction: column;
+    gap: t.$space-3;
+    // Stacked: never taller than the screen (the page gutter and the column's padding and border
+    // are outside the panel), so the whole panel fits on screen when you scroll to it, and a long
+    // list scrolls inside it. A short list makes a short panel.
+    max-height: calc(100dvh - 2 * #{t.$gutter} - 2 * #{t.$space-5} - 2 * #{t.$border-width});
+
+    // Desktop, where the page never scrolls: the panel fills its column, and the list takes what is left.
+    @include t.wide-layout {
+        height: 100%;
+        max-height: none;
+    }
+
+    // The heading and the switch share a row while the heading has at least 5rem (it wraps onto
+    // two lines in a narrow column). With less room, wrap-reverse puts the switch on a row of its
+    // own *above* the heading, so it always stays in the panel's top-right corner, and the heading
+    // still comes first for screen readers.
+    .favorites-panel-header {
+        display: flex;
+        flex-wrap: wrap-reverse;
+        align-items: center;
+        gap: t.$space-2 t.$space-3;
+        text-align: start;
+
+        h2 {
+            flex: 1 1 0;
+            min-width: 5rem;
+            margin: 0;
+        }
+    }
+
+    .favorites-panel-switch {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        gap: t.$space-2;
+        max-width: 100%; // never wider than the panel, even with very large text
+        min-height: t.$tap-target;
+        margin-inline-start: auto;
+        padding: 0 t.$space-1;
+        border: 0;
+        border-radius: t.$radius-md;
+        background: none;
+        font: inherit;
+        font-weight: 500;
+        color: var(--text-color-favorites-panel-switch);
+        text-align: end;
+        cursor: pointer;
+    }
+
+    // The label wraps ("All / time") only when the switch would otherwise overflow a narrow column.
+    .favorites-panel-switch-label {
+        min-width: 0;
+    }
+
+    .favorites-panel-switch-track {
+        position: relative;
+        flex: none;
+        width: $track-width;
+        height: $track-height;
+        border: t.$border-width solid var(--border-color-favorites-panel-switch);
+        border-radius: calc(#{$track-height} / 2);
+        background-color: var(--surface-color-favorites-panel-switch);
+        @include t.transitions;
+
+        // The knob: left when off, right when on.
+        &::after {
+            content: "";
+            position: absolute;
+            top: $knob-inset;
+            left: $knob-inset;
+            width: $knob-size;
+            height: $knob-size;
+            border-radius: 50%;
+            background-color: var(--surface-color-favorites-panel-switch-knob);
+            transition: transform t.$transition; // off under prefers-reduced-motion (AppLayout.scss)
+        }
+    }
+
+    .favorites-panel-switch[aria-checked="true"] .favorites-panel-switch-track {
+        border-color: var(--border-color-favorites-panel-switch-on);
+        background-color: var(--surface-color-favorites-panel-switch-on);
+
+        &::after {
+            background-color: var(--surface-color-favorites-panel-switch-knob-on);
+            transform: translateX(calc(#{$track-width} - #{$knob-size} - 2 * #{$knob-inset} - 2 * #{t.$border-width}));
+        }
+    }
+
+    .favorites-panel-message {
+        margin: 0;
+    }
+
+    .favorites-panel-list {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: t.$space-2;
+        min-height: 0; // lets the list shrink below its content, so it can scroll
+        margin: 0;
+        padding: t.$space-1; // focus rings aren't cut off at the scroll edge
+        overflow-y: auto;
+        overscroll-behavior: contain; // the end of the list doesn't start scrolling the page
+        list-style: none;
+        text-align: start;
+
+        // Desktop: the list contributes no height of its own, so twenty favorites can't stretch the
+        // row and make the page scroll. It fills what the column has left.
+        @include t.wide-layout {
+            contain: size;
+        }
+    }
+
+    .favorites-panel-item {
+        flex: none; // a card keeps its height; the list scrolls instead of squashing it
+    }
+
+    // Focusable by script and pointer only, so presses on a description keep focus in the card;
+    // the card's face shows the ring.
+    .favorites-panel-card:focus {
+        outline: none;
+    }
+}

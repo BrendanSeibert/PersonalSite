@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { Navbar } from './Navbar';
@@ -24,62 +24,66 @@ describe('Navbar', () => {
     expect(within(banner).getByRole('heading', { level: 1, name: 'Brendan Seibert' })).toBeInTheDocument();
   });
 
-  it('on the home page, shows a link to the Frog Library and the About button, but no Home link', () => {
+  it('on the home page, shows links to the Frog Library and About, but no Home link', () => {
     renderWithProviders(<Navbar />, { route: '/' });
-    expect(navItems()).toEqual(['link:Frog Library', 'button:About']);
+    expect(navItems()).toEqual(['link:Frog Library', 'link:About']);
     expect(screen.getByRole('link', { name: 'Frog Library' })).toHaveAttribute('href', '/frog-library');
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
   });
 
-  it.each(['/frog-library', '/frog-library/'])('on %s, shows a Home link and About, but no Frog Library link', (route) => {
+  it.each(['/frog-library', '/frog-library/'])('on %s, shows Home and About, but no Frog Library link', (route) => {
     renderWithProviders(<Navbar />, { route });
-    expect(navItems()).toEqual(['link:Home', 'button:About']);
+    expect(navItems()).toEqual(['link:Home', 'link:About']);
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
   });
 
-  it.each(['/does-not-exist', '/frog-library/extra', '/home'])('on %s (not a page), shows both links and About', (route) => {
+  it.each(['/about', '/about/'])('on %s, shows Home and the Frog Library, but no About link', (route) => {
     renderWithProviders(<Navbar />, { route });
-    expect(navItems()).toEqual(['link:Home', 'link:Frog Library', 'button:About']);
+    expect(navItems()).toEqual(['link:Home', 'link:Frog Library']);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
   });
 
-  it('makes Home and Frog Library links, and About a plain button', () => {
+  it.each(['/does-not-exist', '/frog-library/extra', '/about/extra', '/aboutme', '/home'])(
+    'on %s (not a page), shows all three links',
+    (route) => {
+      renderWithProviders(<Navbar />, { route });
+      expect(navItems()).toEqual(['link:Home', 'link:Frog Library', 'link:About']);
+    },
+  );
+
+  it('is links only: no buttons in the nav', () => {
     renderWithProviders(<Navbar />, { route: '/does-not-exist' });
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
-    expect(nav.getAllByRole('link').map((link) => link.textContent)).toEqual(['Home', 'Frog Library']);
-    expect(nav.getByRole('button', { name: 'About' })).toHaveAttribute('type', 'button');
-    for (const control of [...nav.getAllByRole('link'), nav.getByRole('button')]) {
-      expect(control).toHaveClass('navbar-button');
-    }
+    const links = nav.getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual(['Home', 'Frog Library', 'About']);
+    for (const link of links) expect(link).toHaveClass('navbar-link');
+    expect(nav.queryAllByRole('button')).toHaveLength(0);
   });
 
-  it('navigates between the pages, hiding the link to the page you are on', async () => {
+  it('navigates between all three pages, hiding the link to the page you are on', async () => {
     const user = userEvent.setup();
     const router = createMemoryRouter(routes, { initialEntries: ['/'] });
     renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
     await screen.findByText('API ok, database up');
+
+    await user.click(screen.getByRole('link', { name: 'About' }));
+    expect(router.state.location.pathname).toBe('/about');
+    expect(screen.getByRole('heading', { level: 2, name: 'About' })).toBeInTheDocument();
+    expect(navItems()).toEqual(['link:Home', 'link:Frog Library']);
 
     await user.click(screen.getByRole('link', { name: 'Frog Library' }));
     expect(router.state.location.pathname).toBe('/frog-library');
     expect(screen.getByRole('heading', { level: 2, name: 'Frog Library' })).toBeInTheDocument();
-    expect(navItems()).toEqual(['link:Home', 'button:About']);
+    expect(navItems()).toEqual(['link:Home', 'link:About']);
+
+    await user.click(screen.getByRole('link', { name: 'About' }));
+    expect(router.state.location.pathname).toBe('/about');
+    expect(navItems()).toEqual(['link:Home', 'link:Frog Library']);
 
     await user.click(screen.getByRole('link', { name: 'Home' }));
     expect(router.state.location.pathname).toBe('/');
     expect(screen.getByRole('heading', { name: 'Hello, world' })).toBeInTheDocument();
-    expect(navItems()).toEqual(['link:Frog Library', 'button:About']);
-  });
-
-  it('does nothing yet when About is clicked', async () => {
-    const consoleError = vi.spyOn(console, 'error');
-    const user = userEvent.setup();
-    const router = createMemoryRouter(routes, { initialEntries: ['/'] });
-    renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-    await screen.findByText('API ok, database up');
-
-    await user.click(screen.getByRole('button', { name: 'About' }));
-    expect(router.state.location.pathname).toBe('/');
-    expect(screen.getByRole('heading', { name: 'Hello, world' })).toBeInTheDocument();
-    expect(consoleError).not.toHaveBeenCalled();
-    consoleError.mockRestore();
+    expect(navItems()).toEqual(['link:Frog Library', 'link:About']);
   });
 
   it('has the colour and layout classes on its root', () => {

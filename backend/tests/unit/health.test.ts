@@ -1,9 +1,10 @@
 import express from 'express';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Db } from '../../src/db.js';
 import { healthRouter } from '../../src/routes/health.js';
 
-function appWith(db: { query: (sql: string) => Promise<unknown> }) {
+function appWith(db: Db) {
   const app = express();
   app.use('/api', healthRouter(db));
   return app;

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { useI18n } from '../context/I18nContext';
+import { FavoritesStatus } from './FavoritesStatus';
 import { Navbar } from './Navbar';
 import './AppLayout.scss';
 
@@ -34,6 +35,8 @@ export function AppLayout() {
     <div ref={layoutRef} className="d-app-layout app-layout">
       <Navbar />
       <Outlet />
+      {/* Once, for every page: announces a heart that couldn't be saved. */}
+      <FavoritesStatus />
     </div>
   );
 }

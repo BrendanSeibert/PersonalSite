@@ -17,10 +17,24 @@
     },
     "left": {
       "heading": "Highlights"
+    }
+  },
+  "favorites": {
+    "label": "Favorites",
+    "switch": "All time",
+    "toggle": "Favorite {title}",
+    "countShort": "{count}",
+    "likes": { "one": "{count} like", "other": "{count} likes" },
+    "loading": "Loading favorites...",
+    "unavailable": "Favorites are unavailable right now.",
+    "saveFailed": "Couldn't save your favorite. Please try again.",
+    "mine": {
+      "heading": "Your Favorites",
+      "empty": "No favorites yet. Tap the heart on any frog to add it here."
     },
-    "right": {
-      "heading": "Get in touch",
-      "body": "Coming soon."
+    "allTime": {
+      "heading": "All Time Favorites",
+      "empty": "No frogs have been liked yet."
     }
   },
   "frogSpinner": {
@@ -54,6 +68,11 @@
   "frogLibrary": {
     "heading": "Frog Library",
     "intro": "Every frog the spinner can give you, with its full description."
+  },
+  "about": {
+    "heading": "About",
+    "intro": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.",
+    "body": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
   },
   "health": {
     "checking": "Checking...",

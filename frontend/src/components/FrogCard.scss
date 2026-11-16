@@ -24,6 +24,7 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
 
 .frog-card {
     container-type: inline-size; // lets the image slot respond to the card's own width
+    position: relative; // the heart's corner is placed against the card
     height: 100%;
     overflow: hidden;
     border: t.$border-width solid;
@@ -109,6 +110,14 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
         }
     }
 
+    // A narrow collapsed card with a like count (All Time Favorites on the narrow desktop column):
+    // the count and heart take the room the picture would need, so the title keeps at least 3rem.
+    @container (width < 12rem) {
+        &[data-expanded="false"] .frog-card-face:has(~ .frog-card-corner .frog-card-likes) .frog-card-image {
+            display: none;
+        }
+    }
+
     .frog-card-title {
         display: -webkit-box;
         overflow: hidden;
@@ -162,6 +171,41 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
     // the same height. Its title is an <h3>: drop the heading's default margins.
     &.frog-card-full .frog-card-title {
         margin: 0;
+    }
+
+    // The heart (and, in All Time Favorites, its count) in the top-right corner, 0.25rem in from
+    // the edges: room for the focus ring (0.125rem + 0.125rem offset) inside the card, which clips
+    // its overflow.
+    .frog-card-corner {
+        position: absolute;
+        top: t.$space-1;
+        inset-inline-end: t.$space-1;
+        display: flex;
+        align-items: center;
+        gap: t.$space-1;
+    }
+
+    .frog-card-likes {
+        font-size: t.$font-size-sm;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    // The title (and, when open, the large image) stays clear of the corner. In the open layout
+    // the image is sized inside the face's content box, which excludes this padding.
+    --frog-card-corner-width: #{t.$favorite-size};
+
+    @media (pointer: coarse) {
+        --frog-card-corner-width: #{t.$tap-target};
+    }
+
+    &:has(> .frog-card-corner) .frog-card-face {
+        padding-inline-end: calc(var(--frog-card-corner-width) + 2 * #{t.$space-1});
+    }
+
+    // With a count as well, the corner is wider: room for three digits beside the heart.
+    &:has(> .frog-card-corner .frog-card-likes) .frog-card-face {
+        padding-inline-end: calc(var(--frog-card-corner-width) + 2.5rem);
     }
 }
 

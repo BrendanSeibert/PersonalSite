@@ -37,17 +37,7 @@
     }
 
     .column-layout-column {
-        min-width: 0;
-        padding: t.$space-5;
-        border: t.$border-width solid;
-        border-radius: t.$radius-lg;
-        overflow-wrap: anywhere; // a long URL or word wraps instead of widening the column
-        text-align: center; // every column's content is centred horizontally
-
-        > :first-child { margin-top: 0; }
-        > :last-child { margin-bottom: 0; }
-
-        h2 { font-size: t.$font-size-lg; }
+        @include t.panel; // the shared panel shape; each column sets its colours below
     }
 
     .column-layout-middle {

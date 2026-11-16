@@ -1,0 +1,54 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+.d-favorite-button {
+    --text-color-favorite-button: #{p.$sienna-750}; // outline and fill, on every card tone
+    --surface-color-favorite-button-hover: #{p.$sand-50};
+}
+
+.favorite-button {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: t.$favorite-size;
+    height: t.$favorite-size;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-color-favorite-button);
+    cursor: pointer;
+    @include t.transitions;
+
+    // A finger, not a mouse: the site's full tap target.
+    @media (pointer: coarse) {
+        width: t.$tap-target;
+        height: t.$tap-target;
+    }
+
+    &:hover {
+        background-color: var(--surface-color-favorite-button-hover);
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+    }
+
+    .favorite-button-heart {
+        width: 1.25rem;
+        height: 1.25rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        transition: transform t.$transition; // off under prefers-reduced-motion (AppLayout.scss)
+    }
+
+    &[aria-pressed="true"] .favorite-button-heart {
+        fill: currentColor; // the state is the shape's fill, not a colour change
+    }
+
+    &:active:not([aria-disabled="true"]) .favorite-button-heart {
+        transform: scale(0.85);
+    }
+}

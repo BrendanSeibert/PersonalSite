@@ -1,0 +1,38 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+// The same colour roles as the home page's middle column, so its README contrast pairings apply.
+.d-about-page {
+    --surface-color-about-page: #{p.$sand-150};
+    --border-color-about-page: #{p.$sand-300};
+    --text-color-about-page-heading: #{p.$sienna-750};
+}
+
+// The home page's grid with one column: sized to its content when stacked, reaching the bottom of
+// the screen when wide. Always the stacked width, so lines stay readable.
+.about-page {
+    display: grid;
+    flex: 1; // fill the height left under the nav bar, like the home page's layout
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    width: 100%;
+    max-width: t.$stacked-max-width;
+    margin-inline: auto;
+    padding: t.$gutter;
+
+    @include t.wide-layout {
+        align-content: stretch; // the one row grows to the bottom, like the home page's columns
+    }
+
+    .about-page-panel {
+        @include t.panel;
+        background-color: var(--surface-color-about-page);
+        border-color: var(--border-color-about-page);
+
+        h2 { color: var(--text-color-about-page-heading); }
+    }
+
+    .about-page-intro {
+        font-size: t.$font-size-lg; // the same lead size as the home page's intro
+    }
+}

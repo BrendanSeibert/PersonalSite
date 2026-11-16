@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import en from '../i18n/en.json';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { FrogCard } from './FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
@@ -113,6 +114,61 @@ describe('FrogCard', () => {
       // @ts-expect-error: `full` and `concealed` together are meaningless, so the props forbid it.
       const bad = <FrogCard entry={entry} full concealed />;
       expect(bad).toBeTruthy();
+    });
+  });
+
+  describe('heart and likes (the corner)', () => {
+    const expansion = { expanded: false, onActivate: () => {}, blurbId: 'blurb' };
+
+    it.each([
+      ['full', { full: true as const }],
+      ['static', {}],
+      ['expandable', { expansion }],
+    ])('puts the heart in the corner of a %s card, a sibling of the face, never inside it', (_kind, props) => {
+      const card = renderCard({ ...props, heart: true });
+      const heart = screen.getByRole('button', { name: 'Favorite Dolor sit amet' });
+      const face = card.querySelector('.frog-card-face')!;
+      expect(card.lastElementChild).toHaveClass('frog-card-corner');
+      expect(card.lastElementChild!.contains(heart)).toBe(true);
+      expect(face.contains(heart)).toBe(false);
+    });
+
+    it('has no corner without heart', () => {
+      const card = renderCard({ expansion });
+      expect(card.querySelector('.frog-card-corner')).toBeNull();
+      expect(screen.queryByRole('button', { name: /^Favorite/ })).toBeNull();
+    });
+
+    it.each([
+      [1, '1', '1 like'],
+      [12, '12', '12 likes'],
+      [0, '0', '0 likes'],
+    ])('shows likes=%i as "%s", spoken as "%s"', (likes, visible, spoken) => {
+      const card = renderCard({ expansion, heart: true, likes });
+      const count = card.querySelector('.frog-card-likes')!;
+      const [shown, hidden] = [...count.children];
+      expect(shown).toHaveTextContent(visible);
+      expect(shown).toHaveAttribute('aria-hidden', 'true');
+      expect(hidden).toHaveTextContent(spoken);
+      expect(hidden).toHaveClass('visually-hidden');
+      expect(count.nextElementSibling).toHaveClass('favorite-button'); // count first, then the heart
+    });
+
+    it('falls back to English plural rules when the page language is not a real locale', () => {
+      const dictionary = { ...en, app: { ...en.app, lang: 'not a locale!' } };
+      const { container } = renderWithProviders(<FrogCard entry={entry} expansion={expansion} heart likes={1} />, {
+        withRouter: false,
+        dictionary,
+      });
+      expect(container.querySelector('.frog-card-likes .visually-hidden')).toHaveTextContent('1 like');
+    });
+
+    it('never has a heart on a concealed reel card (checked by the compiler)', () => {
+      // @ts-expect-error: a concealed card has no title and spins, so it can't take a heart.
+      const bad = <FrogCard entry={entry} concealed heart />;
+      expect(bad).toBeTruthy();
+      const card = renderCard({ concealed: true });
+      expect(card.querySelector('.frog-card-corner')).toBeNull();
     });
   });
 });

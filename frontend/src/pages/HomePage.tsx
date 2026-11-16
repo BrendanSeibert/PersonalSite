@@ -1,4 +1,5 @@
 import { ColumnLayout } from '../components/ColumnLayout';
+import { FavoritesPanel } from '../components/FavoritesPanel';
 import { FrogSpinner } from '../components/FrogSpinner';
 import { HealthStatus } from '../components/HealthStatus';
 import { useI18n } from '../context/I18nContext';
@@ -22,14 +23,9 @@ export function HomePage() {
           <FrogSpinner />
         </>
       }
-      right={
-        <>
-          <h2>{t('home.right.heading')}</h2>
-          <p>{t('home.right.body')}</p>
-        </>
-      }
+      right={<FavoritesPanel />}
       leftLabel={t('home.left.heading')}
-      rightLabel={t('home.right.heading')}
+      rightLabel={t('favorites.label')}
     />
   );
 }
