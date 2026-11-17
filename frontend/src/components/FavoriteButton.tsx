@@ -18,7 +18,9 @@ export function FavoriteButton({ entry }: { entry: FrogEntry }) {
       onClick={toggle}
     >
       <svg className="favorite-button-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 20.5s-7.5-4.6-9.3-9.4C1.4 7.6 3.6 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.6 0 5.8 3.6 4.5 7.1-1.8 4.8-9.3 9.4-9.3 9.4z" />
+        {/* Mirror-symmetric about x = 12. Both curves at the bottom point have real control points,
+            so they meet in a clean tip (a degenerate one there drew a "foot" under the heart). */}
+        <path d="M12 20.5C7.5 17.5 3 13.8 3 9.2 3 6.3 5.2 4 8 4c1.7 0 3.1.9 4 2.3C12.9 4.9 14.3 4 16 4c2.8 0 5 2.3 5 5.2 0 4.6-4.5 8.3-9 11.3Z" />
       </svg>
     </button>
   );

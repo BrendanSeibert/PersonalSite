@@ -16,10 +16,10 @@ function renderCards() {
     { withRouter: false },
   );
 }
-const face = (name = 'Lorem ipsum') => screen.getByRole('button', { name });
-const isOpen = (name = 'Lorem ipsum') => face(name).getAttribute('aria-expanded') === 'true';
+const face = (name = 'Eastern Cricket Frog') => screen.getByRole('button', { name });
+const isOpen = (name = 'Eastern Cricket Frog') => face(name).getAttribute('aria-expanded') === 'true';
 const outside = () => screen.getByRole('button', { name: 'Outside' });
-const wrapper = (name = 'Lorem ipsum') => face(name).closest('.frog-card')!.parentElement!;
+const wrapper = (name = 'Eastern Cricket Frog') => face(name).closest('.frog-card')!.parentElement!;
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -78,10 +78,10 @@ describe('useCardExpansion', () => {
   it('closes this card when another expandable card is clicked, so one is open at a time', async () => {
     const user = userEvent.setup();
     renderCards();
-    await user.click(face('Lorem ipsum'));
-    await user.click(face('Dolor sit amet'));
-    expect(isOpen('Lorem ipsum')).toBe(false);
-    expect(isOpen('Dolor sit amet')).toBe(true);
+    await user.click(face('Eastern Cricket Frog'));
+    await user.click(face('Eastern American Toad'));
+    expect(isOpen('Eastern Cricket Frog')).toBe(false);
+    expect(isOpen('Eastern American Toad')).toBe(true);
   });
 
   it('closes when focus leaves by keyboard, but not when it moves within, or the window loses focus', async () => {

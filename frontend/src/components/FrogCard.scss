@@ -110,9 +110,11 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
         }
     }
 
-    // A narrow collapsed card with a like count (All Time Favorites on the narrow desktop column):
-    // the count and heart take the room the picture would need, so the title keeps at least 3rem.
-    @container (width < 12rem) {
+    // A collapsed card with a like count (All Time Favorites): the count and heart take the room the
+    // picture would need. With the picture, padding, gap and corner take up to 10.25rem (a 44px
+    // touch heart), so below 16.5rem it is dropped and the title keeps about 6rem: room for a
+    // word like "Northern" on one line instead of a mid-word break.
+    @container (width < 16.5rem) {
         &[data-expanded="false"] .frog-card-face:has(~ .frog-card-corner .frog-card-likes) .frog-card-image {
             display: none;
         }
@@ -124,7 +126,10 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2; // at most two lines on the reel, ending in "…"
         font-weight: 600;
-        line-height: 1.25;
+        line-height: 1.4; // room for descenders ("g", "p", "y"): the clamp's overflow: hidden clips at the last line box
+        // Long words break at a syllable with a hyphen ("North-ern", from the page's lang="en");
+        // `anywhere` is only the last resort, for a word with no hyphenation point (or a URL).
+        hyphens: auto;
         overflow-wrap: anywhere;
     }
 

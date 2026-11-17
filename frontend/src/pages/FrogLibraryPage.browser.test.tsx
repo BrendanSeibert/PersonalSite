@@ -258,7 +258,7 @@ describe.each([
     // The hearts are the library's only controls: Tab goes forward to the first card's, never back to the nav.
     await userEvent.keyboard('{Tab}');
     expect(nav.contains(document.activeElement)).toBe(false);
-    expect(screen.getByRole('button', { name: 'Favorite Lorem ipsum' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' })).toHaveFocus();
 
     main.focus();
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}');

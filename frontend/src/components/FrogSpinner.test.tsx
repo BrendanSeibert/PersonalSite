@@ -11,7 +11,7 @@ import { FrogSpinner } from './FrogSpinner';
 
 const titles = FROG_ENTRIES.map((entry) => translate(en, entry.titleKey));
 const PROMPT = 'Press the button to get a frog.';
-const DOLOR_BLURB = /^Sed cursus ante dapibus diam/;
+const TOAD_BLURB = /^Anaxyrus americanus\./;
 
 type Options = Parameters<typeof FrogSpinner>[0];
 
@@ -31,10 +31,10 @@ function renderSpinner(props: Options = { random: () => 0 }) {
 const button = () => screen.getByRole('button', { name: 'Get a frog' });
 const status = () => screen.getByRole('status');
 const offset = (strip: HTMLElement) => strip.style.getPropertyValue('--frog-spinner-offset');
-const cardButton = (name = 'Dolor sit amet') => screen.getByRole('button', { name });
+const cardButton = (name = 'Eastern American Toad') => screen.getByRole('button', { name });
 const pick = () => document.querySelector('.frog-spinner-pick') as HTMLElement;
-const isOpen = (name = 'Dolor sit amet') => cardButton(name).getAttribute('aria-expanded') === 'true';
-const heart = (name = 'Dolor sit amet') => screen.getByRole('button', { name: `Favorite ${name}` });
+const isOpen = (name = 'Eastern American Toad') => cardButton(name).getAttribute('aria-expanded') === 'true';
+const heart = (name = 'Eastern American Toad') => screen.getByRole('button', { name: `Favorite ${name}` });
 
 async function spinAndLand(user: ReturnType<typeof userEvent.setup>, strip: HTMLElement) {
   await user.click(button());
@@ -53,14 +53,14 @@ describe('FrogSpinner', () => {
     expect(status()).toHaveTextContent(PROMPT);
     expect(container.querySelector('.frog-spinner-window')).toHaveAttribute('aria-hidden', 'true');
     const rows = strip.querySelectorAll('.frog-spinner-row');
-    expect(rows).toHaveLength(20 * REPEATS);
+    expect(rows).toHaveLength(FROG_ENTRIES.length * REPEATS);
     // Concealed: the reel cycles through the entries in en.json order, but shows no text.
     rows.forEach((row, index) =>
-      expect(row.querySelector('.frog-card')).toHaveAttribute('data-entry-id', FROG_ENTRIES[index % 20].id),
+      expect(row.querySelector('.frog-card')).toHaveAttribute('data-entry-id', FROG_ENTRIES[index % FROG_ENTRIES.length].id),
     );
     expect(strip.textContent).toBe('');
-    expect(offset(strip)).toBe('20');
-    expect(screen.queryByRole('button', { name: 'Lorem ipsum' })).toBeNull();
+    expect(offset(strip)).toBe('19');
+    expect(screen.queryByRole('button', { name: 'Eastern Cricket Frog' })).toBeNull();
   });
 
   it('starts a spin on click', async () => {
@@ -70,9 +70,9 @@ describe('FrogSpinner', () => {
     expect(status()).toHaveTextContent('Spinning...');
     expect(button()).toHaveAttribute('aria-disabled', 'true');
     expect(strip).toHaveClass('frog-spinner-strip-spinning');
-    expect(offset(strip)).toBe(String(spinOffset(1, 20)));
-    expect(offset(strip)).toBe('61');
-    expect(screen.queryByRole('button', { name: 'Dolor sit amet' })).toBeNull();
+    expect(offset(strip)).toBe(String(spinOffset(1, FROG_ENTRIES.length)));
+    expect(offset(strip)).toBe('58'); // three full turns of 19 entries, plus one
+    expect(screen.queryByRole('button', { name: 'Eastern American Toad' })).toBeNull();
   });
 
   it('ignores clicks during a spin', async () => {
@@ -81,7 +81,7 @@ describe('FrogSpinner', () => {
     const { strip } = renderSpinner({ random });
     await user.click(button());
     await user.click(button());
-    expect(offset(strip)).toBe('61');
+    expect(offset(strip)).toBe('58');
     expect(random).toHaveBeenCalledTimes(1);
   });
 
@@ -89,12 +89,12 @@ describe('FrogSpinner', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    expect(status()).toHaveTextContent('You got: Dolor sit amet. Tap or click the card to read more.');
+    expect(status()).toHaveTextContent('You got: Eastern American Toad. Tap or click the card to read more.');
     expect(button()).toHaveAttribute('aria-disabled', 'false');
     expect(strip).not.toHaveClass('frog-spinner-strip-spinning');
-    expect(offset(strip)).toBe('21');
+    expect(offset(strip)).toBe('20');
     expect(cardButton()).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText(DOLOR_BLURB)).not.toBeVisible();
+    expect(screen.getByText(TOAD_BLURB)).not.toBeVisible();
   });
 
   it("counts only the strip's own transition", async () => {
@@ -102,7 +102,7 @@ describe('FrogSpinner', () => {
     const { strip } = renderSpinner();
     fireEvent.transitionEnd(strip); // idle: nothing happens
     expect(status()).toHaveTextContent(PROMPT);
-    expect(offset(strip)).toBe('20');
+    expect(offset(strip)).toBe('19');
 
     await user.click(button());
     fireEvent.transitionEnd(strip.querySelector('.frog-card')!);
@@ -116,7 +116,7 @@ describe('FrogSpinner', () => {
     await spinAndLand(user, strip);
     await user.hover(cardButton());
     expect(isOpen()).toBe(false);
-    expect(screen.getByText(DOLOR_BLURB)).not.toBeVisible();
+    expect(screen.getByText(TOAD_BLURB)).not.toBeVisible();
     await user.unhover(cardButton());
     expect(isOpen()).toBe(false);
   });
@@ -139,7 +139,7 @@ describe('FrogSpinner', () => {
       await user.pointer({ keys: '[TouchA]', target: cardButton() });
       await user.pointer({ keys: '[TouchA]', target: cardButton() });
       expect(isOpen()).toBe(true);
-      await user.pointer({ keys: '[TouchA]', target: screen.getByText(DOLOR_BLURB) });
+      await user.pointer({ keys: '[TouchA]', target: screen.getByText(TOAD_BLURB) });
       expect(isOpen()).toBe(true);
     });
 
@@ -203,7 +203,7 @@ describe('FrogSpinner', () => {
     const { strip, root } = renderSpinner();
     await spinAndLand(user, strip);
     await user.click(cardButton());
-    fireEvent.pointerDown(screen.getByText(DOLOR_BLURB), { pointerType: 'mouse' });
+    fireEvent.pointerDown(screen.getByText(TOAD_BLURB), { pointerType: 'mouse' });
     fireEvent.click(root);
     expect(isOpen()).toBe(true);
   });
@@ -249,7 +249,7 @@ describe('FrogSpinner', () => {
       const { strip } = renderSpinner();
       await spinAndLand(user, strip);
       await user.click(cardButton());
-      const blurb = screen.getByText(DOLOR_BLURB);
+      const blurb = screen.getByText(TOAD_BLURB);
       fireEvent.focusOut(cardButton(), { relatedTarget: blurb });
       expect(isOpen()).toBe(true);
 
@@ -334,9 +334,9 @@ describe('FrogSpinner', () => {
     await user.click(cardButton());
     expect(isOpen()).toBe(true);
     await user.click(button());
-    expect(screen.queryByRole('button', { name: 'Dolor sit amet' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Eastern American Toad' })).toBeNull();
     fireEvent.transitionEnd(strip);
-    expect(isOpen('Lorem ipsum')).toBe(false);
+    expect(isOpen('Eastern Cricket Frog')).toBe(false);
   });
 
   it('keeps an open card open while a press outside is held, so the layout does not jump under it', async () => {
@@ -389,7 +389,7 @@ describe('FrogSpinner', () => {
   it('never lands on the same entry twice in a row', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
-    for (const title of ['Dolor sit amet', 'Lorem ipsum', 'Dolor sit amet']) {
+    for (const title of ['Eastern American Toad', 'Eastern Cricket Frog', 'Eastern American Toad']) {
       await spinAndLand(user, strip);
       expect(status()).toHaveTextContent(`You got: ${title}.`);
     }
@@ -413,7 +413,7 @@ describe('FrogSpinner', () => {
     await spinAndLand(user, strip);
     const landed = titles.find((title) => status().textContent?.includes(`You got: ${title}.`));
     expect(landed).toBeDefined();
-    expect(landed).not.toBe('Lorem ipsum');
+    expect(landed).not.toBe('Eastern Cricket Frog');
   });
 
   it('has the convention classes', () => {
@@ -434,23 +434,23 @@ describe('FrogSpinner favorites', () => {
     expect(strip.querySelector('.favorite-button')).toBeNull();
 
     const card = pick().querySelector('.frog-card')!;
-    expect(card.querySelector('.frog-card-corner .favorite-button')).toBe(heartFor('Dolor sit amet'));
+    expect(card.querySelector('.frog-card-corner .favorite-button')).toBe(heartFor('Eastern American Toad'));
     await user.click(cardButton());
     expect(isOpen()).toBe(true);
-    expect(heartFor('Dolor sit amet')).toBeInTheDocument();
+    expect(heartFor('Eastern American Toad')).toBeInTheDocument();
   });
 
   it('never favorites by landing, opening, closing or spinning again', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    await ready('Dolor sit amet');
-    expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'false');
+    await ready('Eastern American Toad');
+    expect(heartFor('Eastern American Toad')).toHaveAttribute('aria-pressed', 'false');
     await user.click(cardButton());
     await user.click(cardButton());
     await spinAndLand(user, strip);
-    await ready('Lorem ipsum');
-    expect(heartFor('Lorem ipsum')).toHaveAttribute('aria-pressed', 'false');
+    await ready('Eastern Cricket Frog');
+    expect(heartFor('Eastern Cricket Frog')).toHaveAttribute('aria-pressed', 'false');
     expect(favoriteRequests).toEqual([]);
   });
 
@@ -459,7 +459,7 @@ describe('FrogSpinner favorites', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    await waitFor(() => expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() => expect(heartFor('Eastern American Toad')).toHaveAttribute('aria-pressed', 'true'));
     expect(favoriteRequests).toEqual([]);
   });
 
@@ -467,12 +467,12 @@ describe('FrogSpinner favorites', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    await ready('Dolor sit amet');
+    await ready('Eastern American Toad');
     await user.click(cardButton());
     expect(isOpen()).toBe(true);
 
-    await user.click(heartFor('Dolor sit amet'));
-    expect(heartFor('Dolor sit amet')).toHaveAttribute('aria-pressed', 'true');
+    await user.click(heartFor('Eastern American Toad'));
+    expect(heartFor('Eastern American Toad')).toHaveAttribute('aria-pressed', 'true');
     expect(isOpen()).toBe(true); // pressing the heart neither opens nor closes the card
     await waitFor(() => expect(favoriteRequests).toEqual(['PUT entry02']));
   });
@@ -481,8 +481,8 @@ describe('FrogSpinner favorites', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    await ready('Dolor sit amet');
-    act(() => heartFor('Dolor sit amet').focus());
+    await ready('Eastern American Toad');
+    act(() => heartFor('Eastern American Toad').focus());
     await user.keyboard('{Enter}');
     expect(isOpen()).toBe(false);
     await user.keyboard(' ');

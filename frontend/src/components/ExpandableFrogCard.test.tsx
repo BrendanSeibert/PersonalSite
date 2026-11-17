@@ -6,9 +6,9 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { ExpandableFrogCard } from './ExpandableFrogCard';
 import { FROG_ENTRIES } from './frogEntries';
 
-const entry = FROG_ENTRIES[1]; // "Dolor sit amet"
-const face = () => screen.getByRole('button', { name: 'Dolor sit amet' });
-const heart = () => screen.getByRole('button', { name: 'Favorite Dolor sit amet' });
+const entry = FROG_ENTRIES[1]; // "Eastern American Toad"
+const face = () => screen.getByRole('button', { name: 'Eastern American Toad' });
+const heart = () => screen.getByRole('button', { name: 'Favorite Eastern American Toad' });
 const isOpen = () => face().getAttribute('aria-expanded') === 'true';
 const ready = () => waitFor(() => expect(heart()).toHaveAttribute('aria-disabled', 'false'));
 

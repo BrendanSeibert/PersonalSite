@@ -4,8 +4,8 @@ import { translate } from '../i18n/translate';
 import { FROG_ENTRIES, TONES, toneFor } from './frogEntries';
 
 describe('FROG_ENTRIES', () => {
-  it('holds exactly the 20 entries of en.json, in its order', () => {
-    expect(FROG_ENTRIES).toHaveLength(20);
+  it('holds exactly the 19 entries of en.json, in its order', () => {
+    expect(FROG_ENTRIES).toHaveLength(19);
     expect(FROG_ENTRIES.map((entry) => entry.id)).toEqual(Object.keys(en.frogSpinner.entries));
   });
 

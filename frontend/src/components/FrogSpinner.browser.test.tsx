@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../i18n/en.json';
-import { translate } from '../i18n/translate';
+import { translate, type Dictionary } from '../i18n/translate';
 import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedPeek, TAP_TARGET_PX, VIEWPORTS } from '../test/viewports';
@@ -40,11 +40,28 @@ const SPIN_TIMEOUT = 6000; // the spin is 3s; allow for a slow CI machine
 
 const title = (index: number) => translate(en, FROG_ENTRIES[index].titleKey);
 
-async function renderApp() {
+async function renderApp(dictionary?: Dictionary) {
   const router = createMemoryRouter(routes, { initialEntries: ['/'] });
-  renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
+  renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary });
   await screen.findByText('API ok, database up');
 }
+
+// The real descriptions are all short, so the long-description case gets one: entry12's own text,
+// six times over, long enough that an opened card outgrows the desktop screen.
+const LONG_ENTRY = 'entry12';
+const withLongBlurb: Dictionary = {
+  ...en,
+  frogSpinner: {
+    ...en.frogSpinner,
+    entries: {
+      ...en.frogSpinner.entries,
+      [LONG_ENTRY]: {
+        ...en.frogSpinner.entries[LONG_ENTRY],
+        blurb: Array(6).fill(en.frogSpinner.entries[LONG_ENTRY].blurb).join(' '),
+      },
+    },
+  },
+};
 
 // In page coordinates, so comparisons survive the page scrolling (pinning a card may scroll it).
 const rect = (element: Element) => {
@@ -230,7 +247,7 @@ describe.each([
   beforeEach(async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     await page.viewport(width, height);
-    await renderApp();
+    await renderApp(withLongBlurb);
   }, SPIN_TIMEOUT);
 
   afterEach(() => {
@@ -460,8 +477,8 @@ describe.each([
     });
 
     it('keeps a long description within the column width, and on screen on desktop', async () => {
-      // Land on entry12, the long blurb: one more spin from `first`.
-      const target = FROG_ENTRIES.findIndex((entry) => entry.id === 'entry12');
+      // Land on the entry given a long blurb (withLongBlurb): one more spin from `first`.
+      const target = FROG_ENTRIES.findIndex((entry) => entry.id === LONG_ENTRY);
       const choice = target > first ? target - 1 : target;
       vi.mocked(Math.random).mockReturnValue((choice + 0.5) / (FROG_ENTRIES.length - 1));
       await spinAndLand(title(target));

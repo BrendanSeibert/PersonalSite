@@ -8,11 +8,11 @@ import { server } from '../test/server';
 import { FavoriteButton } from './FavoriteButton';
 import { FROG_ENTRIES } from './frogEntries';
 
-const entry = FROG_ENTRIES[1]; // "Dolor sit amet", entry02
+const entry = FROG_ENTRIES[1]; // "Eastern American Toad", entry02
 
 function renderHeart() {
   renderWithProviders(<FavoriteButton entry={entry} />, { withRouter: false });
-  return screen.getByRole('button', { name: 'Favorite Dolor sit amet' });
+  return screen.getByRole('button', { name: 'Favorite Eastern American Toad' });
 }
 const ready = (heart: HTMLElement) => waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
 

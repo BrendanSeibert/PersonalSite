@@ -6,7 +6,7 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { FrogCard } from './FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
 
-const entry: FrogEntry = FROG_ENTRIES[1]; // "Dolor sit amet", tone "sage"
+const entry: FrogEntry = FROG_ENTRIES[1]; // "Eastern American Toad", tone "sage"
 
 function renderCard(props: Partial<Parameters<typeof FrogCard>[0]> = {}) {
   const { container } = renderWithProviders(<FrogCard entry={entry} {...props} />, { withRouter: false });
@@ -16,7 +16,7 @@ function renderCard(props: Partial<Parameters<typeof FrogCard>[0]> = {}) {
 describe('FrogCard', () => {
   it('draws a static card with its title, an empty image slot and its tone', () => {
     const card = renderCard();
-    expect(screen.getByText('Dolor sit amet')).toBeInTheDocument();
+    expect(screen.getByText('Eastern American Toad')).toBeInTheDocument();
     expect(card.querySelector('.frog-card-image-empty')).not.toBeNull();
     expect(card.querySelector('img')).toBeNull();
     expect(card).toHaveClass(`frog-card-tone-${entry.tone}`);
@@ -35,19 +35,19 @@ describe('FrogCard', () => {
 
   it('is a collapsed disclosure button when expandable and closed', () => {
     renderCard({ expansion: { expanded: false, onActivate: vi.fn(), blurbId: 'blurb' } });
-    const face = screen.getByRole('button', { name: 'Dolor sit amet' });
+    const face = screen.getByRole('button', { name: 'Eastern American Toad' });
     expect(face).toHaveAttribute('type', 'button');
     expect(face).toHaveAttribute('aria-expanded', 'false');
     expect(face).toHaveAttribute('aria-controls', 'blurb');
     const blurb = document.getElementById('blurb')!;
-    expect(blurb.textContent).toMatch(/^Sed cursus ante dapibus diam/);
+    expect(blurb.textContent).toMatch(/^Anaxyrus americanus\./);
     expect(blurb).not.toBeVisible();
   });
 
   it('shows the description when expanded', () => {
     const card = renderCard({ expansion: { expanded: true, onActivate: vi.fn(), blurbId: 'blurb' } });
-    expect(screen.getByRole('button', { name: 'Dolor sit amet' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText(/^Sed cursus ante dapibus diam/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Eastern American Toad' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/^Anaxyrus americanus\./)).toBeVisible();
     expect(card).toHaveAttribute('data-expanded', 'true');
   });
 
@@ -55,10 +55,10 @@ describe('FrogCard', () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
     renderCard({ expansion: { expanded: true, onActivate, blurbId: 'blurb' } });
-    await user.click(screen.getByRole('button', { name: 'Dolor sit amet' }));
+    await user.click(screen.getByRole('button', { name: 'Eastern American Toad' }));
     expect(onActivate).toHaveBeenCalledTimes(1);
     expect(onActivate.mock.calls[0][0]).toHaveProperty('type', 'click');
-    await user.click(screen.getByText(/^Sed cursus ante dapibus diam/));
+    await user.click(screen.getByText(/^Anaxyrus americanus\./));
     expect(onActivate).toHaveBeenCalledTimes(1);
   });
 
@@ -83,9 +83,9 @@ describe('FrogCard', () => {
       expect(card.tagName).toBe('ARTICLE');
       expect(card).toHaveClass('d-frog-card', 'frog-card', 'frog-card-full', `frog-card-tone-${entry.tone}`);
       expect(card).toHaveAttribute('data-entry-id', entry.id);
-      expect(screen.getByRole('heading', { level: 3, name: 'Dolor sit amet' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 3, name: 'Eastern American Toad' })).toBeInTheDocument();
       const blurb = card.querySelector('.frog-card-blurb')!;
-      expect(blurb.textContent).toMatch(/^Sed cursus ante dapibus diam/);
+      expect(blurb.textContent).toMatch(/^Anaxyrus americanus\./);
       expect(blurb).toBeVisible();
       expect(screen.queryByRole('button')).toBeNull();
       expect(card.querySelector('[aria-expanded]')).toBeNull();
@@ -126,7 +126,7 @@ describe('FrogCard', () => {
       ['expandable', { expansion }],
     ])('puts the heart in the corner of a %s card, a sibling of the face, never inside it', (_kind, props) => {
       const card = renderCard({ ...props, heart: true });
-      const heart = screen.getByRole('button', { name: 'Favorite Dolor sit amet' });
+      const heart = screen.getByRole('button', { name: 'Favorite Eastern American Toad' });
       const face = card.querySelector('.frog-card-face')!;
       expect(card.lastElementChild).toHaveClass('frog-card-corner');
       expect(card.lastElementChild!.contains(heart)).toBe(true);

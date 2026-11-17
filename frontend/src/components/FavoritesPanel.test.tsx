@@ -115,7 +115,7 @@ describe('FavoritesPanel', () => {
       expect(isOpen(name)).toBe(false);
       await waitFor(() => expect(heart(name)).toHaveAttribute('aria-pressed', 'true'));
     }
-    expect(within(listEl).getByText(/^Sed cursus ante/)).not.toBeVisible();
+    expect(within(listEl).getByText(/^Anaxyrus americanus\./)).not.toBeVisible();
   });
 
   it('opens and closes its cards like the spinner, one at a time, and the heart never toggles them', async () => {
@@ -125,7 +125,7 @@ describe('FavoritesPanel', () => {
     await list(MINE);
     await user.click(face(title(0)));
     expect(isOpen(title(0))).toBe(true);
-    expect(screen.getByText(/^Lorem ipsum dolor sit amet/)).toBeVisible();
+    expect(screen.getByText(/^Acris crepitans\./)).toBeVisible();
     await user.click(face(title(1)));
     expect(isOpen(title(0))).toBe(false);
     expect(isOpen(title(1))).toBe(true);

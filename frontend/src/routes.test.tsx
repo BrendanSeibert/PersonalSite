@@ -41,7 +41,7 @@ describe('routes', () => {
   it('shows a frog liked in the library in Your Favorites on the home page, pressed in both places', async () => {
     const user = userEvent.setup();
     const router = renderAt('/frog-library');
-    const heart = screen.getByRole('button', { name: 'Favorite Consectetur' });
+    const heart = screen.getByRole('button', { name: "Favorite Fowler's Toad" });
     await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
     await user.click(heart);
     expect(heart).toHaveAttribute('aria-pressed', 'true');
@@ -49,10 +49,10 @@ describe('routes', () => {
     await act(() => router.navigate('/'));
     const panel = within(screen.getByRole('complementary', { name: 'Favorites' }));
     const list = await within(await panel.findByRole('tabpanel', { name: 'Your Favorites' })).findByRole('list');
-    expect(within(list).getByRole('button', { name: 'Consectetur' })).toBeInTheDocument();
-    expect(within(list).getByRole('button', { name: 'Favorite Consectetur' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(list).getByRole('button', { name: "Fowler's Toad" })).toBeInTheDocument();
+    expect(within(list).getByRole('button', { name: "Favorite Fowler's Toad" })).toHaveAttribute('aria-pressed', 'true');
 
     await act(() => router.navigate('/frog-library'));
-    expect(screen.getByRole('button', { name: 'Favorite Consectetur' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: "Favorite Fowler's Toad" })).toHaveAttribute('aria-pressed', 'true');
   });
 });

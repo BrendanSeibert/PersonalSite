@@ -41,6 +41,7 @@
         fill: none;
         stroke: currentColor;
         stroke-width: 2;
+        stroke-linejoin: round; // a rounded tip and cleft: a miter corner can spike past the point
         transition: transform t.$transition; // off under prefers-reduced-motion (AppLayout.scss)
     }
 

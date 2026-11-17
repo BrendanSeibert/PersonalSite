@@ -17,7 +17,7 @@ function renderWithHeart() {
     </>,
     { withRouter: false },
   );
-  return screen.getByRole('button', { name: 'Favorite Lorem ipsum' });
+  return screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' });
 }
 
 describe('FavoritesStatus', () => {

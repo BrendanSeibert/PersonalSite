@@ -13,7 +13,7 @@ const ALL = FROG_ENTRIES.map((entry) => entry.id);
 
 function seed(many: boolean) {
   if (many) {
-    // All 20 are yours; 12 frogs have likes, 1 to 12.
+    // Every frog is yours; 12 frogs have likes, 1 to 12.
     seedFavorites({ mine: ALL });
     seedFavorites({ counts: Object.fromEntries(ALL.map((id, i) => [id, i < 12 ? i + 1 : 0])) });
   } else {
@@ -138,7 +138,7 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
     await page.viewport(width, height);
   });
 
-  describe('with twenty favorites', () => {
+  describe('with every frog a favorite', () => {
     beforeEach(async () => {
       seed(true);
       await renderHome();
@@ -172,7 +172,7 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
     });
 
     it('scrolls the list inside the panel instead of growing', async () => {
-      expect(cards()).toHaveLength(20);
+      expect(cards()).toHaveLength(ALL.length);
       expect(getComputedStyle(list()).overflowY).toBe('auto');
       expect(getComputedStyle(list()).overscrollBehaviorY).toBe('contain'); // the page doesn't scroll on at the end
       expect(list().scrollHeight).toBeGreaterThan(list().clientHeight);
@@ -256,6 +256,26 @@ describe.each(VIEWPORTS)('the favorites panel at %i × %i (%s)', (width, height)
         expect(count.bottom).toBeGreaterThan(heart.top);
       }
       expectTabsAsHeader();
+    });
+
+    it('gives each title room to keep a whole word on a line, never breaking "Northern" mid-word', () => {
+      const remPx = px(getComputedStyle(document.documentElement).fontSize);
+      for (const card of cards()) {
+        const titleEl = card.querySelector('.frog-card-title')!;
+        const corner = rect(card.querySelector('.frog-card-corner')!);
+        expect(corner.left - rect(titleEl).left, `room for ${titleEl.textContent}`).toBeGreaterThanOrEqual(5.5 * remPx);
+        expect(getComputedStyle(titleEl).hyphens).toBe('auto'); // a word that must break gets a hyphen
+      }
+      // entry10, Northern Leopard Frog, is in the top ten: its first word sits on one line.
+      const northern = cards()
+        .find((card) => card.dataset.entryId === 'entry10')!
+        .querySelector('.frog-card-title')!;
+      const text = northern.firstChild!;
+      const range = document.createRange();
+      range.setStart(text, 0);
+      range.setEnd(text, 'Northern'.length);
+      const lineTops = new Set([...range.getClientRects()].map((r) => Math.round(r.top)));
+      expect(lineTops.size, '"Northern" on one line').toBe(1);
     });
   });
 

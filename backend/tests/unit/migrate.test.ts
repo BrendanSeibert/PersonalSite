@@ -41,15 +41,15 @@ describe('migrate', () => {
   it('on a fresh database: locks, creates the bookkeeping table, applies every file in order, unlocks', async () => {
     const { pool, queries, release } = fakePool();
     const applied = await migrate(pool); // the real backend/migrations folder
-    expect(applied).toEqual(['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql']);
+    expect(applied).toEqual(['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql']);
 
     expect(queries[0]).toMatch(/^SELECT pg_advisory_lock/);
     expect(queries[1]).toMatch(/^CREATE TABLE IF NOT EXISTS schema_migrations/);
     expect(queries[2]).toMatch(/^SELECT name FROM schema_migrations/);
     // Each migration: BEGIN, its SQL, the record, COMMIT.
     const perFile = queries.slice(3, -1);
-    expect(perFile).toHaveLength(12);
-    for (let i = 0; i < 3; i += 1) {
+    expect(perFile).toHaveLength(16);
+    for (let i = 0; i < 4; i += 1) {
       const [begin, sql, record, commit] = perFile.slice(i * 4, i * 4 + 4);
       expect(begin).toBe('BEGIN');
       expect(sql).not.toBe('');
@@ -59,13 +59,14 @@ describe('migrate', () => {
     expect(perFile[1]).toMatch(/CREATE TABLE frogs/);
     expect(perFile[5]).toMatch(/INSERT INTO frogs/);
     expect(perFile[9]).toMatch(/CREATE TABLE favorites/);
+    expect(perFile[13]).toMatch(/DELETE FROM frogs WHERE id = 'entry20'/);
     expect(queries.at(-1)).toMatch(/^SELECT pg_advisory_unlock/);
     expect(release).toHaveBeenCalledTimes(1);
   });
 
   it('when everything is applied: only the lock, the bookkeeping and the unlock', async () => {
     const { pool, queries } = fakePool({
-      applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql'],
+      applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql'],
     });
     expect(await migrate(pool)).toEqual([]);
     expect(queries).toHaveLength(4);
@@ -112,7 +113,7 @@ describe('migrate', () => {
   });
 
   it('still releases the client when the unlock itself fails', async () => {
-    const { pool, release } = fakePool({ applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql'], failOn: 'unlock' });
+    const { pool, release } = fakePool({ applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql'], failOn: 'unlock' });
     await expect(migrate(pool)).resolves.toEqual([]);
     expect(release).toHaveBeenCalledTimes(1);
   });

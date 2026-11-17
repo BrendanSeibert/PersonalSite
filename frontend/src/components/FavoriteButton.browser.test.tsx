@@ -6,10 +6,11 @@ import { routes } from '../routes';
 import { seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { VIEWPORTS } from '../test/viewports';
+import { FROG_ENTRIES } from './frogEntries';
 
 const INSET_PX = 4; // $space-1: the heart's distance from the card's top and right edges
 const HEART_PX = 32; // $favorite-size (2rem); Playwright's Chromium reports a fine pointer
-const MIN_TITLE_PX = 48; // 3rem: a title always keeps at least this much width
+const MIN_TITLE_PX = 48; // 3rem: a title always keeps at least this much room beside the heart
 const SAGE_800 = 'rgb(59, 66, 46)';
 
 async function renderApp(url: string) {
@@ -47,7 +48,11 @@ function expectHeartInCorner(card: HTMLElement) {
   const corner = card.querySelector('.frog-card-corner')!.getBoundingClientRect();
   const title = card.querySelector('.frog-card-title')!.getBoundingClientRect();
   expect(overlaps(corner, title), 'corner over the title').toBe(false);
-  expect(title.width).toBeGreaterThanOrEqual(MIN_TITLE_PX);
+  // The room the title gets, not its own width: a short title ("Greg") is narrow however much room
+  // it has. On the corner's row the room ends at the corner; below it, at the card's inner edge.
+  const besideCorner = corner.bottom > title.top && corner.top < title.bottom;
+  const room = (besideCorner ? corner.left : box.right) - title.left;
+  expect(room, 'room for the title').toBeGreaterThanOrEqual(MIN_TITLE_PX);
   const image = card.querySelector('.frog-card-image')!;
   if (getComputedStyle(image).display !== 'none') {
     expect(overlaps(corner, image.getBoundingClientRect()), 'corner over the image').toBe(false);
@@ -75,7 +80,7 @@ describe.each(VIEWPORTS)('hearts at %i × %i (%s)', (width, height) => {
   it('sit in the top-right corner of every Frog Library card, clear of the title and image', async () => {
     await renderApp('/frog-library');
     const cards = [...document.querySelectorAll<HTMLElement>('.frog-library-page-grid .frog-card')];
-    expect(cards).toHaveLength(20);
+    expect(cards).toHaveLength(FROG_ENTRIES.length);
     for (const card of cards) expectHeartInCorner(card);
   });
 
@@ -112,13 +117,13 @@ describe.each([
   it('shows its keyboard ring inside the card', async () => {
     screen.getByRole('main').focus();
     await userEvent.keyboard('{Tab}');
-    const heart = screen.getByRole('button', { name: 'Favorite Lorem ipsum' });
+    const heart = screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' });
     expect(heart).toHaveFocus();
     expectRingInside(heart);
   });
 
   it('fills in green when pressed, and keeps the same outline colour', async () => {
-    const heart = screen.getByRole('button', { name: 'Favorite Lorem ipsum' });
+    const heart = screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' });
     const strokeBefore = pathOf(heart).stroke;
     expect(pathOf(heart).fill).toBe('none');
     await userEvent.click(heart);
@@ -127,5 +132,23 @@ describe.each([
     expect(strokeBefore).toBe(SAGE_800);
     await userEvent.click(heart);
     await waitFor(() => expect(pathOf(heart).fill).toBe('none'));
+  });
+
+  it('is a plain heart: symmetric, with a rounded tip and no "foot" below the point', () => {
+    const heart = screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' });
+    const path = heart.querySelector('path')!;
+    // Round joins never reach past the outline's corners, the way a miter join can at the tip.
+    expect(pathOf(heart).strokeLinejoin).toBe('round');
+    // The shape itself, in the 24 × 24 viewBox: centred on x = 12, its point at the bottom.
+    const box = path.getBBox();
+    expect(box.x + box.width / 2).toBeCloseTo(12, 1);
+    expect(box.x).toBeCloseTo(3, 1);
+    expect(box.y + box.height).toBeCloseTo(20.5, 1);
+    expect(path.isPointInFill(new DOMPoint(12, 20))).toBe(true); // just above the point: inside
+    expect(path.isPointInFill(new DOMPoint(12, 21.5))).toBe(false); // below it: nothing
+    // With its stroke (half the width outside the outline), it still fits the viewBox.
+    const half = parseFloat(pathOf(heart).strokeWidth) / 2;
+    expect(box.y + box.height + half).toBeLessThanOrEqual(24);
+    expect(box.x - half).toBeGreaterThanOrEqual(0);
   });
 });

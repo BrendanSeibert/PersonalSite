@@ -23,7 +23,7 @@ describe('FrogLibraryPage', () => {
     renderWithProviders(<FrogLibraryPage />);
     const listItems = items();
     expect(listItems).toHaveLength(FROG_ENTRIES.length);
-    expect(FROG_ENTRIES.length).toBe(20);
+    expect(FROG_ENTRIES.length).toBe(19);
 
     listItems.forEach((item, i) => {
       const entry = FROG_ENTRIES[i];
@@ -57,7 +57,7 @@ describe('FrogLibraryPage', () => {
   it('favorites a frog when its heart is pressed', async () => {
     const user = userEvent.setup();
     renderWithProviders(<FrogLibraryPage />);
-    const heart = screen.getByRole('button', { name: 'Favorite Consectetur' });
+    const heart = screen.getByRole('button', { name: "Favorite Fowler's Toad" });
     await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
     await user.click(heart);
     expect(heart).toHaveAttribute('aria-pressed', 'true');
