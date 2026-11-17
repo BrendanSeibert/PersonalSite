@@ -9,6 +9,7 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedPeek, TAP_TARGET_PX, VIEWPORTS } from '../test/viewports';
 import { FROG_ENTRIES } from './frogEntries';
 import { pickNextIndex } from './frogReel';
+import { waitForHomeToSettle } from '../test/settle';
 
 const ROW_PX = 88; // one reel row: $frog-card-height (5rem) + 2 × 0.25rem, at 16px text
 const GAP_PX = 12; // the spinner's flex gap, $space-3
@@ -43,7 +44,7 @@ const title = (index: number) => translate(en, FROG_ENTRIES[index].titleKey);
 async function renderApp(dictionary?: Dictionary) {
   const router = createMemoryRouter(routes, { initialEntries: ['/'] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary });
-  await screen.findByText('API ok, database up');
+  await waitForHomeToSettle();
 }
 
 // The real descriptions are all short, so the long-description case gets one: entry12's own text,
@@ -79,7 +80,7 @@ function parts() {
     reel: left.querySelector('.frog-spinner-reel')!,
     window: left.querySelector<HTMLElement>('.frog-spinner-window')!,
     strip: left.querySelector<HTMLElement>('.frog-spinner-strip')!,
-    button: scope.getByRole('button', { name: 'Get a frog' }),
+    button: scope.getByRole('button', { name: 'Spin the wheel' }),
     status: scope.getByRole('status'),
   };
 }
@@ -502,7 +503,7 @@ describe.each([
     it('closes the card and lands on a new entry on a second spin', async () => {
       await userEvent.click(landedFace());
       expect(isOpen()).toBe(true);
-      // The open card lies over "Get a frog", so start the spin from the keyboard.
+      // The open card lies over "Spin the wheel", so start the spin from the keyboard.
       parts().button.focus();
       await userEvent.keyboard('{Enter}');
       await waitForLanding(title(second));

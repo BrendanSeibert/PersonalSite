@@ -3,7 +3,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { answerFavorites, resetFavorites } from './favoritesFake';
 
-// No MSW here: the Node MSW server cannot run in a browser. Answer the health request and the
+// No MSW here: the Node MSW server cannot run in a browser. Answer the
 // favorites endpoints (from the shared in-memory fake), and pass everything else through to the
 // real fetch, so Vitest's own traffic is untouched.
 const realFetch = window.fetch.bind(window);
@@ -12,7 +12,6 @@ beforeEach(() => {
   vi.spyOn(window, 'fetch').mockImplementation((input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
-    if (url.includes('/api/health')) return Promise.resolve(Response.json({ status: 'ok', db: 'up' }));
     const favorites = answerFavorites(method, url);
     return favorites ? Promise.resolve(favorites) : realFetch(input, init);
   });

@@ -1,7 +1,10 @@
 import { useI18n } from '../context/I18nContext';
+import { fillSlots } from '../i18n/fillSlots';
+import { PAHERPS_URL } from './contactLinks';
 import './AboutPage.scss';
 
-// One panel, like the home page's middle column: a heading, a lead paragraph and the body.
+// One panel, like the home page's middle column: a heading, a lead paragraph, the body and the
+// source of the frog facts.
 export function AboutPage() {
   const { t } = useI18n();
 
@@ -12,6 +15,16 @@ export function AboutPage() {
         <h2>{t('about.heading')}</h2>
         <p className="about-page-intro">{t('about.intro')}</p>
         <p>{t('about.body')}</p>
+        <p className="about-page-source">
+          {fillSlots(t('about.source'), {
+            // The citation shows its URL as written; the link only makes it clickable (new tab).
+            url: (
+              <a className="about-page-source-link" href={PAHERPS_URL} target="_blank" rel="noopener noreferrer">
+                {t('about.sourceUrl')}
+              </a>
+            ),
+          })}
+        </p>
       </div>
     </main>
   );

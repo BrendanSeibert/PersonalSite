@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import en from '../i18n/en.json';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { AboutPage } from './AboutPage';
+import { PAHERPS_URL } from './contactLinks';
+
+// The citation as it reads on the page, unchanged from before the URL became a link.
+const CITATION =
+  'Pa Herp Identification, https://www.paherps.com/herps/frogs-toads/, accessed November 16, 2026';
 
 describe('AboutPage', () => {
   it('is the main landmark, focusable by script only, with the "About" heading', () => {
@@ -12,17 +17,34 @@ describe('AboutPage', () => {
     expect(within(main).getByRole('heading', { level: 2, name: 'About' })).toBeInTheDocument();
   });
 
-  it('shows the lead and the body from en.json', () => {
+  it('shows the lead, the body and the source from en.json, in that order', () => {
     renderWithProviders(<AboutPage />);
     expect(screen.getByText(en.about.intro)).toHaveClass('about-page-intro');
     expect(screen.getByText(en.about.body)).toBeInTheDocument();
+    const paragraphs = [...screen.getByRole('main').querySelectorAll('p')].map((p) => p.textContent);
+    expect(paragraphs).toEqual([en.about.intro, en.about.body, CITATION]);
+    expect(screen.getByRole('main').querySelector('p:last-child')).toHaveClass('about-page-source');
   });
 
-  it('has nothing to click, so Tab after a navigation leaves the page', () => {
+  it('has no placeholder text left', () => {
+    renderWithProviders(<AboutPage />);
+    expect(screen.getByRole('main').textContent).not.toMatch(/lorem|ipsum|\{url\}/i);
+  });
+
+  it('makes the source URL in the citation a link, showing the URL as written, in a new tab', () => {
     renderWithProviders(<AboutPage />);
     const main = screen.getByRole('main');
     expect(within(main).queryAllByRole('button')).toHaveLength(0);
-    expect(within(main).queryAllByRole('link')).toHaveLength(0);
+    const links = within(main).getAllByRole('link');
+    expect(links).toHaveLength(1); // the only Tab stop on the page
+    const link = links[0]!;
+    expect(link.textContent).toBe('https://www.paherps.com/herps/frogs-toads/');
+    expect(link).toHaveAttribute('href', 'https://www.paherps.com/herps/frogs-toads/');
+    expect(link).toHaveAttribute('href', en.about.sourceUrl); // the shown text and the target agree
+    expect(PAHERPS_URL).toBe(en.about.sourceUrl);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveClass('about-page-source-link');
   });
 
   it('has the colour and layout classes on its root, and the panel class', () => {

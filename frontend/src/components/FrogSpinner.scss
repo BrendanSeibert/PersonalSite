@@ -151,6 +151,7 @@ $spin-easing: cubic-bezier(0.15, 0.85, 0.25, 1); // fast start, long slow-down, 
     .frog-spinner-result {
         margin: 0;
         font-weight: 600;
+        white-space: pre-line; // a "\n" in en.json is a line break (the prompt has two lines)
         color: var(--text-color-frog-spinner-result);
     }
 }

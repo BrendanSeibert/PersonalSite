@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from './routes';
 import { renderWithProviders } from './test/renderWithProviders';
+import { waitForHomeToSettle } from './test/settle';
 
 function renderAt(url: string) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
@@ -15,8 +16,8 @@ describe('routes', () => {
   it('renders the nav bar and the home page at /', async () => {
     renderAt('/');
     expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Hello, world' })).toBeInTheDocument();
-    await screen.findByText('API ok, database up');
+    expect(screen.getByRole('heading', { name: 'About Me' })).toBeInTheDocument();
+    await waitForHomeToSettle();
   });
 
   it('renders the nav bar and the Frog Library at /frog-library', () => {

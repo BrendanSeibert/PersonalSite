@@ -8,6 +8,7 @@ import { seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import en from './en.json';
 import type { Dictionary } from './translate';
+import { waitForHomeToSettle } from '../test/settle';
 
 // A copy of the dictionary where every value is its own key in brackets, e.g. ⟦navbar.home⟧.
 // Any visible text that is not in brackets did not come from the dictionary.
@@ -40,9 +41,9 @@ function findHardcodedText(): string[] {
   return offenders;
 }
 
-function renderMarkedUp(url: string) {
+function renderMarkedUp(url: string, dictionary: Dictionary = markUp(en)) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
-  return renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary: markUp(en) });
+  return renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary });
 }
 
 afterEach(() => {
@@ -50,22 +51,45 @@ afterEach(() => {
 });
 
 it.each([
-  ['/', '⟦health.ok⟧'],
+  ['/', '⟦favorites.mine.empty⟧'],
   ['/frog-library', '⟦frogLibrary.heading⟧'],
   ['/about', '⟦about.heading⟧'],
   ['/does-not-exist', '⟦notFound.heading⟧'],
 ])('every visible string on %s comes from en.json', async (url, settledText) => {
   renderMarkedUp(url);
-  await screen.findByText(settledText); // wait for async content such as the health check
+  await screen.findByText(settledText); // wait for async content such as the favorites panel
 
   expect(findHardcodedText()).toEqual([]);
   expect(document.title).toBe('⟦app.title⟧');
 });
 
+it('the links in the About Me section take their words from en.json too', async () => {
+  // The marked-up contact sentence has no placeholders, so its links would not render at all.
+  // Keep the placeholders here, so the resume, email, LinkedIn and GitHub words are checked as well.
+  const dictionary = markUp(en);
+  const middle = (dictionary.home as Dictionary).middle as Dictionary;
+  middle.contact = '⟦home.middle.contact⟧ {resume} {email} {linkedIn} {gitHub}';
+  renderMarkedUp('/', dictionary);
+  await waitForHomeToSettle('⟦favorites.loading⟧');
+
+  expect(screen.getAllByRole('link', { name: /^⟦home\.middle\.(resume|email|linkedIn|gitHub)⟧$/ })).toHaveLength(4);
+  expect(findHardcodedText()).toEqual([]);
+});
+
+it('the source link on the About page takes its text from en.json too', async () => {
+  const dictionary = markUp(en);
+  (dictionary.about as Dictionary).source = '⟦about.source⟧ {url}';
+  renderMarkedUp('/about', dictionary);
+  await screen.findByText('⟦about.heading⟧');
+
+  expect(screen.getByRole('link', { name: '⟦about.sourceUrl⟧' })).toBeInTheDocument();
+  expect(findHardcodedText()).toEqual([]);
+});
+
 it('every string on / comes from en.json after a spin, with the landed card open', async () => {
   const user = userEvent.setup();
   const { container } = renderMarkedUp('/');
-  await screen.findByText('⟦health.ok⟧');
+  await waitForHomeToSettle('⟦favorites.loading⟧');
 
   await user.click(screen.getByRole('button', { name: '⟦frogSpinner.button⟧' }));
   fireEvent.transitionEnd(container.querySelector('.frog-spinner-strip')!);
@@ -87,7 +111,7 @@ describe('with favorites', () => {
     seedFavorites({ mine: ['entry02', 'entry07'], counts: { entry02: 1, entry07: 12, entry03: 4 } });
     if (allTime) localStorage.setItem(MODE_STORAGE_KEY, 'allTime');
     const { container } = renderMarkedUp('/');
-    await screen.findByText('⟦health.ok⟧');
+    await waitForHomeToSettle('⟦favorites.loading⟧');
     await screen.findByRole('heading', { name: '⟦favorites.label⟧' });
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
       '⟦favorites.mine.tab⟧',

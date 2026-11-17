@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { Navbar } from './Navbar';
+import { waitForHomeToSettle } from '../test/settle';
 
 // The nav's items in order, as "role:name", so links and the About button are told apart.
 function navItems() {
@@ -64,7 +65,7 @@ describe('Navbar', () => {
     const user = userEvent.setup();
     const router = createMemoryRouter(routes, { initialEntries: ['/'] });
     renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-    await screen.findByText('API ok, database up');
+    await waitForHomeToSettle();
 
     await user.click(screen.getByRole('link', { name: 'About' }));
     expect(router.state.location.pathname).toBe('/about');
@@ -82,7 +83,7 @@ describe('Navbar', () => {
 
     await user.click(screen.getByRole('link', { name: 'Home' }));
     expect(router.state.location.pathname).toBe('/');
-    expect(screen.getByRole('heading', { name: 'Hello, world' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'About Me' })).toBeInTheDocument();
     expect(navItems()).toEqual(['link:Frog Library', 'link:About']);
   });
 

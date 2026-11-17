@@ -35,4 +35,22 @@
     .about-page-intro {
         font-size: t.$font-size-lg; // the same lead size as the home page's intro
     }
+
+    // A citation: smaller than the body, and the long URL may break anywhere on a narrow screen.
+    .about-page-source {
+        font-size: t.$font-size-sm;
+        overflow-wrap: anywhere;
+    }
+
+    // Looks like the rest of the citation (same colour and size), plus an underline so it reads as
+    // a link without relying on colour.
+    .about-page-source-link {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+
+        &:hover {
+            text-decoration-thickness: 0.12em;
+        }
+    }
 }

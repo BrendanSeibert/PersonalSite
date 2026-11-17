@@ -1,6 +1,6 @@
 # EX3: Hello World full-stack slice
 
-A thin vertical slice that proves every layer of the stack is wired together: a React page asks a Node.js API for its health, and the API asks PostgreSQL. Everything runs locally with one Docker command.
+A personal site with a frog spinner, a Frog Library and frog favorites: a React frontend, a Node.js API and PostgreSQL. Everything runs locally with one Docker command.
 
 **Stack:** React 19 + Vite 8, React Router 8, TanStack Query 5 (frontend) · Node.js 24, Express 5, TypeScript, `pg` (backend) · PostgreSQL 16 · Docker Compose · Vitest, Supertest, React Testing Library, MSW (tests).
 
@@ -24,7 +24,7 @@ The values in `.env.example` are for local development only. Keep the password t
 docker compose up --build
 ```
 
-Then open <http://localhost:5173>. You should see a dark green nav bar ("Brendan Seibert" on the left; Frog Library and About on the right) above three columns, with "Hello, world" in the middle one and, within a second, "API ok, database up". The right column is the favorites panel, headed by two tabs: **Your Favorites** and **All Time Favorites**. The API is also available directly at <http://localhost:3000/api/health>.
+Then open <http://localhost:5173>. You should see a dark green nav bar ("Brendan Seibert" on the left; Frog Library and About on the right) above three columns, with "About Me" in the middle one. The right column is the favorites panel, headed by two tabs: **Your Favorites** and **All Time Favorites**. The API is also available directly at <http://localhost:3000/api/health>.
 
 Add `-d` to run in the background.
 
@@ -118,11 +118,12 @@ The palette (`frontend/src/styles/_palette.scss`) is built from four anchor colo
 | Body text on the page, the columns and the cards | `sky-900` on `sand-100`, `sand-150`, `sage-100`, `sky-100`, `sand-200`, `sage-200`, `sky-200` | 10.4 to 13.3 |
 | Column headings (middle, left, right; the Frog Library and About headings match the middle) | `sage-800` on `sand-150`, `sage-800` on `sage-100`, `sky-800` on `sky-100` | 8.7, 9.4, 9.9 |
 | Page-not-found heading | `sage-800` on `sand-100` | 9.2 |
-| Status lines (health, spinner result) | `sky-700` on `sand-150`, `sage-800` on `sage-100` | 7.0, 9.4 |
+| Spinner status line | `sage-800` on `sage-100` | 9.4 |
+| Links in the About Me section, and on hover | `sage-800` on `sand-150`, `sage-900` on `sand-150` | 8.7, 11.5 |
 | Nav bar title and buttons | `sand-50` and `sand-100` on `sage-800` | 10.0, 9.2 |
 | Nav button on hover | `sage-900` on `sand-200` | 9.7 |
-| "Get a frog" button, and on hover | `sand-50` on `sage-800`, on `sage-900` | 10.0, 13.1 |
-| "Get a frog" button outline against its column | `sage-800` on `sage-100` | 9.4 (needs 3) |
+| "Spin the wheel" button, and on hover | `sand-50` on `sage-800`, on `sage-900` | 10.0, 13.1 |
+| "Spin the wheel" button outline against its column | `sage-800` on `sage-100` | 9.4 (needs 3) |
 | Nav button outline and focus ring | `sand-300` on `sage-800` | 6.2 (needs 3) |
 | Page focus ring | `sky-700` on any page or column surface | 7.0 or more (needs 3) |
 | Payline | `sage-800` on `sand-50` | 10.0 (needs 3) |
@@ -284,12 +285,13 @@ EX3/
         ├── paths.ts           every page's URL (PATHS), shared by the routes and the nav bar
         ├── routes.tsx         the list of URLs and their pages, inside AppLayout
         ├── layout.browser.test.tsx   real-browser layout tests at 9 viewport sizes
-        ├── api/               health.ts (GET /api/health), favorites.ts (the favorites endpoints, checked data)
+        ├── api/               favorites.ts (the favorites endpoints, checked data)
         ├── styles/            _palette.scss (colours), _tokens.scss (sizes, breakpoint, mixins), convention and contrast tests
-        ├── i18n/              en.json (every visible string), translate.ts, no-hard-coded-text test
+        ├── i18n/              en.json (every visible string), translate.ts, fillSlots.tsx (links inside a sentence),
+        │                      no-hard-coded-text test
         ├── context/           I18nProvider and useI18n()
-        ├── components/        AppLayout, Navbar, ColumnLayout, HealthStatus (each with .scss and tests)
-        │   ├── FrogSpinner.tsx       the reel, "Get a frog" button and status line (+ .scss, tests, browser tests)
+        ├── components/        AppLayout, Navbar, ColumnLayout (each with .scss and tests)
+        │   ├── FrogSpinner.tsx       the reel, "Spin the wheel" button and status line (+ .scss, tests, browser tests)
         │   ├── FrogCard.tsx          one rounded, coloured card: image slot, title, optional description
         │   ├── frogEntries.ts        the entry list from en.json, card tones, image map
         │   ├── frogReel.ts           pure reel maths: next pick, resting and landing rows
@@ -298,14 +300,15 @@ EX3/
         │   ├── FavoriteButton.tsx    the heart: a toggle button; useFavorite.ts holds its state and saves
         │   ├── FavoritesPanel.tsx    the home page's right column: Your Favorites / All Time Favorites
         │   └── FavoritesStatus.tsx   announces a heart that couldn't be saved (in AppLayout, every page)
-        ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage
+        ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage;
+        │                      contactLinks.ts (the email address and profile URLs behind the About Me links)
         └── test/              test setup (jsdom and browser), MSW server and handlers, favoritesFake.ts, renderWithProviders,
                                viewports.ts (the viewport table shared by the browser tests)
 ```
 
 ## How a request flows
 
-The browser loads the React app from the Vite dev server. React Router shows the home page. The home page uses TanStack Query to call `GET /api/health`. Vite forwards any `/api` request to the Node backend. The backend runs a trivial query (`SELECT 1`) against PostgreSQL and returns `{"status":"ok","db":"up"}`. TanStack Query hands that result to the page, which shows it in a small status line.
+The browser loads the React app from the Vite dev server. React Router shows the home page. The home page uses TanStack Query to call the favorites endpoints (`GET /api/favorites/mine` and `/top`). Vite forwards any `/api` request to the Node backend, which queries PostgreSQL and returns JSON. TanStack Query hands the result to the favorites panel and the hearts. `GET /api/health` (a trivial `SELECT 1`) is for the Docker health check and the smoke test; the page no longer shows it.
 
 Favorites flow the same way. Pressing a heart updates every heart for that frog at once, then sends `PUT` (like) or `DELETE` (unlike) to `/api/favorites/<frog>`, with the `ex3_visitor` cookie. The backend checks the frog exists, stores or removes one row, and answers with the new count; the page then refetches your list and the top ten. If the save fails, the heart flips back and the page announces it.
 
@@ -332,7 +335,7 @@ In production there is no Vite: one container answers everything.
 - **"password authentication failed" when connecting from Windows, although `.env` is correct:** a PostgreSQL installed directly on Windows is probably answering on port 5432 instead of the Docker one. Run `netstat -ano | findstr :5432`. Either stop that service (Windows "Services" app, `postgresql-...`, set to Manual) or map the Docker database to `"127.0.0.1:5433:5432"` and connect on 5433.
 - **Backend logs show "host not found", "getaddrinfo ENOTFOUND" or "Invalid URL" right after you changed the password:** the password contains a character that breaks the URL (`@ : / # ? %`). Use only letters, numbers, `-` and `_`, then run `docker compose down -v` (see the last entry).
 - **The app works on your machine but not from your phone or another computer:** this is intentional. All ports are bound to `127.0.0.1` so the dev servers are not reachable from the network. Do not remove that to "fix" it.
-- **Page loads but says "API unavailable":** run `docker compose logs backend`. The health check logs the real reason on a line starting with `Health check: database query failed`.
+- **Page loads but says "Favorites are unavailable right now.":** run `docker compose logs backend`. Open <http://localhost:3000/api/health>; if the database is down, the backend logs the real reason on a line starting with `Health check: database query failed`.
 - **Frontend changes do not appear in the browser:** confirm `usePolling: true` in `frontend/vite.config.ts` (Windows file-watching quirk).
 - **Backend changes are not picked up** (no `restarting due to changes...` in the logs): confirm the `dev` script in `backend/package.json` uses `nodemon --legacy-watch`, then run `docker compose up --build -V backend`.
 - **Compose stops with "Copy .env.example to .env first":** you have no `.env` file. Run `cp .env.example .env`.

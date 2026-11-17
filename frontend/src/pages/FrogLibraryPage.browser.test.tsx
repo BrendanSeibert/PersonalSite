@@ -10,6 +10,7 @@ import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedLayout, VIEWPORTS, type Layout } from '../test/viewports';
 import { FrogLibraryPage } from './FrogLibraryPage';
+import { waitForHomeToSettle } from '../test/settle';
 
 const IMAGE_MAX_PX = 192; // 12rem: the open layout's largest image, at 16px text
 const PANEL_RADIUS_PX = 12; // $radius-lg
@@ -19,7 +20,7 @@ const PAGE_MAX_PX = 1280; // $page-max-width (80rem)
 async function renderApp(url: string) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  if (url === '/') await screen.findByText('API ok, database up');
+  if (url === '/') await waitForHomeToSettle();
   else await screen.findByRole('heading', { level: 2, name: 'Frog Library' });
   return router;
 }
@@ -265,16 +266,21 @@ describe.each([
     expect(screen.getByRole('link', { name: 'About' })).toHaveFocus();
   });
 
-  it('keyboard into the home page: Tab goes on to the spinner, not back to the nav', async () => {
+  it('keyboard into the home page: Tab goes on through the About Me links (resume, email, LinkedIn, GitHub) to the spinner, not back to the nav', async () => {
     await renderApp('/frog-library');
     screen.getByRole('link', { name: 'Home' }).focus();
     await userEvent.keyboard('{Enter}');
-    await screen.findByRole('heading', { name: 'Hello, world' });
+    await screen.findByRole('heading', { name: 'About Me' });
     expect(screen.getByRole('main')).toHaveFocus();
 
+    const main = within(screen.getByRole('main'));
+    for (const name of ['here', 'email', 'LinkedIn', 'GitHub']) {
+      await userEvent.keyboard('{Tab}');
+      expect(main.getByRole('link', { name })).toHaveFocus();
+    }
     await userEvent.keyboard('{Tab}');
     const spinnerColumn = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
-    expect(spinnerColumn.getByRole('button', { name: 'Get a frog' })).toHaveFocus();
+    expect(spinnerColumn.getByRole('button', { name: 'Spin the wheel' })).toHaveFocus();
   });
 
   it('library to home: shows the home page, focuses its <main>, hides the Home link', async () => {
@@ -285,7 +291,7 @@ describe.each([
     // A DOM click, not userEvent: Playwright would scroll the link (at the top) into view first,
     // reaching scrollY 0 on its own and hiding a missing scrollTo.
     screen.getByRole('link', { name: 'Home' }).click();
-    await screen.findByRole('heading', { name: 'Hello, world' });
+    await screen.findByRole('heading', { name: 'About Me' });
     expect(window.scrollY).toBe(0);
     expect(screen.getByRole('main')).toHaveClass('column-layout-middle');
     expect(screen.getByRole('main')).toHaveFocus();
@@ -300,7 +306,7 @@ describe.each([
     expect(window.scrollY).toBeGreaterThan(0);
 
     await router.navigate(-1);
-    await screen.findByRole('heading', { name: 'Hello, world' });
+    await screen.findByRole('heading', { name: 'About Me' });
     expect(window.scrollY).toBe(0);
     expect(screen.getByRole('main')).toHaveFocus();
     expect(navItems()).toEqual(['Frog Library', 'About']);

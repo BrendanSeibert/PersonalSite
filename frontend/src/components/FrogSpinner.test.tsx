@@ -10,7 +10,7 @@ import { REPEATS, spinOffset } from './frogReel';
 import { FrogSpinner } from './FrogSpinner';
 
 const titles = FROG_ENTRIES.map((entry) => translate(en, entry.titleKey));
-const PROMPT = 'Press the button to get a frog.';
+const PROMPT = 'Press the button to get a random frog.';
 const TOAD_BLURB = /^Anaxyrus americanus\./;
 
 type Options = Parameters<typeof FrogSpinner>[0];
@@ -28,7 +28,7 @@ function renderSpinner(props: Options = { random: () => 0 }) {
   return { root, strip, container };
 }
 
-const button = () => screen.getByRole('button', { name: 'Get a frog' });
+const button = () => screen.getByRole('button', { name: 'Spin the wheel' });
 const status = () => screen.getByRole('status');
 const offset = (strip: HTMLElement) => strip.style.getPropertyValue('--frog-spinner-offset');
 const cardButton = (name = 'Eastern American Toad') => screen.getByRole('button', { name });
@@ -51,6 +51,12 @@ describe('FrogSpinner', () => {
     expect(button()).toHaveAttribute('type', 'button');
     expect(button()).toHaveAttribute('aria-disabled', 'false');
     expect(status()).toHaveTextContent(PROMPT);
+    // Two lines: the second points to the Frog Library. The break is a real "\n" (shown by CSS pre-line).
+    expect(status().textContent).toBe(
+      'Press the button to get a random frog.\n' +
+        'If you need to see all the frogs in one place RIGHT NOW, check out the Frog Library instead.',
+    );
+    expect(button()).toHaveTextContent('Spin the wheel');
     expect(container.querySelector('.frog-spinner-window')).toHaveAttribute('aria-hidden', 'true');
     const rows = strip.querySelectorAll('.frog-spinner-row');
     expect(rows).toHaveLength(FROG_ENTRIES.length * REPEATS);
@@ -347,7 +353,7 @@ describe('FrogSpinner', () => {
     await user.keyboard('{Enter}');
     expect(isOpen()).toBe(true);
 
-    // Mouse down on "Get a frog" moves focus off the card, but the card stays open until the click.
+    // Mouse down on "Spin the wheel" moves focus off the card, but the card stays open until the click.
     await user.pointer({ keys: '[MouseLeft>]', target: button() });
     expect(button()).toHaveFocus();
     expect(isOpen()).toBe(true);

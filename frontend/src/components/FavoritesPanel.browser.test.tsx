@@ -8,6 +8,7 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS } from '../test/viewports';
 import { FROG_ENTRIES } from './frogEntries';
 import { MODE_STORAGE_KEY } from './FavoritesPanel';
+import { waitForHomeToSettle } from '../test/settle';
 
 const ALL = FROG_ENTRIES.map((entry) => entry.id);
 
@@ -25,7 +26,7 @@ async function renderHome({ allTime = false } = {}) {
   if (allTime) localStorage.setItem(MODE_STORAGE_KEY, 'allTime');
   const router = createMemoryRouter(routes, { initialEntries: ['/'] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  await screen.findByText('API ok, database up');
+  await waitForHomeToSettle();
   await waitFor(() => expect(document.querySelector('.favorites-panel-list li')).not.toBeNull());
 }
 

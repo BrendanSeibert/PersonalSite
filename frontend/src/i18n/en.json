@@ -12,8 +12,13 @@
   },
   "home": {
     "middle": {
-      "heading": "Hello, world",
-      "intro": "I'm a software engineer, and this is my corner of the web. It's under construction."
+      "heading": "About Me",
+      "intro": "I’m a professional software engineer with 5+ years of experience, and an amateur frog enthusiast with 28 years of experience. I specialize in creating reactive user friendly web components and appreciating critters of all sorts. The majority of my experience developing is with TypeScript, using SolidJS and Angular, and the majority of my experience pursuing amphibians is in northwestern Pennsylvania.",
+      "contact": "If you want to check out my resume, you can do so {resume}. If you want to reach out, this is my {email}, and here are links to my {linkedIn} and my {gitHub}.",
+      "resume": "here",
+      "email": "email",
+      "linkedIn": "LinkedIn",
+      "gitHub": "GitHub"
     },
     "left": {
       "heading": "Frog Spinner"
@@ -37,8 +42,8 @@
     }
   },
   "frogSpinner": {
-    "button": "Get a frog",
-    "prompt": "Press the button to get a frog.",
+    "button": "Spin the wheel",
+    "prompt": "Press the button to get a random frog.\nIf you need to see all the frogs in one place RIGHT NOW, check out the Frog Library instead.",
     "spinning": "Spinning...",
     "result": "You got: {title}. Tap or click the card to read more.",
     "entries": {
@@ -65,17 +70,14 @@
   },
   "frogLibrary": {
     "heading": "Frog Library",
-    "intro": "Every frog the spinner can give you, with its full description."
+    "intro": "Peruse every frog on the site in one place"
   },
   "about": {
     "heading": "About",
-    "intro": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.",
-    "body": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-  },
-  "health": {
-    "checking": "Checking...",
-    "ok": "API ok, database up",
-    "unavailable": "API unavailable"
+    "intro": "This site is an exploration into developing with Claude. I mainly used the Opus 5.5 model, though I used Fable 5.1 for some of the bigger tasks. My last Claude assisted project was built with Sonnet 5.5, and details about its construction can be found on my GitHub. This time around I wanted to try to lean more into AI assisted development and put something together rapidly. I did less line by line code checking, instead leaning on fresh Claude sessions for code reviews. I also used the previous project as a style guide, and that helped to speed up development. I still had Claude throw together plan documents for bigger changes. I find it reduces the number of miscommunications and helps catch some unexpected behaviors before implementation.",
+    "body": "All images and drawings on the site are my own, so no need for licensing. I’m just a casual frog enjoyer, and I didn’t want to wing it, so all frog facts on this site (excluding those about cats) came from paherps.com.",
+    "source": "Pa Herp Identification, {url}, accessed November 16, 2026",
+    "sourceUrl": "https://www.paherps.com/herps/frogs-toads/"
   },
   "notFound": {
     "heading": "Page not found"

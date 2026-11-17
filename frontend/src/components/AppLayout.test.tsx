@@ -7,12 +7,13 @@ import type { Dictionary } from '../i18n/translate';
 import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { AppLayout } from './AppLayout';
+import { waitForHomeToSettle } from '../test/settle';
 
 // The real routes, so navigation goes between the real pages and their <main>s.
 async function renderApp(url = '/', { strict = false } = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false, strict });
-  if (url === '/') await screen.findByText('API ok, database up');
+  if (url === '/') await waitForHomeToSettle();
   return router;
 }
 
@@ -58,7 +59,7 @@ describe('AppLayout, the favorites status', () => {
   it.each(['/', '/frog-library', '/about', '/does-not-exist'])('renders the save-failed status once on %s', async (url) => {
     const router = createMemoryRouter(routes, { initialEntries: [url] });
     const { container } = renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-    if (url === '/') await screen.findByText('API ok, database up');
+    if (url === '/') await waitForHomeToSettle();
     const statuses = container.querySelectorAll('.app-layout > p.visually-hidden[role="status"]');
     expect(statuses).toHaveLength(1);
     expect(statuses[0].textContent).toBe('');

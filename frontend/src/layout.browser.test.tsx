@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { routes } from './routes';
 import { renderWithProviders } from './test/renderWithProviders';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS, type Layout } from './test/viewports';
+import { waitForHomeToSettle } from './test/settle';
 
 async function renderApp(url = '/') {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
   // Let the layout settle into its final content.
-  if (url === '/') await screen.findByText('API ok, database up');
+  if (url === '/') await waitForHomeToSettle();
   else await screen.findByRole('heading', { level: 2 });
 }
 
@@ -122,12 +123,13 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
         expect(inner.bottom).toBeLessThanOrEqual(box.bottom + 1);
       }
     }
-    expect(within(middle).getByRole('heading', { name: 'Hello, world' })).toBeVisible();
-    expect(within(middle).getByText(/this is my corner of the web/)).toBeVisible();
-    expect(within(middle).getByRole('status')).toHaveTextContent('API ok, database up');
+    expect(within(middle).getByRole('heading', { name: 'About Me' })).toBeVisible();
+    expect(within(middle).getByText(/amateur frog enthusiast/)).toBeVisible();
+    expect(within(middle).getByRole('link', { name: 'GitHub' })).toBeVisible();
     expect(within(left).getByRole('heading', { name: 'Frog Spinner' })).toBeVisible();
-    expect(within(left).getByRole('button', { name: 'Get a frog' })).toBeVisible();
-    expect(within(left).getByRole('status')).toHaveTextContent('Press the button to get a frog.');
+    expect(within(left).getByRole('button', { name: 'Spin the wheel' })).toBeVisible();
+    expect(within(left).getByRole('status')).toHaveTextContent('Press the button to get a random frog.');
+    expect(getComputedStyle(within(left).getByRole('status')).whiteSpace).toBe('pre-line'); // the prompt's line break shows
     // The tabs are the right column's visible header; its heading is for screen readers only.
     expect(within(right).getByRole('heading', { name: 'Favorites' })).toHaveClass('visually-hidden');
     expect(within(right).getByRole('tab', { name: 'All Time Favorites' })).toBeVisible();
@@ -139,10 +141,10 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
   });
 
   if (width === 375 || width === 1280) {
-    it('draws the nav bar, the "Get a frog" button and the middle heading in the main green (sage-800)', () => {
+    it('draws the nav bar, the "Spin the wheel" button and the middle heading in the main green (sage-800)', () => {
       const SAGE_800 = 'rgb(59, 66, 46)';
       expect(getComputedStyle(document.querySelector('.navbar')!).backgroundColor).toBe(SAGE_800);
-      expect(getComputedStyle(screen.getByRole('button', { name: 'Get a frog' })).backgroundColor).toBe(SAGE_800);
+      expect(getComputedStyle(screen.getByRole('button', { name: 'Spin the wheel' })).backgroundColor).toBe(SAGE_800);
       const heading = within(columns().middle).getByRole('heading', { level: 2 });
       expect(getComputedStyle(heading).color).toBe(SAGE_800);
     });
@@ -223,7 +225,7 @@ describe.each([375, 1280])('with very large text (root font size doubled) at %i 
     const left = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
     const column = rect(screen.getByRole('complementary', { name: 'Frog Spinner' }));
     const reel = rect(document.querySelector('.frog-spinner-reel')!);
-    const button = rect(left.getByRole('button', { name: 'Get a frog' }));
+    const button = rect(left.getByRole('button', { name: 'Spin the wheel' }));
     const status = rect(left.getByRole('status'));
     for (const box of [reel, button, status]) {
       expect(box.left).toBeGreaterThanOrEqual(column.left - 1);

@@ -1,9 +1,29 @@
+@use "../styles/palette" as p;
 @use "../styles/tokens" as t;
 
-// No colours of its own yet; keep the block so future colour roles have one place to go.
 .d-home-page {
+    --text-color-home-page-link: #{p.$sage-800};
+    --text-color-home-page-link-hover: #{p.$sage-900};
 }
 
 .home-page-intro {
     font-size: t.$font-size-lg;
+}
+
+// The panel zeroes its own last child's bottom margin; this wrapper is that child, so its last
+// paragraph's margin would otherwise spill out below it and leave a gap at the column's bottom.
+.home-page-about > :last-child {
+    margin-bottom: 0;
+}
+
+// Underlined as well as coloured, so a link never relies on colour alone.
+.home-page-link {
+    color: var(--text-color-home-page-link);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+
+    &:hover {
+        color: var(--text-color-home-page-link-hover);
+        text-decoration-thickness: 0.12em;
+    }
 }
