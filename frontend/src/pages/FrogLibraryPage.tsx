@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { FrogCard } from '../components/FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from '../components/frogEntries';
+import { usePageTitle } from '../components/usePageTitle';
 import { useI18n } from '../context/I18nContext';
 import './FrogLibraryPage.scss';
 
@@ -12,10 +13,12 @@ type Props = {
 export function FrogLibraryPage({ entries = FROG_ENTRIES }: Props) {
   const { t } = useI18n();
   const headingId = useId();
+  usePageTitle('frogLibrary.heading');
 
   return (
-    // tabIndex -1: AppLayout focuses <main> after a navigation; never a Tab stop.
-    <main className="d-frog-library-page frog-library-page" tabIndex={-1}>
+    // tabIndex -1: AppLayout focuses <main> after a navigation; never a Tab stop. Named for the
+    // page, so a screen reader says which page opened when focus lands here.
+    <main className="d-frog-library-page frog-library-page" tabIndex={-1} aria-label={t('frogLibrary.heading')}>
       <div className="frog-library-page-panel">
         <h2 id={headingId}>{t('frogLibrary.heading')}</h2>
         <p className="frog-library-page-intro">{t('frogLibrary.intro')}</p>

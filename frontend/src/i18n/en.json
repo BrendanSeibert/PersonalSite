@@ -1,7 +1,12 @@
 {
   "app": {
     "lang": "en",
-    "title": "Brendan Seibert"
+    "title": "Brendan Seibert",
+    "pageTitle": "{page} · {site}"
+  },
+  "link": {
+    "newTab": "(opens in a new tab)",
+    "newTabPdf": "(PDF, opens in a new tab)"
   },
   "navbar": {
     "title": "Brendan Seibert",
@@ -34,7 +39,7 @@
     "saveFailed": "Couldn't save your favorite. Please try again.",
     "mine": {
       "tab": "Your Favorites",
-      "empty": "No favorites yet. Tap the heart on any frog to add it here."
+      "empty": "No favorites yet. Select the heart-shaped Favorite button on any frog to add it here."
     },
     "allTime": {
       "tab": "All Time Favorites",
@@ -43,9 +48,9 @@
   },
   "frogSpinner": {
     "button": "Spin the wheel",
-    "prompt": "Press the button to get a random frog.\nIf you need to see all the frogs in one place RIGHT NOW, check out the Frog Library instead.",
+    "prompt": "Press Spin the wheel to get a random frog.\nIf you need to see all the frogs in one place RIGHT NOW, check out the Frog Library instead.",
     "spinning": "Spinning...",
-    "result": "You got: {title}. Tap or click the card to read more.",
+    "result": "You got: {title}. Select the card to read more.",
     "entries": {
       "entry01": { "title": "Eastern Cricket Frog", "blurb": "Acris crepitans. A small frog with rough skin. Its color can be greenish, brown, tan, or yellow." },
       "entry02": { "title": "Eastern American Toad", "blurb": "Anaxyrus americanus. A medium-sized lumpy frog. Its color can be brown, red, olive, or gray." },

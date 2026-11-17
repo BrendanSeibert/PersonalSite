@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { routes } from './routes';
 import { renderWithProviders } from './test/renderWithProviders';
 import { waitForHomeToSettle } from './test/settle';
@@ -11,6 +11,10 @@ function renderAt(url: string) {
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
   return router;
 }
+
+afterEach(() => {
+  document.title = ''; // so no test passes on a title left by the one before
+});
 
 describe('routes', () => {
   it('renders the nav bar and the home page at /', async () => {
@@ -37,6 +41,37 @@ describe('routes', () => {
     renderAt('/does-not-exist');
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/', 'Brendan Seibert', 'Home'],
+    ['/frog-library', 'Frog Library · Brendan Seibert', 'Frog Library'],
+    ['/about', 'About · Brendan Seibert', 'About'],
+    ['/nope', 'Page not found · Brendan Seibert', 'Page not found'],
+  ])('titles %s "%s" and names its <main> "%s"', async (url, title, mainName) => {
+    renderAt(url);
+    expect(screen.getByRole('main', { name: mainName })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe(title));
+    if (url === '/') await waitForHomeToSettle();
+  });
+
+  it('changes the title on navigation, and restores it on Back and Forward', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/');
+    await waitForHomeToSettle();
+    expect(document.title).toBe('Brendan Seibert');
+
+    await user.click(screen.getByRole('link', { name: 'Frog Library' }));
+    expect(document.title).toBe('Frog Library · Brendan Seibert');
+    expect(screen.getByRole('main', { name: 'Frog Library' })).toHaveFocus();
+
+    await act(() => router.navigate(-1));
+    expect(document.title).toBe('Brendan Seibert');
+    expect(screen.getByRole('main', { name: 'Home' })).toHaveFocus();
+    await waitForHomeToSettle();
+
+    await act(() => router.navigate(1));
+    expect(document.title).toBe('Frog Library · Brendan Seibert');
   });
 
   it('shows a frog liked in the library in Your Favorites on the home page, pressed in both places', async () => {

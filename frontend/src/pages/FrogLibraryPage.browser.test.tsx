@@ -274,9 +274,10 @@ describe.each([
     expect(screen.getByRole('main')).toHaveFocus();
 
     const main = within(screen.getByRole('main'));
-    for (const name of ['here', 'email', 'LinkedIn', 'GitHub']) {
+    // Each name starts with the link's word; the new-tab links add a screen-reader-only warning.
+    for (const word of ['here', 'email', 'LinkedIn', 'GitHub']) {
       await userEvent.keyboard('{Tab}');
-      expect(main.getByRole('link', { name })).toHaveFocus();
+      expect(main.getByRole('link', { name: new RegExp(`^${word}( ?\\(.*opens in a new tab\\))?$`) })).toHaveFocus();
     }
     await userEvent.keyboard('{Tab}');
     const spinnerColumn = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));

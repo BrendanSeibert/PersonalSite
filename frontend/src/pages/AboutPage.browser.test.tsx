@@ -189,7 +189,7 @@ describe.each([
 
     // The source link is the page's one Tab stop; the next Tab moves on past the page, never back to the nav.
     await userEvent.keyboard('{Tab}');
-    expect(within(main).getByRole('link', { name: en.about.sourceUrl })).toHaveFocus();
+    expect(within(main).getByRole('link', { name: new RegExp(`^${en.about.sourceUrl}`) })).toHaveFocus();
     await userEvent.keyboard('{Tab}');
     expect(nav.contains(document.activeElement)).toBe(false);
     expect(main.contains(document.activeElement) && document.activeElement !== main).toBe(false);

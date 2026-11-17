@@ -9,7 +9,36 @@ import { waitForHomeToSettle } from '../test/settle';
 // The PDFs in frontend/public, read as text: enough to check one is there and starts like a PDF.
 const PUBLIC_PDFS = import.meta.glob<string>('/public/*.pdf', { query: '?raw', import: 'default', eager: true });
 
+// A new-tab link's accessible name: its word, then the hidden warning. jsdom's name computation
+// trims the hidden span's leading space ("here(PDF, …)"), which a real browser keeps, so the space
+// is optional here; the span's own text is checked for it, and a11y.browser.test.tsx checks the
+// exact name in Chromium.
+const newTabName = (word: string, pdf = false) =>
+  new RegExp(`^${word} ?\\(${pdf ? 'PDF, ' : ''}opens in a new tab\\)$`);
+
 describe('HomePage', () => {
+  it('names its one <main> "Home" and leaves the tab title as the site name', async () => {
+    renderWithProviders(<HomePage />);
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(screen.getByRole('main', { name: 'Home' })).toBeInTheDocument();
+    expect(document.title).toBe('Brendan Seibert');
+    await waitForHomeToSettle();
+  });
+
+  it('warns a screen reader that the new-tab links open a new tab, and the resume is a PDF', async () => {
+    renderWithProviders(<HomePage />);
+    expect(screen.getByRole('link', { name: newTabName('here', true) })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: newTabName('LinkedIn') })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: newTabName('GitHub') })).toBeInTheDocument();
+    const hiddenTexts = screen.getByRole('main').querySelectorAll('a .visually-hidden');
+    expect(hiddenTexts).toHaveLength(3);
+    for (const hidden of hiddenTexts) {
+      expect(hidden.textContent).toMatch(/^ \((PDF, )?opens in a new tab\)$/); // a leading space
+    }
+    expect(screen.getByRole('link', { name: 'email' })).toHaveAccessibleName('email'); // a mail app, not a tab
+    await waitForHomeToSettle();
+  });
+
   it('puts the About Me heading and both paragraphs in the main column, with no status line', async () => {
     renderWithProviders(<HomePage />);
     const main = within(screen.getByRole('main'));
@@ -33,7 +62,7 @@ describe('HomePage', () => {
 
   it('links the word "here" to the resume PDF that ships with the site, in a new tab', async () => {
     renderWithProviders(<HomePage />);
-    const link = screen.getByRole('link', { name: 'here' });
+    const link = screen.getByRole('link', { name: newTabName('here', true) });
     expect(link).toHaveAttribute('href', '/Brendan-Seibert-Resume.pdf');
     expect(link).toHaveAttribute('href', RESUME_URL);
     expect(link).toHaveAttribute('target', '_blank');
@@ -50,7 +79,7 @@ describe('HomePage', () => {
   ])('links the word %s to the profile, in a new tab, without the URL showing', async (name, constant, url) => {
     renderWithProviders(<HomePage />);
     expect(constant).toBe(url);
-    const link = screen.getByRole('link', { name });
+    const link = screen.getByRole('link', { name: newTabName(name) });
     expect(link).toHaveAttribute('href', url);
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
@@ -60,7 +89,9 @@ describe('HomePage', () => {
 
   it('keeps the contact sentence whole around its links', async () => {
     renderWithProviders(<HomePage />);
-    const paragraph = screen.getByRole('link', { name: 'GitHub' }).closest('p')!;
+    const paragraph = screen.getByRole('link', { name: /^GitHub/ }).closest('p')!.cloneNode(true) as HTMLElement;
+    // What is drawn: the new-tab warnings are for screen readers only (tested above).
+    for (const hidden of paragraph.querySelectorAll('.visually-hidden')) hidden.remove();
     expect(paragraph.textContent).toBe(
       'If you want to check out my resume, you can do so here. If you want to reach out, this is my ' +
         'email, and here are links to my LinkedIn and my GitHub.',
@@ -73,7 +104,7 @@ describe('HomePage', () => {
     const left = within(screen.getByRole('complementary', { name: 'Frog Spinner' }));
     expect(left.getByRole('heading', { name: 'Frog Spinner' })).toBeInTheDocument();
     expect(left.getByRole('button', { name: 'Spin the wheel' })).toBeInTheDocument();
-    expect(left.getByRole('status')).toHaveTextContent('Press the button to get a random frog.');
+    expect(left.getByRole('status')).toHaveTextContent('Press Spin the wheel to get a random frog.');
     expect(left.queryByText('Coming soon.')).toBeNull();
     await waitForHomeToSettle();
   });

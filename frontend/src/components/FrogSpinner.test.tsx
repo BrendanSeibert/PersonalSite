@@ -10,7 +10,7 @@ import { REPEATS, spinOffset } from './frogReel';
 import { FrogSpinner } from './FrogSpinner';
 
 const titles = FROG_ENTRIES.map((entry) => translate(en, entry.titleKey));
-const PROMPT = 'Press the button to get a random frog.';
+const PROMPT = 'Press Spin the wheel to get a random frog.';
 const TOAD_BLURB = /^Anaxyrus americanus\./;
 
 type Options = Parameters<typeof FrogSpinner>[0];
@@ -53,7 +53,7 @@ describe('FrogSpinner', () => {
     expect(status()).toHaveTextContent(PROMPT);
     // Two lines: the second points to the Frog Library. The break is a real "\n" (shown by CSS pre-line).
     expect(status().textContent).toBe(
-      'Press the button to get a random frog.\n' +
+      'Press Spin the wheel to get a random frog.\n' +
         'If you need to see all the frogs in one place RIGHT NOW, check out the Frog Library instead.',
     );
     expect(button()).toHaveTextContent('Spin the wheel');
@@ -95,12 +95,14 @@ describe('FrogSpinner', () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    expect(status()).toHaveTextContent('You got: Eastern American Toad. Tap or click the card to read more.');
+    expect(status()).toHaveTextContent('You got: Eastern American Toad. Select the card to read more.');
     expect(button()).toHaveAttribute('aria-disabled', 'false');
     expect(strip).not.toHaveClass('frog-spinner-strip-spinning');
     expect(offset(strip)).toBe('20');
     expect(cardButton()).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText(TOAD_BLURB)).not.toBeVisible();
+    // It sits on the payline, so it keeps one row's height and a two-line title, like the reel's cards.
+    expect(pick().querySelector('.frog-card')).toHaveAttribute('data-fits-row', 'true');
   });
 
   it("counts only the strip's own transition", async () => {

@@ -37,15 +37,14 @@ describe('AppLayout', () => {
     expect(screen.getByText('child route marker')).toBeInTheDocument();
   });
 
-  it('sets the document title and the page language from the dictionary', () => {
+  it('sets the page language from the dictionary, and leaves the title to each page', () => {
     renderLayout();
-    expect(document.title).toBe('Brendan Seibert');
     expect(document.documentElement.lang).toBe('en');
+    expect(document.title).toBe(''); // usePageTitle() in each page sets it
   });
 
-  it('follows a custom dictionary for the title', () => {
-    renderLayout({ ...en, app: { lang: 'fr', title: 'Le site' } });
-    expect(document.title).toBe('Le site');
+  it('follows a custom dictionary for the language', () => {
+    renderLayout({ ...en, app: { ...en.app, lang: 'fr' } });
     expect(document.documentElement.lang).toBe('fr');
   });
 

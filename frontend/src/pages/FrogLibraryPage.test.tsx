@@ -19,6 +19,13 @@ describe('FrogLibraryPage', () => {
     expect(within(main).getByText(en.frogLibrary.intro)).toBeInTheDocument();
   });
 
+  it('names its one <main> "Frog Library" and titles the tab "Frog Library · Brendan Seibert"', () => {
+    renderWithProviders(<FrogLibraryPage />);
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(screen.getByRole('main', { name: 'Frog Library' })).toBeInTheDocument();
+    expect(document.title).toBe('Frog Library · Brendan Seibert');
+  });
+
   it('lists every frog from the spinner’s source, in order, fully open', () => {
     renderWithProviders(<FrogLibraryPage />);
     const listItems = items();

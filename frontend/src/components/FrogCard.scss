@@ -37,7 +37,8 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
         align-items: center;
         gap: t.$space-3;
         width: 100%;
-        height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width}); // same outer height on the strip and when landed
+        // At least one row tall; it grows to fit a long title. Row-fitting cards fix it (below).
+        min-height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width});
         padding: t.$space-3;
         border: 0;
         background: none;
@@ -121,10 +122,6 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
     }
 
     .frog-card-title {
-        display: -webkit-box;
-        overflow: hidden;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2; // at most two lines on the reel, ending in "…"
         font-weight: 600;
         line-height: 1.4; // room for descenders ("g", "p", "y"): the clamp's overflow: hidden clips at the last line box
         // Long words break at a syllable with a hyphen ("North-ern", from the page's lang="en");
@@ -139,6 +136,23 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
         overflow-wrap: anywhere; // the card clips its overflow, so a long word or URL must wrap
     }
 
+    // Cards on the reel, and the landed card on the payline, must be exactly one row tall: there the
+    // title is cut at two lines, ending in "…" (the landed card's full name is in the status line
+    // below it). Every other card grows to show its whole title (WCAG 1.4.12).
+    // Before the open layout, which overrides both rules at the same specificity.
+    &[data-fits-row="true"] {
+        .frog-card-face {
+            height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width}); // same outer height on the strip and when landed
+        }
+
+        .frog-card-title {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+    }
+
     // The open layout: a large image on top, then the full title, then the description. Shared by
     // the landed card when it opens and by every card on the Frog Library page.
     &[data-expanded="true"],
@@ -149,7 +163,6 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
             flex-direction: column;
             align-items: flex-start;
             height: auto;
-            min-height: calc(#{t.$frog-card-height} - 2 * #{t.$border-width});
         }
 
         // Shown even on narrow cards: stacked, it no longer competes with the title for width.

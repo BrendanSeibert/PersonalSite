@@ -84,7 +84,8 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
         {phase === 'landed' && (
           // The open and close rules live in useCardExpansion, shared with the favorites panel.
           // Its heart is the only way to favorite this frog: landing on it never does.
-          <ExpandableFrogCard className="frog-spinner-pick" entry={picked} heart whileOpen={fitOpenCard} />
+          // fitsRow: it sits exactly on the payline, so it keeps one row's height and a two-line title.
+          <ExpandableFrogCard className="frog-spinner-pick" entry={picked} heart fitsRow whileOpen={fitOpenCard} />
         )}
       </div>
       <button type="button" className="frog-spinner-button" aria-disabled={phase === 'spinning'} onClick={spin}>

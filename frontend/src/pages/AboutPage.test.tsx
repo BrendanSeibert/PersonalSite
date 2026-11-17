@@ -17,11 +17,20 @@ describe('AboutPage', () => {
     expect(within(main).getByRole('heading', { level: 2, name: 'About' })).toBeInTheDocument();
   });
 
+  it('names its one <main> "About" and titles the tab "About · Brendan Seibert"', () => {
+    renderWithProviders(<AboutPage />);
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(screen.getByRole('main', { name: 'About' })).toBeInTheDocument();
+    expect(document.title).toBe('About · Brendan Seibert');
+  });
+
   it('shows the lead, the body and the source from en.json, in that order', () => {
     renderWithProviders(<AboutPage />);
     expect(screen.getByText(en.about.intro)).toHaveClass('about-page-intro');
     expect(screen.getByText(en.about.body)).toBeInTheDocument();
-    const paragraphs = [...screen.getByRole('main').querySelectorAll('p')].map((p) => p.textContent);
+    const shown = screen.getByRole('main').cloneNode(true) as HTMLElement;
+    for (const hidden of shown.querySelectorAll('.visually-hidden')) hidden.remove(); // screen-reader-only text
+    const paragraphs = [...shown.querySelectorAll('p')].map((p) => p.textContent);
     expect(paragraphs).toEqual([en.about.intro, en.about.body, CITATION]);
     expect(screen.getByRole('main').querySelector('p:last-child')).toHaveClass('about-page-source');
   });
@@ -38,7 +47,12 @@ describe('AboutPage', () => {
     const links = within(main).getAllByRole('link');
     expect(links).toHaveLength(1); // the only Tab stop on the page
     const link = links[0]!;
-    expect(link.textContent).toBe('https://www.paherps.com/herps/frogs-toads/');
+    expect(link.firstChild!.textContent).toBe('https://www.paherps.com/herps/frogs-toads/');
+    // A screen reader also hears that it opens a new tab; nothing extra is drawn.
+    // (jsdom trims the hidden span's leading space from the name; a real browser keeps it, and
+    // a11y.browser.test.tsx checks the exact name in Chromium.)
+    expect(link).toHaveAccessibleName(/^https:\/\/www\.paherps\.com\/herps\/frogs-toads\/ ?\(opens in a new tab\)$/);
+    expect(link.querySelector('.visually-hidden')!.textContent).toBe(' (opens in a new tab)');
     expect(link).toHaveAttribute('href', 'https://www.paherps.com/herps/frogs-toads/');
     expect(link).toHaveAttribute('href', en.about.sourceUrl); // the shown text and the target agree
     expect(PAHERPS_URL).toBe(en.about.sourceUrl);

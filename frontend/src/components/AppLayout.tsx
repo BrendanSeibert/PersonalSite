@@ -11,8 +11,8 @@ export function AppLayout() {
   const shownPath = useRef(pathname);
   const layoutRef = useRef<HTMLDivElement>(null);
 
+  // The page language only: each page sets its own title with usePageTitle().
   useEffect(() => {
-    document.title = t('app.title');
     document.documentElement.lang = t('app.lang');
   }, [t]);
 

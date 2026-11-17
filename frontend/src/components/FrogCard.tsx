@@ -20,10 +20,19 @@ type Props = { entry: FrogEntry } & (
       full: true;
       expansion?: never;
       concealed?: never;
+      fitsRow?: never; // a library card always shows its whole title
     } & Corner)
-  | ({ full?: false; expansion?: Expansion; concealed?: false } & Corner)
+  | ({
+      full?: false;
+      expansion?: Expansion;
+      concealed?: false;
+      // Exactly one reel row tall, with the title cut at two lines: the landed card, which sits on
+      // the payline. Every other collapsed card grows to show its whole title.
+      fitsRow?: boolean;
+    } & Corner)
   | {
       full?: false;
+      fitsRow?: boolean; // a concealed card always fits a row
       expansion?: never;
       // A skeleton in the card's colours: an image block and a title bar, with no picture or text.
       // Used on the reel, so only the landed card gives away what it is.
@@ -47,7 +56,15 @@ function likesKey(lang: string, count: number): TranslationKey {
 // One card, drawn the same way on the reel strip, as the landed card, in the Frog Library and in
 // the favorites panel. Without `expansion` it is static; with it, the face is a disclosure button
 // and the description is rendered. With `full` it is always open and not interactive.
-export function FrogCard({ entry, expansion, concealed = false, full = false, heart = false, likes }: Props) {
+export function FrogCard({
+  entry,
+  expansion,
+  concealed = false,
+  full = false,
+  fitsRow = false,
+  heart = false,
+  likes,
+}: Props) {
   const { t } = useI18n();
   const image = entry.image ? (
     <img className="frog-card-image" src={entry.image} alt="" />
@@ -101,7 +118,12 @@ export function FrogCard({ entry, expansion, concealed = false, full = false, he
   }
 
   return (
-    <div className={classes} data-entry-id={entry.id} data-expanded={expansion?.expanded ?? false}>
+    <div
+      className={classes}
+      data-entry-id={entry.id}
+      data-expanded={expansion?.expanded ?? false}
+      data-fits-row={fitsRow || concealed}
+    >
       {expansion ? (
         <button
           type="button"

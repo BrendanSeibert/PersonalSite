@@ -8,6 +8,7 @@ function renderLayout() {
       middle={<p>middle content</p>}
       left={<p>left content</p>}
       right={<p>right content</p>}
+      mainLabel="Middle page"
       leftLabel="Left side"
       rightLabel="Right side"
     />,
@@ -28,6 +29,7 @@ describe('ColumnLayout', () => {
   it('makes the middle the main landmark and the sides labelled complementary landmarks', () => {
     renderLayout();
     expect(screen.getByRole('main')).toHaveClass('column-layout-middle');
+    expect(screen.getByRole('main', { name: 'Middle page' })).toBeInTheDocument(); // named for the page
     expect(screen.getByRole('complementary', { name: 'Left side' })).toHaveClass('column-layout-left');
     expect(screen.getByRole('complementary', { name: 'Right side' })).toHaveClass('column-layout-right');
   });

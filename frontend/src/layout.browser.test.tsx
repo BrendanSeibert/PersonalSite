@@ -125,10 +125,10 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
     }
     expect(within(middle).getByRole('heading', { name: 'About Me' })).toBeVisible();
     expect(within(middle).getByText(/amateur frog enthusiast/)).toBeVisible();
-    expect(within(middle).getByRole('link', { name: 'GitHub' })).toBeVisible();
+    expect(within(middle).getByRole('link', { name: /^GitHub ?\(opens in a new tab\)$/ })).toBeVisible();
     expect(within(left).getByRole('heading', { name: 'Frog Spinner' })).toBeVisible();
     expect(within(left).getByRole('button', { name: 'Spin the wheel' })).toBeVisible();
-    expect(within(left).getByRole('status')).toHaveTextContent('Press the button to get a random frog.');
+    expect(within(left).getByRole('status')).toHaveTextContent('Press Spin the wheel to get a random frog.');
     expect(getComputedStyle(within(left).getByRole('status')).whiteSpace).toBe('pre-line'); // the prompt's line break shows
     // The tabs are the right column's visible header; its heading is for screen readers only.
     expect(within(right).getByRole('heading', { name: 'Favorites' })).toHaveClass('visually-hidden');

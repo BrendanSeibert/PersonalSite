@@ -62,6 +62,15 @@ describe('FrogCard', () => {
     expect(onActivate).toHaveBeenCalledTimes(1);
   });
 
+  it('marks only row-fitting cards (fitsRow, or concealed) for the fixed height and two-line title', () => {
+    const expansion = { expanded: false, onActivate: vi.fn(), blurbId: 'blurb' };
+    expect(renderCard()).toHaveAttribute('data-fits-row', 'false');
+    expect(renderCard({ expansion, heart: true })).toHaveAttribute('data-fits-row', 'false');
+    expect(renderCard({ expansion, fitsRow: true })).toHaveAttribute('data-fits-row', 'true');
+    expect(renderCard({ concealed: true })).toHaveAttribute('data-fits-row', 'true');
+    expect(renderCard({ full: true })).not.toHaveAttribute('data-fits-row'); // a library card is never cut
+  });
+
   it('draws a concealed card as a skeleton, with no title or picture', () => {
     const card = renderCard({ entry: { ...entry, image: '/test.png' }, concealed: true });
     expect(card.textContent).toBe('');

@@ -82,6 +82,10 @@ npm run test:browser
 
 They include real frog-spinner spins (3 seconds each), so the run takes a couple of minutes.
 
+`src/a11y.browser.test.tsx` runs [axe-core](https://github.com/dequelabs/axe-core)'s WCAG 2.x Level A and AA rules over every page and the home page's key states (idle, card landed and open, All Time Favorites, favorites unavailable, empty Your Favorites) at a phone and a laptop size, and over the Frog Library under the WCAG 1.4.12 text-spacing overrides (`src/test/textSpacing.ts`). **A new page or state gets a case there.** axe finds only the mechanical failures (a missing name, a bad ARIA attribute): it does not replace checking by hand with a screen reader, the keyboard, zoom and a contrast theme. One rule is skipped in one state: with the landed card open, `target-size` is off, because the open card floats over the Spin button on purpose (it closes on a click outside, Escape, or focus moving away).
+
+If `npm test` fails every file with "Vitest failed to find the runner", the terminal's working directory has a lowercase drive letter (`c:\...`), which makes Node load Vitest twice. `cd C:\Users\...\frontend` (capital `C:`) and run it again.
+
 **Backend integration tests** (real PostgreSQL in a throwaway Docker stack; no local install needed). Run both lines; the second always cleans up:
 
 ```powershell
@@ -131,6 +135,11 @@ The palette (`frontend/src/styles/_palette.scss`) is built from four anchor colo
 | Favorites tabs: text, and on hover | `sky-700` on `sky-100`, on `sky-200` | 7.5, 6.4 |
 | Favorites tabs: selected text | `sky-900` on `sky-100` | 13.1 |
 | Favorites tabs: the selected tab's bar | `sage-800` on `sky-100` | 9.2 (needs 3) |
+| Heart focus ring on the card tones | `sky-700` on `sand-200`, `sage-200`, `sky-200` | 5.9, 6.7, 6.4 (needs 3) |
+| Heart on its hover surface | `sage-800` on `sand-50` | 10.0 (needs 3) |
+| Card focus ring on the spinner window | `sky-700` on `sand-50` | 8.0 (needs 3) |
+
+The card surfaces against their panels (about 1.2:1) and the panel borders (about 1.4:1) are below 3:1 on purpose. WCAG 1.4.11 needs a visible boundary only when nothing else identifies the control, and every card face is identified by its title text. The spinner window's border (`sage-500`, about 2.9:1) is decoration, not a control.
 
 `frontend/src/styles/contrast.test.ts` checks every row; add new pairings there too. When you add a colour pairing, check it with a contrast checker before using it, and add it here.
 
@@ -140,6 +149,7 @@ The frog spinner in the "Frog Spinner" column reads its entries from `frontend/s
 
 - **Text:** each entry has a `title` and a `blurb` (the description shown when the card opens). The order in the file is the order on the reel. Titles must be unique (a test checks this). The ids (`entry01`...) never appear on screen.
 - **Adding or removing an entry:** edit `en.json`. Card colours are assigned automatically so neighbouring cards always differ. Until an admin page exists, the backend must also know the frog: add a new numbered migration that inserts its row into `frogs` (for example `backend/migrations/004_add_entry21.sql` with `INSERT INTO frogs (id, position) VALUES ('entry21', 21);`), or one that deletes it. Removing a frog removes its likes. The seed (`002_seed_frogs.sql`) is the initial crop only and never runs again; `seedFrogs.test.ts` checks that the seed plus every later frog migration (such as `004_remove_entry20.sql`) leaves exactly the frogs in `en.json`.
+- **Long titles:** only a card with `fitsRow` (the spinner's landed card, and every concealed reel card) is exactly one reel row tall, with its title cut at two lines ("…"); the landed card's full name is in the status line below it. Every other card, such as those in the favorites panel, grows to show its whole title (WCAG 1.4.12).
 - **The Frog Library page** (`/frog-library`) shows the same entries, every one fully open, in the same order and the same colours, so editing `en.json` updates both the reel and the library.
 - **Images:** put the file in `frontend/src/assets/frog-entries/`, import it at the top of `frontend/src/components/frogEntries.ts`, and add it to `IMAGES` there. Keep images small (about 160px square, WebP), because each one appears five times on the reel strip. Images are decorative (`alt=""`) for now; if a picture adds information the title doesn't, give it alt text in `en.json`.
 
@@ -241,7 +251,9 @@ A high or critical vulnerability in a shipped package fails the build. Dependabo
 
 - The pages are Home (`/`), the Frog Library (`/frog-library`) and About (`/about`).
 - Every page's URL lives in `frontend/src/paths.ts` (`PATHS`). The routes and the nav bar both read it, so changing a URL is one line.
-- A new page needs a route in `routes.tsx`, exactly one `<main tabIndex={-1}>` (after each navigation, Back and Forward included, `AppLayout` scrolls to the top and focuses that `<main>`), and, if it belongs in the nav bar, an item in `NAV_ITEMS` in `Navbar.tsx`.
+- A new page needs a route in `routes.tsx`; exactly one `<main tabIndex={-1}>`, **with a name** (`aria-label`, from the same key as its title; after each navigation, Back and Forward included, `AppLayout` scrolls to the top and focuses that `<main>`, so a screen reader says e.g. "Frog Library, main landmark"); a `usePageTitle()` call (`usePageTitle('frogLibrary.heading')` gives the tab title "Frog Library · Brendan Seibert", and with no key it is the site name alone, as on Home; the format is `app.pageTitle` in `en.json`); and, if it belongs in the nav bar, an item in `NAV_ITEMS` in `Navbar.tsx`. `AppLayout` sets only the page language, not the title.
+- A link that opens a new tab uses `NewTabLink` in `HomePage.tsx`, or adds the same screen-reader-only text (`<span className="visually-hidden"> {t('link.newTab')}</span>`, with the leading space). A link to a PDF uses `link.newTabPdf`.
+- On wide screens the home page's columns read Left, Middle, Right on screen, but the DOM and Tab order run Middle, Left, Right. This is deliberate: the columns are independent, and the DOM order is the right reading order on a phone (WCAG 1.3.2 and 2.4.3 still pass).
 - The nav bar is links only: every item in `NAV_ITEMS` must have a `to` (an item without one fails to compile).
 - The nav bar hides the link to the page you are on: no Home on the home page, no Frog Library on the library, no About on the About page. On any other URL, all three links show.
 - After a navigation, Tab moves forward from the page's `<main>` into its content; Shift+Tab goes back to the nav bar.
@@ -285,12 +297,13 @@ EX3/
         ├── paths.ts           every page's URL (PATHS), shared by the routes and the nav bar
         ├── routes.tsx         the list of URLs and their pages, inside AppLayout
         ├── layout.browser.test.tsx   real-browser layout tests at 9 viewport sizes
+        ├── a11y.browser.test.tsx     axe WCAG A/AA scans of every page and key state
         ├── api/               favorites.ts (the favorites endpoints, checked data)
         ├── styles/            _palette.scss (colours), _tokens.scss (sizes, breakpoint, mixins), convention and contrast tests
         ├── i18n/              en.json (every visible string), translate.ts, fillSlots.tsx (links inside a sentence),
         │                      no-hard-coded-text test
         ├── context/           I18nProvider and useI18n()
-        ├── components/        AppLayout, Navbar, ColumnLayout (each with .scss and tests)
+        ├── components/        AppLayout, Navbar, ColumnLayout (each with .scss and tests); usePageTitle.ts (each page's tab title)
         │   ├── FrogSpinner.tsx       the reel, "Spin the wheel" button and status line (+ .scss, tests, browser tests)
         │   ├── FrogCard.tsx          one rounded, coloured card: image slot, title, optional description
         │   ├── frogEntries.ts        the entry list from en.json, card tones, image map
@@ -303,7 +316,8 @@ EX3/
         ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage;
         │                      contactLinks.ts (the email address and profile URLs behind the About Me links)
         └── test/              test setup (jsdom and browser), MSW server and handlers, favoritesFake.ts, renderWithProviders,
-                               viewports.ts (the viewport table shared by the browser tests)
+                               viewports.ts (the viewport table shared by the browser tests),
+                               axe.ts (expectNoAxeViolations), textSpacing.ts (the WCAG 1.4.12 overrides)
 ```
 
 ## How a request flows

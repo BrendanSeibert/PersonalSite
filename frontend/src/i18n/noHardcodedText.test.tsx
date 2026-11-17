@@ -47,6 +47,7 @@ function renderMarkedUp(url: string, dictionary: Dictionary = markUp(en)) {
 }
 
 afterEach(() => {
+  document.title = '';
   document.documentElement.lang = '';
 });
 
@@ -60,7 +61,9 @@ it.each([
   await screen.findByText(settledText); // wait for async content such as the favorites panel
 
   expect(findHardcodedText()).toEqual([]);
-  expect(document.title).toBe('⟦app.title⟧');
+  // The tab title too: only the site name on Home, the page-title format elsewhere.
+  expect(document.title).toMatch(MARKED);
+  expect(document.title).toBe(url === '/' ? '⟦app.title⟧' : '⟦app.pageTitle⟧');
 });
 
 it('the links in the About Me section take their words from en.json too', async () => {
@@ -72,7 +75,13 @@ it('the links in the About Me section take their words from en.json too', async 
   renderMarkedUp('/', dictionary);
   await waitForHomeToSettle('⟦favorites.loading⟧');
 
-  expect(screen.getAllByRole('link', { name: /^⟦home\.middle\.(resume|email|linkedIn|gitHub)⟧$/ })).toHaveLength(4);
+  expect(
+    // (jsdom drops the space before the hidden new-tab warning; a real browser keeps it.)
+    screen.getAllByRole('link', { name: /^⟦home\.middle\.(resume|email|linkedIn|gitHub)⟧( ?⟦link\.newTab(Pdf)?⟧)?$/ }),
+  ).toHaveLength(4);
+  // The new-tab warnings come from en.json too.
+  expect(screen.getByRole('link', { name: /^⟦home\.middle\.resume⟧ ?⟦link\.newTabPdf⟧$/ })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /^⟦home\.middle\.gitHub⟧ ?⟦link\.newTab⟧$/ })).toBeInTheDocument();
   expect(findHardcodedText()).toEqual([]);
 });
 
@@ -82,7 +91,7 @@ it('the source link on the About page takes its text from en.json too', async ()
   renderMarkedUp('/about', dictionary);
   await screen.findByText('⟦about.heading⟧');
 
-  expect(screen.getByRole('link', { name: '⟦about.sourceUrl⟧' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /^⟦about\.sourceUrl⟧ ?⟦link\.newTab⟧$/ })).toBeInTheDocument();
   expect(findHardcodedText()).toEqual([]);
 });
 

@@ -8,6 +8,7 @@ type Props = {
   className?: string; // for the wrapper, which the caller positions
   heart?: boolean;
   likes?: number;
+  fitsRow?: boolean; // one reel row tall, title cut at two lines (the spinner's landed card)
   // Runs while the card is open, given the wrapper; return a cleanup. It runs in the same commit
   // that opens the card, before the card is painted or scrolled into view, so a caller can size
   // things around the open card first (the spinner caps it at the screen's bottom edge).
@@ -16,7 +17,7 @@ type Props = {
 
 // A collapsed card that opens to show its description, and closes again, by the rules in
 // useCardExpansion. The spinner's landed card and every card in the favorites panel are one.
-export function ExpandableFrogCard({ entry, className, heart, likes, whileOpen }: Props) {
+export function ExpandableFrogCard({ entry, className, heart, likes, fitsRow, whileOpen }: Props) {
   const blurbId = useId();
   const { expanded, ref, wrapperProps, onActivate } = useCardExpansion();
 
@@ -28,7 +29,13 @@ export function ExpandableFrogCard({ entry, className, heart, likes, whileOpen }
 
   return (
     <div ref={ref} className={className} {...wrapperProps}>
-      <FrogCard entry={entry} expansion={{ expanded, blurbId, onActivate }} heart={heart} likes={likes} />
+      <FrogCard
+        entry={entry}
+        expansion={{ expanded, blurbId, onActivate }}
+        heart={heart}
+        likes={likes}
+        fitsRow={fitsRow}
+      />
     </div>
   );
 }

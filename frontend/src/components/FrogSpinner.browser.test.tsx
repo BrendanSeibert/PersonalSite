@@ -6,6 +6,7 @@ import en from '../i18n/en.json';
 import { translate, type Dictionary } from '../i18n/translate';
 import { routes } from '../routes';
 import { renderWithProviders } from '../test/renderWithProviders';
+import { applyTextSpacing } from '../test/textSpacing';
 import { expectedPeek, TAP_TARGET_PX, VIEWPORTS } from '../test/viewports';
 import { FROG_ENTRIES } from './frogEntries';
 import { pickNextIndex } from './frogReel';
@@ -302,6 +303,20 @@ describe.each([
     expect(heart.left).toBeGreaterThanOrEqual(rect(titleEl).right - 1);
     expect(rect(titleEl).width).toBeGreaterThanOrEqual(48);
   });
+
+  it('keeps the landed card one reel row tall under the text-spacing overrides, its full name in the status', async () => {
+    const undo = applyTextSpacing();
+    try {
+      await spinAndLand(title(first));
+      expect(landedCard()).toHaveAttribute('data-fits-row', 'true');
+      const outer = rect(landedCard()).height + 2 * 4; // the card plus its 0.25rem gap above and below
+      expect(Math.abs(outer - ROW_PX)).toBeLessThanOrEqual(1);
+      expectClose(rect(landedCard()), rect(paylineCard()));
+      expect(parts().status).toHaveTextContent(`You got: ${title(first)}.`);
+    } finally {
+      undo();
+    }
+  }, SPIN_TIMEOUT * 2);
 
   describe('once landed', () => {
     beforeEach(async () => {

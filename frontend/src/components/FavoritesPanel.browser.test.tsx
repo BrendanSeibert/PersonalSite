@@ -2,8 +2,11 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import en from '../i18n/en.json';
+import type { Dictionary } from '../i18n/translate';
 import { routes } from '../routes';
 import { seedFavorites } from '../test/favoritesFake';
+import { applyTextSpacing } from '../test/textSpacing';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS } from '../test/viewports';
 import { FROG_ENTRIES } from './frogEntries';
@@ -353,5 +356,62 @@ describe('the favorites panel while its list loads', () => {
     release();
     await waitFor(() => expect(within(panelEl).getAllByRole('listitem')).toHaveLength(1));
     expect(panelEl, 'focus is not dropped to <body>').toHaveFocus();
+  });
+});
+
+// WCAG 1.4.12: a favorites card has no reel row to match, so it grows to show its whole title,
+// with or without the text-spacing overrides. Atlantic Coast Leopard Frog already needs three lines
+// in the desktop column; entry01 is renamed to a made-up 60-character title for this test.
+describe.each([
+  [1280, 800],
+  [375, 667],
+])('favorites titles in full at %i × %i', (width, height) => {
+  const LONG_TITLE = 'Extraordinarily Long Speckled Northern Mountain Chorus Frogs';
+  const dictionary: Dictionary = {
+    ...en,
+    frogSpinner: {
+      ...en.frogSpinner,
+      entries: { ...en.frogSpinner.entries, entry01: { ...en.frogSpinner.entries.entry01, title: LONG_TITLE } },
+    },
+  };
+
+  beforeEach(async () => {
+    await page.viewport(width, height);
+    seedFavorites({ mine: ['entry01', 'entry08'] });
+    const router = createMemoryRouter(routes, { initialEntries: ['/'] });
+    renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary });
+    await waitForHomeToSettle();
+    await waitFor(() => expect(cards()).toHaveLength(2));
+  });
+
+  function expectWholeTitles() {
+    expect(LONG_TITLE).toHaveLength(60);
+    expect(cards().map((card) => card.querySelector('.frog-card-title')!.textContent)).toEqual([
+      LONG_TITLE,
+      'Atlantic Coast Leopard Frog',
+    ]);
+    for (const card of cards()) {
+      const title = card.querySelector<HTMLElement>('.frog-card-title')!;
+      expect(card).toHaveAttribute('data-fits-row', 'false');
+      expect(getComputedStyle(title).getPropertyValue('-webkit-line-clamp'), 'not clamped').toBe('none');
+      expect(title.scrollHeight, 'title not cut off').toBeLessThanOrEqual(title.clientHeight + 1);
+      expect(rect(title).bottom, 'title inside its card').toBeLessThanOrEqual(rect(card).bottom);
+      expect(card.scrollWidth, 'card not clipped sideways').toBeLessThanOrEqual(card.clientWidth + 1);
+    }
+    expect(getComputedStyle(list()).overflowY, 'the list still scrolls').toBe('auto');
+    expectNoHorizontalScroll();
+  }
+
+  it('without the text-spacing overrides', () => {
+    expectWholeTitles();
+  });
+
+  it('with the text-spacing overrides', () => {
+    const undo = applyTextSpacing();
+    try {
+      expectWholeTitles();
+    } finally {
+      undo();
+    }
   });
 });

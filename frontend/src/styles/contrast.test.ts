@@ -62,6 +62,11 @@ const PAIRINGS: [string, string, string, number][] = [
   ['tab text', 'sky-700', 'sky-100', TEXT],
   ['tab text on hover', 'sky-700', 'sky-200', TEXT],
   ['selected tab text', 'sky-900', 'sky-100', TEXT],
+  ['heart focus ring on a sand card', 'sky-700', 'sand-200', UI],
+  ['heart focus ring on a sage card', 'sky-700', 'sage-200', UI],
+  ['heart focus ring on a sky card', 'sky-700', 'sky-200', UI],
+  ['heart on its hover surface', 'sage-800', 'sand-50', UI],
+  ['card focus ring on the spinner window', 'sky-700', 'sand-50', UI],
 ];
 
 describe('the contrast formula', () => {
