@@ -19,7 +19,10 @@ async function countFor(db: Db, entryId: string): Promise<number> {
 
 const unknownFrog = (res: Response) => void res.status(404).json({ error: 'Unknown frog' });
 
-export function favoritesRouter(db: Db, { cookieSecure }: { cookieSecure: boolean }): Router {
+export function favoritesRouter(
+  db: Db,
+  { cookieSecure, visitorSecret }: { cookieSecure: boolean; visitorSecret: string },
+): Router {
   const router = Router();
   router.use('/favorites', (_req, res, next) => {
     res.set('Cache-Control', 'no-store'); // per-visitor and always changing: never cache
@@ -28,7 +31,7 @@ export function favoritesRouter(db: Db, { cookieSecure }: { cookieSecure: boolea
 
   // Your favorites, in the frogs' display order. No cookie: an empty list, and no cookie is created.
   router.get('/favorites/mine', async (req, res) => {
-    const visitor = readVisitorId(req);
+    const visitor = readVisitorId(req, visitorSecret);
     if (!visitor) return void res.json({ entryIds: [] });
     const { rows } = await db.query(
       `SELECT f.entry_id FROM favorites f JOIN frogs ON frogs.id = f.entry_id
@@ -54,7 +57,7 @@ export function favoritesRouter(db: Db, { cookieSecure }: { cookieSecure: boolea
   router.put('/favorites/:entryId', async (req, res) => {
     const { entryId } = req.params;
     if (!(await frogExists(db, entryId))) return unknownFrog(res);
-    const visitor = ensureVisitorId(req, res, { secure: cookieSecure });
+    const visitor = ensureVisitorId(req, res, { secure: cookieSecure, secret: visitorSecret });
     try {
       await db.query('INSERT INTO favorites (visitor_id, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [
         visitor,
@@ -71,7 +74,7 @@ export function favoritesRouter(db: Db, { cookieSecure }: { cookieSecure: boolea
   router.delete('/favorites/:entryId', async (req, res) => {
     const { entryId } = req.params;
     if (!(await frogExists(db, entryId))) return unknownFrog(res);
-    const visitor = readVisitorId(req);
+    const visitor = readVisitorId(req, visitorSecret);
     if (visitor) await db.query('DELETE FROM favorites WHERE visitor_id = $1 AND entry_id = $2', [visitor, entryId]);
     res.json({ entryId, favorited: false, count: await countFor(db, entryId) });
   });

@@ -2,13 +2,13 @@
 
 A thin vertical slice that proves every layer of the stack is wired together: a React page asks a Node.js API for its health, and the API asks PostgreSQL. Everything runs locally with one Docker command.
 
-**Stack:** React 19 + Vite 8, React Router 8, TanStack Query 5 (frontend) · Node.js 22, Express 5, TypeScript, `pg` (backend) · PostgreSQL 16 · Docker Compose · Vitest, Supertest, React Testing Library, MSW (tests).
+**Stack:** React 19 + Vite 8, React Router 8, TanStack Query 5 (frontend) · Node.js 24, Express 5, TypeScript, `pg` (backend) · PostgreSQL 16 · Docker Compose · Vitest, Supertest, React Testing Library, MSW (tests).
 
 ## Prerequisites
 
 - Docker Desktop (on Windows, with the WSL 2 backend enabled)
 - Git
-- Node.js 22 LTS, only needed to run the unit tests outside Docker
+- Node.js 24 LTS, only needed to run the unit tests outside Docker
 
 ## First-time setup
 
@@ -27,6 +27,8 @@ docker compose up --build
 Then open <http://localhost:5173>. You should see a dark green nav bar ("Brendan Seibert" on the left; Frog Library and About on the right) above three columns, with "Hello, world" in the middle one and, within a second, "API ok, database up". The right column is the favorites panel, headed by two tabs: **Your Favorites** and **All Time Favorites**. The API is also available directly at <http://localhost:3000/api/health>.
 
 Add `-d` to run in the background.
+
+**After pulling the production-readiness change** (new backend packages, Node 24), run `docker compose up --build -V` once. Without `-V`, Compose reuses the containers' old `node_modules` and the backend stops with `Cannot find package 'helmet'`.
 
 ## Stop everything
 
@@ -144,10 +146,10 @@ The frog spinner in the "Frog Spinner" column reads its entries from `frontend/s
 
 Every card that names its frog (the Frog Library, the spinner's landed card, the favorites panel) has a heart in its top-right corner. Pressing it favorites that frog, or unfavorites it. The heart is the only way to favorite a frog: landing on one in the spinner never does.
 
-- **How you are remembered, without a login:** on your first like, the backend sets an anonymous cookie, `ex3_visitor`: a random ID (`HttpOnly`, `SameSite=Lax`, `Path=/api`, 400 days, renewed on every like). Reading the lists never sets it. A private window, another browser or another device is a different visitor.
+- **How you are remembered, without a login:** on your first like, the backend sets an anonymous cookie, `ex3_visitor`: a random ID signed by the server (`<id>.<signature>`, so a made-up ID is treated as no cookie), `HttpOnly`, `SameSite=Lax`, `Path=/api`, 400 days, renewed on every like. Reading the lists never sets it. A private window, another browser or another device is a different visitor.
 - **What is stored:** that random ID and the frogs it liked, with when. No IP address, no user agent, nothing about you.
 - **Clearing cookies** forgets your favorites, but your likes stay in the all-time tally: "All Time" means everyone who ever liked a frog.
-- **The tally is for fun.** Anyone can clear cookies and like again; each ID can like each frog once, and counts can't double count or go negative. Nothing stops ballot stuffing, so don't use the counts for anything that matters.
+- **The tally is for fun.** Anyone can clear cookies and like again; each ID can like each frog once, and counts can't double count or go negative. In production, one address can create at most 30 new visitors an hour (see Security), but many addresses can still stuff the ballot, so don't use the counts for anything that matters.
 - **The panel** (the home page's right column) shows Your Favorites, or the All Time top ten with counts, chosen by the two tabs across its top, which serve as its header (remembered in this browser's `localStorage`). A long list scrolls inside the panel.
 - **Endpoints:** `GET /api/favorites/mine`, `GET /api/favorites/top`, `PUT /api/favorites/:entryId` (like) and `DELETE /api/favorites/:entryId` (unlike). Only frogs in the `frogs` table can be liked.
 
@@ -155,7 +157,78 @@ Every card that names its frog (the Frog Library, the spinner's landed card, the
 
 `.env` (copied from `.env.example`) holds the database name, user and password, the backend port, and:
 
-- **`COOKIE_SECURE`** (`true` or `false`, default `false`): the visitor cookie's `Secure` flag. Keep `false` for `http://localhost`. It **must be `true`** on any server reached over HTTPS, so the cookie is never sent over plain HTTP. Any other value stops the backend at startup.
+- **`COOKIE_SECURE`** (`true` or `false`, default `false`): the visitor cookie's `Secure` flag. Keep `false` for `http://localhost`. It **must be `true`** on any server reached over HTTPS, so the cookie is never sent over plain HTTP. Any other value stops the backend at startup. `true` also turns on HSTS.
+- **`NODE_ENV`** (`development`, `test` or `production`, default `development`): `production` refuses `COOKIE_SECURE=false`, a missing `VISITOR_SECRET` and a database connection without TLS (unless `DATABASE_PRIVATE_NETWORK=true`), and turns on the rate limits and the `Origin` check. The production image sets it; development never does.
+- **`TRUST_PROXY`** (a hop count, default `0`): how many reverse proxies sit in front of the backend. `0` locally, usually `1` behind one proxy, never `true` (refused at startup). Check it on the host with the steps in Security.
+- **`STATIC_DIR`**: the folder with the built frontend. Only the production image sets it (`/app/public`); unset, the backend serves no files.
+- **`VISITOR_SECRET`**: the key that signs the visitor cookie. **Required in production**: at least 32 random characters, for example from `openssl rand -base64 48`, kept in the host's dashboard. Unset elsewhere, a fixed development key is used (production refuses it). Changing it makes every existing visitor a new one: their likes stay in the tally, but Your Favorites starts empty.
+- **`DATABASE_URL`** on a host: `?sslmode=verify-full`, or no `sslmode` on the host's private network (with `DATABASE_PRIVATE_NETWORK=true`). `require`, `prefer`, `verify-ca`, `no-verify`, `disable`, the `ssl` parameter, `uselibpqcompat` and any TLS parameter given twice stop the backend at startup (the error never prints the URL).
+- **`DATABASE_CA_CERT`**: the PEM text of a database provider's own root certificate, for providers not signed by a public authority. The URL must then carry no `sslmode` or other `ssl…` parameter. Line breaks stored as a literal `\n` are turned back into real ones.
+- **`DATABASE_PRIVATE_NETWORK`** (`true` or `false`, default `false`): `true` only when the database is reached over the host's private network (Railway's `*.railway.internal`, Render's internal URL, the self-hosted Compose network). It is the only way production starts without TLS to the database, so a public URL that lost its `?sslmode=verify-full` fails loudly instead of running in plain text.
+
+## Production
+
+One container serves the built React app and the API on one port, in front of a managed PostgreSQL over verified TLS. Build and check it from the repository root:
+
+```powershell
+docker build -t ex3 .
+```
+
+- **What's in the image** (`Dockerfile`, three stages): `node:24-alpine`, the compiled backend (`dist/`), the migrations, the frontend build (`public/`) and production packages only. It runs as the `node` user, with `NODE_ENV=production` and `STATIC_DIR=/app/public`. No source, dev packages, `.env` or `*.md` (see `.dockerignore`).
+- **Run-time settings** come from the host, never the image: `DATABASE_URL`, `COOKIE_SECURE=true`, `VISITOR_SECRET`, `TRUST_PROXY`, `PORT` (default 3000) and, if used, `DATABASE_CA_CERT` or `DATABASE_PRIVATE_NETWORK=true`.
+- **Caching:** `/assets/*` (hashed names) for a year, `immutable`; `index.html` and other files `no-cache` (revalidated with ETags); every `/api` response `no-store`. Text is gzipped.
+- **Pages:** any page URL (`/about`, `/frog-library`, a made-up one) returns `index.html` so a hard refresh works. `/api/*`, `/assets/*` and any path whose last part has a dot (`/robots.txt`, `/.env`) get a JSON 404, never the page.
+- **Smoke test** (Git Bash, Docker Desktop running): `sh scripts/smoke.sh` builds the image, runs it against a throwaway PostgreSQL and checks the headers, caching, 404s, the `Origin` check, the new-visitor limit and the `node` user. It prints `smoke ok`.
+- **Development is unchanged:** `docker compose up --build` still runs Vite and nodemon, with no rate limits and no `Origin` check.
+- **Self-hosting (optional):** `docker-compose.prod.yml` runs the image (read-only, no Linux capabilities), PostgreSQL (no published port) and Caddy (automatic HTTPS, only ports 80 and 443). Put real `POSTGRES_*` values (a password of letters and digits only, such as `openssl rand -hex 24`, because it goes into a URL), `VISITOR_SECRET` and `SITE_ADDRESS` in `.env`, then `docker compose -f docker-compose.prod.yml up -d --build`. Backups are yours: a nightly `pg_dump` copied off the machine.
+
+## Security
+
+| Threat | What stops it |
+| --- | --- |
+| Injected scripts (XSS) | React escapes text; a strict CSP (`default-src 'none'`, `'self'` only, no `'unsafe-inline'`). `scripts/check-dist.sh` fails the build on an inline script or style |
+| Clickjacking | `frame-ancestors 'none'`, `X-Frame-Options` |
+| HTTP downgrade | HSTS (`max-age=86400` to start; raise to `31536000` after a week of HTTPS), `Secure` cookie, production refuses `COOKIE_SECURE=false` |
+| Cross-site likes (CSRF) | `SameSite=Lax`, no CORS headers, `PUT`/`DELETE` with a foreign `Origin` answer `403` (production) |
+| Floods | Per address, in production: 600 API requests and 60 likes/unlikes per 15 minutes; 10 KB bodies; database timeouts |
+| Ballot stuffing from one address | The visitor cookie is signed, so made-up IDs count as new visitors; 30 new visitors per address per hour |
+| Forged `X-Forwarded-For` | `TRUST_PROXY` is a hop count, never `true` |
+| Path traversal, dotfiles, secrets in the image | `express.static` containment, `dotfiles: 'ignore'`; the image holds no source or `.env` |
+| Container escalation | Runs as `node`; on the self-hosted stack, read-only, no capabilities, `no-new-privileges` |
+| Vulnerable packages | `npm audit` in CI, Dependabot weekly |
+| Database eavesdropping or impersonation | `sslmode=verify-full` or `DATABASE_CA_CERT` (certificate and hostname verified), or the host's private network (`DATABASE_PRIVATE_NETWORK=true`); production refuses plain text otherwise; weak, repeated or conflicting TLS parameters refused at startup |
+| Fingerprinting | No `X-Powered-By`, generic errors, no source maps |
+| Shared caches leaking favorites | `no-store` on all of `/api` |
+
+**Not prevented, by design:** ballot stuffing from many addresses (about 720 new visitors a day each), and a volumetric denial of service beyond one small container (put Cloudflare's free tier in front if it matters).
+
+**Check the headers** once hosted with securityheaders.com (expect A or better) and Mozilla's HTTP Observatory (one step lower until HSTS is raised to a year).
+
+**Check `TRUST_PROXY` on the real host** after the first deploy and after any hosting change, from PowerShell, in this order:
+
+1. Writes from other sites are refused (prints `403`):
+   ```powershell
+   $site = "https://<your-site>"
+   curl.exe -s -o NUL -w "%{http_code}`n" -X PUT -H "Origin: https://evil.example" "$site/api/favorites/entry01"
+   ```
+2. A forged address isn't believed: the last lines must be `429` (the new-visitor limit is 30 an hour). Thirty-five `200`s mean `TRUST_PROXY` is too high; lower it by one and redeploy.
+   ```powershell
+   1..35 | ForEach-Object { curl.exe -s -o NUL -w "%{http_code}`n" -X PUT -H "X-Forwarded-For: 203.0.113.$_" "$site/api/favorites/entry01" }
+   ```
+3. Visitors don't share one counter: right after step 2, like a frog from your phone over mobile data. If the heart snaps back with a `429`, `TRUST_PROXY` is too low; raise it by one and redeploy.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request, with read-only permissions:
+
+| Job | What it runs |
+| --- | --- |
+| `backend` | `npm ci`, `npm audit --omit=dev --audit-level=high`, `npm test`, `npm run build` |
+| `frontend` | the same, plus the browser tests and `scripts/check-dist.sh` |
+| `integration` | the integration test stack |
+| `image` | `scripts/smoke.sh` |
+
+A high or critical vulnerability in a shipped package fails the build. Dependabot (`.github/dependabot.yml`) opens weekly pull requests for npm, Docker and GitHub Actions updates. **A red check means don't deploy.** On GitHub, also turn on Dependabot alerts, secret scanning, and a branch protection rule on `main` requiring the four jobs.
 
 ## Database
 
@@ -178,8 +251,15 @@ Every card that names its frog (the Frog Library, the spinner's landed card, the
 EX3/
 ├── README.md
 ├── .env.example               sample settings (copy to .env, never commit .env)
+├── Dockerfile                 production image: frontend build, backend build, runtime as node
+├── .dockerignore              keeps node_modules, dist, .env, .git and *.md out of the image
+├── .gitattributes             *.sh and Caddyfile always LF, so Git Bash on Windows can run them
 ├── docker-compose.yml         dev stack: db + backend + frontend
 ├── docker-compose.test.yml    integration test stack: test db + backend tests
+├── docker-compose.prod.yml    optional self-hosted stack: app + db + Caddy
+├── Caddyfile                  with it: automatic HTTPS, reverse proxy to the app
+├── .github/                   workflows/ci.yml (tests, audit, build, smoke), dependabot.yml
+├── scripts/                   check-dist.sh (no inline script/style or source maps), smoke.sh (image smoke test)
 ├── backend/
 │   ├── Dockerfile
 │   ├── src/
@@ -189,6 +269,8 @@ EX3/
 │   │   ├── db.ts              creates the PostgreSQL connection pool; the shared Db type
 │   │   ├── migrate.ts         applies new migrations in order at startup
 │   │   ├── visitor.ts         reads and issues the anonymous ex3_visitor cookie
+│   │   ├── security.ts        security headers (CSP, HSTS...), rate limits, the same-origin check on writes
+│   │   ├── staticSite.ts      serves the frontend build in production, with index.html for page URLs
 │   │   └── routes/            health.ts (GET /api/health), favorites.ts (the four favorites endpoints)
 │   ├── migrations/            numbered .sql files: the frogs and favorites tables, the seed, and later frog changes (004 removes entry20)
 │   └── tests/
@@ -232,6 +314,18 @@ Browser (React) --> Vite dev server --/api--> Node + Express --SELECT 1--> Postg
                     (frontend container)      (backend container)        (db container)
 ```
 
+In production there is no Vite: one container answers everything.
+
+```text
+                 HTTPS                      private network (TLS or the host's own network)
+ Browser  ───────────────▶  Host's proxy  ───▶  Container (node, non-root)  ───▶  Managed PostgreSQL
+                            TLS ends here       Express:
+                                                  helmet ▸ compression ▸ rate limits ▸ Origin check
+                                                  /assets/*  → 1-year immutable cache
+                                                  /api/*     → JSON, no-store
+                                                  any GET    → index.html (no-cache) → React Router
+```
+
 ## Troubleshooting
 
 - **Port already in use:** stop whatever uses 5173, 3000 or 5432, or change *your* side of the `ports:` mapping in `docker-compose.yml` (the middle number in `"127.0.0.1:5173:5173"`). Keep the `127.0.0.1:` at the front.
@@ -250,4 +344,16 @@ Browser (React) --> Vite dev server --/api--> Node + Express --SELECT 1--> Postg
 - **Styles don't change after `npm install`:** run `docker compose up --build -V`.
 - **A convention test fails on a colour or `px` value:** move the colour into `_palette.scss` and reference it from the component's `.d-` block; use a `rem` token from `_tokens.scss` instead of `px`.
 - **A convention test flags `green` or `blue` in a stylesheet:** bare colour keywords count as colour literals. Name the thing by role or mood instead (like the card tones `sand`, `sage` and `sky`, which are mood names that happen to match palette families, not CSS colour keywords).
+- **`Invalid environment variables: COOKIE_SECURE: must be "true" in production`:** set `COOKIE_SECURE=true` on the host.
+- **`self-signed certificate` or `Hostname/IP does not match` from `pg`:** the URL's host is wrong, or the provider needs `DATABASE_CA_CERT`. Never disable verification.
+- **`sslmode=require is not allowed`:** use `sslmode=verify-full`, or `DATABASE_CA_CERT` with no `sslmode`.
+- **`DATABASE_URL: needs TLS in production`:** add `?sslmode=verify-full`, or set `DATABASE_CA_CERT`. Only if the database is on the host's private network, set `DATABASE_PRIVATE_NETWORK=true` instead.
+- **`VISITOR_SECRET: must be set to your own random value in production`:** set it on the host to the output of `openssl rand -base64 48`, and keep it: changing it starts every visitor's favorites over.
+- **Likes fail with `403 Forbidden` on the host:** something in front rewrites the `Host` header; check the proxy setup.
+- **Every visitor gets `429` at once:** `TRUST_PROXY` is too low; run the checks in Security.
+- **`Cannot find package 'helmet'` in development:** run `docker compose up --build -V`.
+- **`smoke.sh` fails at once with `$'\r'` errors:** the scripts have CRLF line endings; check `.gitattributes` and check the files out again.
+- **Random 502s behind the host's proxy:** check the keep-alive timeouts in `server.ts` (65 and 66 seconds) weren't lowered.
+- **A page shows but a hard refresh 404s:** `STATIC_DIR` is unset or wrong.
+- **A `Refused to execute inline script` console error:** something added an inline script; the CSP is right, the script isn't.
 - **Frontend `npm test` fails with "Vitest failed to find the runner" on the very first run after `npm ci`:** run it again. This was seen intermittently on Windows right after a fresh install and did not recur. It has also been seen on every run from Git Bash and never from PowerShell; if it keeps happening, run the tests from PowerShell.

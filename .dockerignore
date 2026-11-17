@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/coverage
+**/.vitest
+.env
+.env.*
+.git
+*.md
+**/*.md
+docker-compose*.yml

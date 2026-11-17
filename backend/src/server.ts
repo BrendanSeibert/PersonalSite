@@ -2,9 +2,10 @@ import { loadConfig } from './config.js';
 import { createPool } from './db.js';
 import { createApp } from './app.js';
 import { migrate } from './migrate.js';
+import { PRODUCTION_LIMITS } from './security.js';
 
 const config = loadConfig(process.env);
-const pool = createPool(config.DATABASE_URL);
+const pool = createPool(config.DATABASE_URL, config.DATABASE_CA_CERT);
 
 // The tables must exist before the first request. If a migration fails, stop: Docker shows the error.
 try {
@@ -15,9 +16,20 @@ try {
   process.exit(1);
 }
 
-const app = createApp({ db: pool, cookieSecure: config.COOKIE_SECURE });
+const production = config.NODE_ENV === 'production';
+const app = createApp({
+  db: pool,
+  cookieSecure: config.COOKIE_SECURE,
+  trustProxy: config.TRUST_PROXY,
+  staticDir: config.STATIC_DIR,
+  limits: production ? PRODUCTION_LIMITS : undefined, // the Vite proxy shares one address in development
+  checkOrigin: production, // the Vite proxy rewrites Host in development
+  visitorSecret: config.VISITOR_SECRET, // always set in production (config.ts); unset: the development key
+});
 
 const server = app.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`));
+server.keepAliveTimeout = 65_000; // longer than a hosting proxy's idle timeout (usually 60 s)
+server.headersTimeout = 66_000; // must exceed keepAliveTimeout
 
 let shuttingDown = false;
 

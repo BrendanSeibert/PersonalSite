@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Db } from '../../src/db.js';
+import { createApp } from '../../src/app.js';
 import { healthRouter } from '../../src/routes/health.js';
 
 function appWith(db: Db) {
@@ -30,6 +31,12 @@ describe('GET /api/health', () => {
     expect(res.body).toEqual({ status: 'degraded', db: 'down' });
     expect(db.query).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith(expect.stringContaining('Health check'), 'connection refused');
+  });
+
+  it('is never cached when mounted in the app', async () => {
+    const db = { query: vi.fn().mockResolvedValue({ rows: [{ ok: 1 }] }) };
+    const res = await request(createApp({ db })).get('/api/health');
+    expect(res.headers['cache-control']).toBe('no-store');
   });
 
   it('logs non-Error rejections as-is', async () => {

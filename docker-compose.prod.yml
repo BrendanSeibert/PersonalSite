@@ -1,0 +1,63 @@
+# Optional self-hosted stack (the "cheap VPS" route): the production image, PostgreSQL and Caddy.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Needs POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, VISITOR_SECRET and SITE_ADDRESS in .env
+# (real values, not the dev ones).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - db_data:/var/lib/postgresql/data     # no ports: line, so the database is unreachable from outside
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    read_only: true                          # the app writes nothing to disk
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]                          # a plain Node server needs no Linux capabilities
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      # POSTGRES_PASSWORD goes into a URL: letters and digits only (openssl rand -hex 24).
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_PRIVATE_NETWORK: "true"       # the Compose network; the db has no published port
+      VISITOR_SECRET: ${VISITOR_SECRET:?set in .env (openssl rand -base64 48)}
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "1"                       # Caddy
+    depends_on:
+      db:
+        condition: service_healthy           # no ports: line either; only Caddy can reach it
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"                              # the only two ports open to the internet
+      - "443:443"
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]              # only what binding ports 80 and 443 needs
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?your domain, e.g. example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data                     # certificates
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

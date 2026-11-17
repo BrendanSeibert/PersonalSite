@@ -90,7 +90,8 @@ describe('favorites, against a real PostgreSQL', () => {
   it('replaces a forged cookie with a fresh one, and stores the like under the new ID', async () => {
     const res = await request(app).put('/api/favorites/entry07').set('Cookie', 'ex3_visitor=not-a-uuid');
     expect(res.status).toBe(200);
-    const issued = /ex3_visitor=([^;]+)/.exec(String(res.headers['set-cookie']))![1];
+    // The cookie is <uuid>.<signature>; the database stores only the UUID.
+    const issued = /ex3_visitor=([^.;]+)\.[^;]+/.exec(String(res.headers['set-cookie']))![1];
     expect(issued).not.toBe('not-a-uuid');
     const { rows } = await pool.query('SELECT visitor_id FROM favorites');
     expect(rows).toEqual([{ visitor_id: issued }]);

@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/app.js';
 import type { Db } from '../../src/db.js';
 import { TOP_FAVORITES } from '../../src/routes/favorites.js';
-import { VISITOR_COOKIE } from '../../src/visitor.js';
+import { DEV_VISITOR_SECRET, signVisitorId, VISITOR_COOKIE } from '../../src/visitor.js';
 
 const ID = '3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b';
-const COOKIE = `${VISITOR_COOKIE}=${ID}`;
+const COOKIE = `${VISITOR_COOKIE}=${signVisitorId(ID, DEV_VISITOR_SECRET)}`;
 
 type Call = { sql: string; params: unknown[] };
 
@@ -60,9 +60,12 @@ describe('GET /api/favorites/mine', () => {
     expect(visitorCookie(res)).toBeUndefined(); // reads never set the cookie
   });
 
-  it('treats a forged cookie as no cookie', async () => {
+  it.each([
+    ['junk', 'forged'],
+    ['an unsigned UUID', ID],
+  ])('treats a forged cookie (%s) as no cookie', async (_name, value) => {
     const { app, calls } = fakeDb();
-    const res = await request(app).get('/api/favorites/mine').set('Cookie', `${VISITOR_COOKIE}=forged`);
+    const res = await request(app).get('/api/favorites/mine').set('Cookie', `${VISITOR_COOKIE}=${value}`);
     expect(res.body).toEqual({ entryIds: [] });
     expect(calls).toHaveLength(0);
   });
@@ -90,7 +93,7 @@ describe('PUT /api/favorites/:entryId', () => {
     expect(res.body).toEqual({ entryId: 'entry07', favorited: true, count: 1 });
 
     const cookie = visitorCookie(res)!;
-    const issued = /^ex3_visitor=([^;]+)/.exec(cookie)![1];
+    const issued = /^ex3_visitor=([^.;]+)\.[^;]+;/.exec(cookie)![1]; // <uuid>.<signature>
     expect(cookie).toMatch(/HttpOnly/);
     expect(calls.map((c) => c.sql.split(' ')[0])).toEqual(['SELECT', 'INSERT', 'SELECT']);
     expect(calls[0]!.params).toEqual(['entry07']);
@@ -103,7 +106,7 @@ describe('PUT /api/favorites/:entryId', () => {
     const { app, calls } = fakeDb();
     const res = await request(app).put('/api/favorites/entry07').set('Cookie', COOKIE);
     expect(calls[1]!.params).toEqual([ID, 'entry07']);
-    expect(visitorCookie(res)).toMatch(new RegExp(`^ex3_visitor=${ID};`));
+    expect(visitorCookie(res)!.startsWith(`${COOKIE};`)).toBe(true);
   });
 
   it('likes a frog beyond the first twenty like any other: nothing assumes 20', async () => {

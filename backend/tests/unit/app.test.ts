@@ -50,6 +50,30 @@ describe('createApp', () => {
     expect(typeof res.body.error).toBe('string');
   });
 
+  it('refuses a body over 10 KB with 413 JSON', async () => {
+    const res = await request(createApp({ db: okDb }))
+      .post('/anything')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ filler: 'x'.repeat(20 * 1024) }));
+    expect(res.status).toBe(413);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+  });
+
+  it('sends the security headers on error responses', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await request(appThrowing(new Error('x'))).get('/boom');
+    expect(res.headers['content-security-policy']).toMatch(/^default-src 'none'/);
+  });
+
+  it('keeps development wiring: no limits and no Origin check', async () => {
+    const db = { query: vi.fn().mockResolvedValue({ rows: [{ count: 0 }] }) };
+    const res = await request(createApp({ db }))
+      .put('/api/favorites/entry01')
+      .set('Origin', 'https://evil.example');
+    expect(res.status).not.toBe(403);
+    expect(res.headers['ratelimit']).toBeUndefined();
+  });
+
   it('returns a generic 500 for a thrown error and hides its details', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const err = new Error('secret internal detail');

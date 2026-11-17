@@ -30,4 +30,16 @@ describe('createPool', () => {
     expect(spy).toHaveBeenCalledWith(expect.stringContaining('Idle database connection error'), 'boom');
     await pool.end();
   });
+
+  it('trusts a provider certificate authority when one is given', async () => {
+    const pool = createPool(url, 'PEM');
+    expect(pool.options.ssl).toEqual({ ca: 'PEM' });
+    await pool.end();
+  });
+
+  it('sets no ssl option without a certificate authority', async () => {
+    const pool = createPool(url);
+    expect(pool.options).not.toHaveProperty('ssl');
+    await pool.end();
+  });
 });
