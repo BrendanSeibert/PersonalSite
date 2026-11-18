@@ -27,7 +27,7 @@ describe('HomePage', () => {
 
   it('warns a screen reader that the new-tab links open a new tab, and the resume is a PDF', async () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByRole('link', { name: newTabName('here', true) })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: newTabName('my resume', true) })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: newTabName('LinkedIn') })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: newTabName('GitHub') })).toBeInTheDocument();
     const hiddenTexts = screen.getByRole('main').querySelectorAll('a .visually-hidden');
@@ -35,7 +35,7 @@ describe('HomePage', () => {
     for (const hidden of hiddenTexts) {
       expect(hidden.textContent).toMatch(/^ \((PDF, )?opens in a new tab\)$/); // a leading space
     }
-    expect(screen.getByRole('link', { name: 'email' })).toHaveAccessibleName('email'); // a mail app, not a tab
+    expect(screen.getByRole('link', { name: 'email me' })).toHaveAccessibleName('email me'); // a mail app, not a tab
     await waitForHomeToSettle();
   });
 
@@ -43,26 +43,26 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />);
     const main = within(screen.getByRole('main'));
     expect(main.getByRole('heading', { name: 'About Me' })).toBeInTheDocument();
-    expect(main.getByText(/amateur frog enthusiast with 28 years of experience/)).toBeInTheDocument();
-    expect(main.getByText(/If you want to check out my resume/)).toBeInTheDocument();
+    expect(main.getByText(/amateur frog enthusiast with 28\+ years experience/)).toBeInTheDocument();
+    expect(main.getByText(/You can find/)).toBeInTheDocument();
     expect(main.queryByRole('status')).toBeNull();
     expect(screen.queryByText(/API ok|API unavailable|Checking\.\.\./)).toBeNull();
     await waitForHomeToSettle();
   });
 
-  it('links the word "email" with mailto:, without the address showing', async () => {
+  it('links the words "email me" with mailto:, without the address showing', async () => {
     renderWithProviders(<HomePage />);
     expect(EMAIL_ADDRESS).toBe('brendanseibertmail@gmail.com');
-    const email = screen.getByRole('link', { name: 'email' });
+    const email = screen.getByRole('link', { name: 'email me' });
     expect(email).toHaveAttribute('href', 'mailto:brendanseibertmail@gmail.com');
     expect(email).not.toHaveAttribute('target');
     expect(screen.getByRole('main').textContent).not.toContain('brendanseibertmail@gmail.com');
     await waitForHomeToSettle();
   });
 
-  it('links the word "here" to the resume PDF that ships with the site, in a new tab', async () => {
+  it('links the words "my resume" to the resume PDF that ships with the site, in a new tab', async () => {
     renderWithProviders(<HomePage />);
-    const link = screen.getByRole('link', { name: newTabName('here', true) });
+    const link = screen.getByRole('link', { name: newTabName('my resume', true) });
     expect(link).toHaveAttribute('href', '/Brendan-Seibert-Resume.pdf');
     expect(link).toHaveAttribute('href', RESUME_URL);
     expect(link).toHaveAttribute('target', '_blank');
@@ -93,8 +93,8 @@ describe('HomePage', () => {
     // What is drawn: the new-tab warnings are for screen readers only (tested above).
     for (const hidden of paragraph.querySelectorAll('.visually-hidden')) hidden.remove();
     expect(paragraph.textContent).toBe(
-      'If you want to check out my resume, you can do so here. If you want to reach out, this is my ' +
-        'email, and here are links to my LinkedIn and my GitHub.',
+      'You can find my resume or email me directly. I’m also on LinkedIn, and you can check out the ' +
+        'code for this site on GitHub.',
     );
     await waitForHomeToSettle();
   });

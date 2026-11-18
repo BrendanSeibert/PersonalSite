@@ -275,7 +275,7 @@ describe.each([
 
     const main = within(screen.getByRole('main'));
     // Each name starts with the link's word; the new-tab links add a screen-reader-only warning.
-    for (const word of ['here', 'email', 'LinkedIn', 'GitHub']) {
+    for (const word of ['my resume', 'email me', 'LinkedIn', 'GitHub']) {
       await userEvent.keyboard('{Tab}');
       expect(main.getByRole('link', { name: new RegExp(`^${word}( ?\\(.*opens in a new tab\\))?$`) })).toHaveFocus();
     }

@@ -101,10 +101,10 @@ describe.each([
     // leading space as a browser does; Testing Library's (in jsdom and here) trims it.
     await renderAt('/');
     for (const name of [
-      'here (PDF, opens in a new tab)',
+      'my resume (PDF, opens in a new tab)',
       'LinkedIn (opens in a new tab)',
       'GitHub (opens in a new tab)',
-      'email',
+      'email me',
     ]) {
       await expect.element(page.getByRole('link', { name, exact: true })).toBeInTheDocument();
     }
