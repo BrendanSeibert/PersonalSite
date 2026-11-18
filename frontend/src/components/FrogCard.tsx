@@ -67,7 +67,7 @@ export function FrogCard({
 }: Props) {
   const { t } = useI18n();
   const image = entry.image ? (
-    <img className="frog-card-image" src={entry.image} alt="" />
+    <img className="frog-card-image" src={entry.image} alt="" loading="lazy" />
   ) : (
     <span className="frog-card-image frog-card-image-empty" />
   );

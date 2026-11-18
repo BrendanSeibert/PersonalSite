@@ -74,7 +74,7 @@ describe('FrogLibraryPage', () => {
   it('renders the entries it is given', () => {
     const entries: FrogEntry[] = [
       { ...FROG_ENTRIES[0], image: '/test.png' },
-      FROG_ENTRIES[1],
+      { ...FROG_ENTRIES[1], image: undefined },
     ];
     renderWithProviders(<FrogLibraryPage entries={entries} />);
     const listItems = items();

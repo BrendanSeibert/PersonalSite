@@ -15,7 +15,7 @@ function renderCard(props: Partial<Parameters<typeof FrogCard>[0]> = {}) {
 
 describe('FrogCard', () => {
   it('draws a static card with its title, an empty image slot and its tone', () => {
-    const card = renderCard();
+    const card = renderCard({ entry: { ...entry, image: undefined } });
     expect(screen.getByText('Eastern American Toad')).toBeInTheDocument();
     expect(card.querySelector('.frog-card-image-empty')).not.toBeNull();
     expect(card.querySelector('img')).toBeNull();
@@ -30,6 +30,7 @@ describe('FrogCard', () => {
     const image = card.querySelector('img')!;
     expect(image).toHaveAttribute('src', '/test.png');
     expect(image).toHaveAttribute('alt', '');
+    expect(image).toHaveAttribute('loading', 'lazy');
     expect(card.querySelector('.frog-card-image-empty')).toBeNull();
   });
 
@@ -114,7 +115,7 @@ describe('FrogCard', () => {
     });
 
     it('shows the empty image slot when the entry has no image', () => {
-      const card = renderCard({ full: true });
+      const card = renderCard({ entry: { ...entry, image: undefined }, full: true });
       expect(card.querySelector('img')).toBeNull();
       expect(card.querySelector('.frog-card-image-empty')).not.toBeNull();
     });

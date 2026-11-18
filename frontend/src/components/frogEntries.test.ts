@@ -32,10 +32,17 @@ describe('FROG_ENTRIES', () => {
     FROG_ENTRIES.forEach((entry, index) => expect(entry.tone).toBe(toneFor(index, FROG_ENTRIES.length)));
   });
 
-  it('has either no image or a non-empty image URL', () => {
+  it('gives every entry a non-empty image URL', () => {
     for (const entry of FROG_ENTRIES) {
-      if (entry.image !== undefined) expect(entry.image).not.toBe('');
+      expect(entry.image, entry.id).toBeTypeOf('string');
+      expect(entry.image, entry.id).not.toBe('');
     }
+  });
+
+  it('gives every entry its own picture, named after its id', () => {
+    const images = FROG_ENTRIES.map((entry) => entry.image);
+    expect(new Set(images).size).toBe(images.length);
+    for (const entry of FROG_ENTRIES) expect(entry.image, entry.id).toContain(`${entry.id}.`);
   });
 });
 
