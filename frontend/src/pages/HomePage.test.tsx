@@ -44,7 +44,7 @@ describe('HomePage', () => {
     const main = within(screen.getByRole('main'));
     expect(main.getByRole('heading', { name: 'About Me' })).toBeInTheDocument();
     expect(main.getByText(/amateur frog enthusiast with 28\+ years experience/)).toBeInTheDocument();
-    expect(main.getByText(/You can find/)).toBeInTheDocument();
+    expect(main.getByText(/Here’s/)).toBeInTheDocument();
     expect(main.queryByRole('status')).toBeNull();
     expect(screen.queryByText(/API ok|API unavailable|Checking\.\.\./)).toBeNull();
     await waitForHomeToSettle();
@@ -93,8 +93,8 @@ describe('HomePage', () => {
     // What is drawn: the new-tab warnings are for screen readers only (tested above).
     for (const hidden of paragraph.querySelectorAll('.visually-hidden')) hidden.remove();
     expect(paragraph.textContent).toBe(
-      'You can find my resume or email me directly. I’m also on LinkedIn, and you can check out the ' +
-        'code for this site on GitHub.',
+      'Here’s my resume, or you can email me directly. I’m also on LinkedIn, and you can check out the ' +
+        'code for this site on my GitHub.',
     );
     await waitForHomeToSettle();
   });
