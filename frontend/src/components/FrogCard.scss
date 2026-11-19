@@ -22,6 +22,23 @@ $image-size-expanded: 12rem; // the open card's image: the card's full width, up
     --shadow-color-frog-card-expanded: #{p.$shadow};
 }
 
+:root[data-theme="dark"] .d-frog-card {
+    --surface-color-frog-card-sand: #{p.$sand-800};
+    --surface-color-frog-card-sage: #{p.$sage-850};
+    --surface-color-frog-card-sky: #{p.$sky-850};
+    --border-color-frog-card-sand: #{p.$sand-600};
+    --border-color-frog-card-sage: #{p.$sage-600};
+    --border-color-frog-card-sky: #{p.$sky-600};
+    --surface-color-frog-card-sand-concealed: #{p.$sand-700};
+    --surface-color-frog-card-sage-concealed: #{p.$sage-700};
+    --surface-color-frog-card-sky-concealed: #{p.$sky-700};
+    --surface-color-frog-card-image: #{p.$sky-950};
+    --border-color-frog-card-image: #{p.$sky-500}; // a mid tone reads on both themes
+    --text-color-frog-card: #{p.$sand-100};
+    --border-color-frog-card-focus: #{p.$sky-300};
+    --shadow-color-frog-card-expanded: #{p.$shadow-dark};
+}
+
 .frog-card {
     container-type: inline-size; // lets the image slot respond to the card's own width
     position: relative; // the heart's corner is placed against the card

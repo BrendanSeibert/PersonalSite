@@ -8,6 +8,12 @@
     --text-color-frog-library-page-heading: #{p.$sage-800};
 }
 
+:root[data-theme="dark"] .d-frog-library-page {
+    --surface-color-frog-library-page: #{p.$sand-900};
+    --border-color-frog-library-page: #{p.$sand-700};
+    --text-color-frog-library-page-heading: #{p.$sienna-300};
+}
+
 .frog-library-page {
     flex: 1; // fill the height left under the nav bar, like the home page's layout
     width: 100%;

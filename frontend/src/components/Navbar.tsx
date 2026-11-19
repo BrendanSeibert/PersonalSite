@@ -2,6 +2,7 @@ import { Link, matchPath, useLocation } from 'react-router';
 import { useI18n } from '../context/I18nContext';
 import type { TranslationKey } from '../i18n/translate';
 import { PATHS } from '../paths';
+import { ThemeToggle } from './ThemeToggle';
 import './Navbar.scss';
 
 // Every nav item is a link to a page; an item without one fails to compile.
@@ -23,17 +24,21 @@ export function Navbar() {
   return (
     <header className="d-navbar navbar">
       <h1 className="navbar-title">{t('navbar.title')}</h1>
-      <nav className="navbar-links" aria-label={t('navbar.label')}>
-        <ul className="navbar-list">
-          {items.map(({ key, to }) => (
-            <li key={key}>
-              <Link to={to} className="navbar-link">
-                {t(key)}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="navbar-end">
+        <nav className="navbar-links" aria-label={t('navbar.label')}>
+          <ul className="navbar-list">
+            {items.map(({ key, to }) => (
+              <li key={key}>
+                <Link to={to} className="navbar-link">
+                  {t(key)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        {/* After the nav, not in it: the nav holds links only. */}
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

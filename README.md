@@ -99,7 +99,7 @@ Do not chain these commands with `&&` in Windows PowerShell 5.1; it is a parse e
 
 ## Styling and text conventions
 
-The frontend follows a few rules, and `npm test` in `frontend/` enforces the first four (`styleConventions.test.ts` and `noHardcodedText.test.tsx`).
+The frontend follows a few rules, and `npm test` in `frontend/` enforces the first four and the dark-block rule (`styleConventions.test.ts` and `noHardcodedText.test.tsx`).
 
 | Rule | Example |
 | --- | --- |
@@ -109,13 +109,14 @@ The frontend follows a few rules, and `npm test` in `frontend/` enforces the fir
 | Sizes use `rem` (or `fr`, `%`, `vw`, `dvh`, `clamp()`), with tokens from `src/styles/_tokens.scss`. The only `px` allowed is a `1px` hairline | `padding: t.$space-3 t.$space-5;` |
 | Every user-facing string, including `aria-label`s and the page title, lives in `src/i18n/en.json` and is read with `t()` from `useI18n()` | `t('navbar.frogLibrary')` |
 | A component's root has both classes, `d-<name>` (colours) and `<name>` (layout); child classes start with the component name | `<header className="d-navbar navbar">`, `.navbar-link` |
+| Each `.d-<name>` block is followed by a `:root[data-theme="dark"] .d-<name>` block that sets exactly the same roles (the test fails if one is missing) | `:root[data-theme="dark"] .d-navbar { --surface-color-navbar: #{p.$sage-900}; }` |
 | One `.scss` file per component, next to it, starting with `@use "../styles/palette" as p;` and/or `@use "../styles/tokens" as t;` | `Navbar.tsx` imports `./Navbar.scss` |
 
 The three-column layout switches to stacked rows (Middle, Left, Right) at 64rem (1024px at default text size) and below. That rule lives in one mixin, `wide-layout` in `_tokens.scss`. The same file holds the shape-only mixins: `button-shape` for buttons and nav links, and `panel` for the rounded, bordered panels (the home page's columns, the Frog Library and About panels). A page that wants the panel look uses `@include t.panel;` and sets its own `background-color`, `border-color` and heading colour.
 
 ## Colour
 
-The palette (`frontend/src/styles/_palette.scss`) is built from four anchor colours: Burnt Sienna `#984216`, Ivory Sand `#E4D6C5`, Stormy Sky `#78898F` and Sage Green `#8D957E`. The other shades are the same hues made lighter or darker. Only the shades the site uses are in the file, with one exception: Burnt Sienna's shades (`sienna-750`, `sienna-800`) stay in the palette file but aren't used at the moment, so sienna can come back (for example as an accent) without re-deriving them. Sage Green is the main colour, used at `sage-800` (`#3b422e`) for the nav bar, buttons, payline, hearts, headings and the selected tab, with `sage-900` (`#292f1e`) for hover. The page background is an off-white sand (`sand-100`) rather than near-white. Every pairing meets WCAG AA: 4.5:1 for text, and 3:1 for focus rings, button outlines, the payline and the selected tab's bar.
+The palette (`frontend/src/styles/_palette.scss`) is built from four anchor colours: Burnt Sienna `#984216`, Ivory Sand `#E4D6C5`, Stormy Sky `#78898F` and Sage Green `#8D957E`. The other shades are the same hues made lighter or darker. Only the shades the site uses are in the file, with one exception: `sienna-750` and `sienna-800` stay in the palette file but aren't used (too dark for text on the dark page, too saturated for large surfaces). The other sienna shades are dark mode's accent. Sage Green is the main colour, used at `sage-800` (`#3b422e`) for the nav bar, buttons, payline, hearts, headings and the selected tab, with `sage-900` (`#292f1e`) for hover. The page background is an off-white sand (`sand-100`) rather than near-white. Every pairing meets WCAG AA: 4.5:1 for text, and 3:1 for focus rings, button outlines, the payline and the selected tab's bar.
 
 | Where | Foreground on background | Contrast |
 | --- | --- | --- |
@@ -142,6 +143,57 @@ The palette (`frontend/src/styles/_palette.scss`) is built from four anchor colo
 The card surfaces against their panels (about 1.2:1) and the panel borders (about 1.4:1) are below 3:1 on purpose. WCAG 1.4.11 needs a visible boundary only when nothing else identifies the control, and every card face is identified by its title text. The spinner window's border (`sage-500`, about 2.9:1) is decoration, not a control.
 
 `frontend/src/styles/contrast.test.ts` checks every row; add new pairings there too. When you add a colour pairing, check it with a contrast checker before using it, and add it here.
+
+### Dark mode
+
+The nav bar has a dark mode switch at its far right: a sun and a moon with a thumb that slides over the active one, built as a `<button role="switch">` named "Dark mode" (the name never changes; `aria-checked` says on or off).
+
+- **First visit:** the site follows the browser or OS setting, and keeps following it live until you use the switch.
+- **After a press:** your choice is remembered in this browser's `localStorage` (`ex3.theme`) and wins on later visits. If storage is blocked, the switch still works for that visit. Nothing is sent to the server.
+- **Other tabs:** a choice made in one tab applies straight away in the site's other open tabs.
+- **How it works:** `startApp.tsx` (called by `main.tsx`) sets `<html data-theme="light|dark">` before React renders, so there is no flash of the wrong theme. A switch changes every colour at once, with no fade. The CSS keys off that attribute only. A stored value other than exactly `light` or `dark` is ignored. `color-scheme` (a meta tag and a rule in `AppLayout.scss`) makes scrollbars and form controls follow.
+- **Colours:** the page is `sky-950` and the text `sand-100`. The columns and cards are lighter shades of their own families, the nav bar is `sage-900`, and Burnt Sienna is the accent (`sienna-300` for headings in sand panels, links, hearts, the selected tab's bar and the Spin button; `sienna-400` for the payline).
+
+Dark pairings (`DARK_PAIRINGS` in `contrast.test.ts`):
+
+| Where | Foreground on background | Contrast |
+| --- | --- | --- |
+| Body text on the page | `sand-100` on `sky-950` | 15.60 |
+| Body text on the middle, left, right column | `sand-100` on `sand-900`, `sage-950`, `sky-900` | 14.42, 14.31, 13.08 |
+| Body text on sand, sage, sky cards | `sand-100` on `sand-800`, `sage-850`, `sky-850` | 11.27, 11.02, 11.64 |
+| Middle heading (and Frog Library, About) | `sienna-300` on `sand-900` | 8.48 |
+| Left heading, spinner result line | `sage-300` on `sage-950` | 10.40 |
+| Right heading | `sky-300` on `sky-900` | 8.65 |
+| Not-found and error headings | `sienna-300` on `sky-950` | 9.17 |
+| Link in the middle column, and on hover | `sienna-300`, `sienna-200` on `sand-900` | 8.48, 11.31 |
+| Nav title, nav links | `sand-50`, `sand-100` on `sage-900` | 13.15, 12.20 |
+| Nav link on hover | `sage-900` on `sand-200` | 9.69 |
+| Nav outline and focus ring | `sand-300` on `sage-900` | 8.16 (needs 3) |
+| "Spin the wheel" button, and on hover | `sienna-950` on `sienna-300`, on `sienna-200` | 9.09, 12.11 |
+| "Spin the wheel" button against its column | `sienna-300` on `sage-950` | 8.41 (needs 3) |
+| Page focus ring on page, middle, left, right | `sky-300` on `sky-950`, `sand-900`, `sage-950`, `sky-900` | 10.32, 9.54, 9.46, 8.65 (needs 3) |
+| Payline | `sienna-400` on `sky-950` | 6.58 (needs 3) |
+| Heart on sand, sage, sky cards | `sienna-300` on `sand-800`, `sage-850`, `sky-850` | 6.63, 6.48, 6.85 (needs 3) |
+| Heart on its hover surface | `sienna-300` on `sky-950` | 9.17 (needs 3) |
+| Heart focus ring on sand, sage, sky cards | `sky-300` on `sand-800`, `sage-850`, `sky-850` | 7.46, 7.29, 7.70 (needs 3) |
+| Favorites tabs: text, and on hover | `sky-300` on `sky-900`, on `sky-800` | 8.65, 6.57 |
+| Favorites tabs: selected text | `sand-50` on `sky-900` | 14.11 |
+| Favorites tabs: the selected tab's bar | `sienna-300` on `sky-900` | 7.70 (needs 3) |
+| Card focus ring on the spinner window | `sky-300` on `sky-950` | 10.32 (needs 3) |
+
+The switch (`TOGGLE_PAIRINGS`) is checked on both nav bar colours (`sage-800` in light, `sage-900` in dark); every row needs 3:
+
+| Where | Foreground on background | Light | Dark |
+| --- | --- | --- | --- |
+| Switch track outline | `sand-300` on the nav bar | 6.19 | 8.16 |
+| Switch track outline on hover | `sand-50` on the nav bar | 10.0 | 13.15 |
+| Inactive icon | `sand-100` on the nav bar | 9.25 | 12.20 |
+| Thumb against the track | `sand-200` on the nav bar | 7.34 | 9.69 |
+| Active icon on the thumb | `sage-900` on `sand-200` | 9.69 | 9.69 |
+
+As in light mode, some pairings are below 3:1 on purpose and aren't tested: card against panel (about 1.3:1), panel borders (1.6 to 1.9:1), concealed reel shapes against their card (decoration with no text) and the column against the page (about 1.1:1). The spinner window's border (`sage-500` on `sky-950`) is 5.67.
+
+The a11y browser tests run every case in both themes.
 
 ## Spinner content
 
@@ -255,7 +307,7 @@ A high or critical vulnerability in a shipped package fails the build. Dependabo
 - A link that opens a new tab uses `NewTabLink` (`components/NewTabLink.tsx`). It adds `target="_blank"`, `rel="noopener noreferrer"` and the screen-reader-only "opens in a new tab" text; pass `pdf` for a PDF link, and the page's own link class as `className` (it has no styles of its own).
 - If a page fails to render, `ErrorPage` replaces it (the nav bar stays), instead of React Router's built-in error screen.
 - On wide screens the home page's columns read Left, Middle, Right on screen, but the DOM and Tab order run Middle, Left, Right. This is deliberate: the columns are independent, and the DOM order is the right reading order on a phone (WCAG 1.3.2 and 2.4.3 still pass).
-- The nav bar is links only: every item in `NAV_ITEMS` must have a `to` (an item without one fails to compile).
+- The nav bar is links only: every item in `NAV_ITEMS` must have a `to` (an item without one fails to compile). The dark mode switch is not a nav item: it sits after `<nav>`, inside the `.navbar-end` wrapper, at the far right.
 - The nav bar hides the link to the page you are on: no Home on the home page, no Frog Library on the library, no About on the About page. On any other URL, all three links show.
 - After a navigation, Tab moves forward from the page's `<main>` into its content; Shift+Tab goes back to the nav bar.
 
@@ -295,13 +347,15 @@ EX3/
     ├── Dockerfile
     ├── vite.config.ts         dev server, /api proxy, Vitest projects (unit, browser)
     └── src/
-        ├── main.tsx           mounts React, i18n, router and TanStack Query
+        ├── main.tsx           calls startApp
+        ├── startApp.tsx       applies the theme, then mounts React, i18n, router and TanStack Query (+ test)
         ├── paths.ts           every page's URL (PATHS), shared by the routes and the nav bar
         ├── routes.tsx         the list of URLs and their pages, inside AppLayout
         ├── layout.browser.test.tsx   real-browser layout tests at 9 viewport sizes
         ├── a11y.browser.test.tsx     axe WCAG A/AA scans of every page and key state
         ├── api/               favorites.ts (the favorites endpoints, checked data)
         ├── styles/            _palette.scss (colours), _tokens.scss (sizes, breakpoint, mixins), convention and contrast tests
+        ├── theme/             theme.ts (pure: parse, resolve and toggle the theme), themeStorage.ts (localStorage `ex3.theme`, browser setting, sets <html data-theme>), useTheme.ts (+ tests)
         ├── i18n/              en.json (every visible string), translate.ts, fillSlots.tsx (links inside a sentence),
         │                      no-hard-coded-text test
         ├── context/           I18nProvider and useI18n()
@@ -316,10 +370,11 @@ EX3/
         │   ├── FavoritesPanel.tsx    the home page's right column: Your Favorites / All Time Favorites
         │   ├── favoritesTabs.ts      the panel's two tabs and their keyboard rule (pure)
         │   ├── FavoritesStatus.tsx   announces a heart that couldn't be saved (in AppLayout, every page)
-        │   └── NewTabLink.tsx        a link that opens a new tab, with the screen-reader warning
+        │   ├── NewTabLink.tsx        a link that opens a new tab, with the screen-reader warning
+        │   └── ThemeToggle.tsx       the dark mode switch (+ .scss, tests, browser tests); Navbar places it after the links, in .navbar-end
         ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage, ErrorPage;
         │                      contactLinks.ts (the email address and profile URLs behind the About Me links)
-        └── test/              test setup (jsdom and browser), MSW server and handlers, favoritesFake.ts, renderWithProviders,
+        └── test/              test setup (jsdom and browser), MSW server and handlers, favoritesFake.ts, matchMedia.ts (fakeMatchMedia), renderWithProviders,
                                renderApp.tsx and browserHelpers.ts (shared by the browser tests),
                                viewports.ts (the viewport table shared by the browser tests),
                                axe.ts (expectNoAxeViolations), textSpacing.ts (the WCAG 1.4.12 overrides)

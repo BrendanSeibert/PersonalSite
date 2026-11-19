@@ -7,6 +7,40 @@
     --border-color-app-layout-focus: #{p.$sky-700};
 }
 
+:root[data-theme="dark"] .d-app-layout {
+    --surface-color-app-layout: #{p.$sky-950};
+    --text-color-app-layout: #{p.$sand-100};
+    --border-color-app-layout-focus: #{p.$sky-300};
+}
+
+// Native UI (scrollbars, form controls, the canvas outside .app-layout) follows the theme.
+:root {
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+// The canvas the browser shows past the page's edges (overscroll, rubber-band scrolling). <html> is
+// outside .d-app-layout, so it can't read the role; these must stay equal to
+// --surface-color-app-layout (theme.browser.test.tsx checks they do).
+:root {
+    background-color: p.$sand-100;
+}
+
+:root[data-theme="dark"] {
+    background-color: p.$sky-950;
+}
+
+// Set for a moment by applyTheme (themeStorage.ts): the whole page changes colour at once instead
+// of the nav links, buttons and tabs fading through low-contrast in-between colours.
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+    transition-property: none !important;
+}
+
 *,
 *::before,
 *::after {

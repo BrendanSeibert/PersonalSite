@@ -5,6 +5,10 @@
     --text-color-not-found-page-heading: #{p.$sage-800};
 }
 
+:root[data-theme="dark"] .d-not-found-page {
+    --text-color-not-found-page-heading: #{p.$sienna-300};
+}
+
 .not-found-page {
     width: 100%;
     max-width: t.$stacked-max-width;

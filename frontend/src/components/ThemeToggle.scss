@@ -1,0 +1,96 @@
+@use "../styles/palette" as p;
+@use "../styles/tokens" as t;
+
+// theme-invariant: the switch sits on the nav bar, whose two greens both pass with these colours
+// (TOGGLE_PAIRINGS in contrast.test.ts), so it has no dark block.
+
+.d-theme-toggle {
+    --border-color-theme-toggle: #{p.$sand-300};
+    --border-color-theme-toggle-hover: #{p.$sand-50};
+    --text-color-theme-toggle-icon: #{p.$sand-100};
+    --surface-color-theme-toggle-thumb: #{p.$sand-200};
+    --text-color-theme-toggle-icon-active: #{p.$sage-900};
+    --border-color-theme-toggle-focus: #{p.$sand-300};
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: t.$tap-target;
+    min-height: t.$tap-target;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    // The page-wide ring would be hard to see on the dark green bar; more specific than
+    // `.app-layout :focus-visible`, as the nav links' ring is.
+    &:focus-visible {
+        @include t.focus-ring(var(--border-color-theme-toggle-focus));
+        border-radius: t.$toggle-height;
+    }
+
+    &:hover .theme-toggle-track {
+        border-color: var(--border-color-theme-toggle-hover);
+    }
+
+    .theme-toggle-track {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        place-items: center;
+        width: t.$toggle-width;
+        height: t.$toggle-height;
+        border: t.$border-width solid var(--border-color-theme-toggle);
+        border-radius: t.$toggle-height;
+        @include t.transitions;
+    }
+
+    // Sits under the sun; moves under the moon when the switch is on. The hairline border keeps
+    // it visible in forced-colours mode, where backgrounds are dropped. Both positions use the
+    // logical inset-inline-start, so in a right-to-left page it still slides towards the moon.
+    .theme-toggle-thumb {
+        position: absolute;
+        top: 50%;
+        inset-inline-start: calc((t.$toggle-width - 2 * t.$border-width) / 4 - t.$toggle-thumb / 2);
+        width: t.$toggle-thumb;
+        height: t.$toggle-thumb;
+        margin-top: calc(t.$toggle-thumb / -2);
+        border: t.$border-width solid var(--border-color-theme-toggle);
+        border-radius: 50%;
+        background-color: var(--surface-color-theme-toggle-thumb);
+        transition: inset-inline-start t.$transition; // shortened under prefers-reduced-motion (AppLayout.scss)
+    }
+
+    &[aria-checked="true"] .theme-toggle-thumb {
+        inset-inline-start: calc(3 * (t.$toggle-width - 2 * t.$border-width) / 4 - t.$toggle-thumb / 2);
+    }
+
+    .theme-toggle-icon {
+        position: relative;
+        width: 1rem;
+        height: 1rem;
+        color: var(--text-color-theme-toggle-icon);
+    }
+
+    .theme-toggle-icon-sun {
+        grid-column: 1;
+    }
+
+    .theme-toggle-icon-moon {
+        grid-column: 2;
+    }
+
+    // The icon over the thumb is inverted: state is shown by position and icon, not colour alone.
+    // The one motion kept while the theme switches (AppLayout.scss turns the rest off for a moment).
+    // Only the property is restored, so reduced motion still shortens the duration.
+    @at-root :root[data-theme-switching] & .theme-toggle-thumb {
+        transition-property: inset-inline-start !important;
+    }
+
+    &[aria-checked="false"] .theme-toggle-icon-sun,
+    &[aria-checked="true"] .theme-toggle-icon-moon {
+        color: var(--text-color-theme-toggle-icon-active);
+    }
+}

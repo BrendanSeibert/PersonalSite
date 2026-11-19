@@ -5,14 +5,15 @@ import { FROG_ENTRIES } from './components/frogEntries';
 import en from './i18n/en.json';
 import { translate } from './i18n/translate';
 import { expectNoAxeViolations } from './test/axe';
+import { setTheme } from './test/browserHelpers';
 import { seedFavorites } from './test/favoritesFake';
 import { renderApp, routesWithPage } from './test/renderApp';
 import { applyTextSpacing } from './test/textSpacing';
 
 // axe-core's WCAG 2.x A and AA rules over every page, and the home page's key states, in real
 // Chromium (so it sees computed styles). A new page or state gets a case here.
-// axe finds the mechanical failures only; a screen reader, keyboard-only use, 400% zoom and a
-// forced-colours theme still need checking by hand.
+// axe finds the mechanical failures only; a screen reader, keyboard-only use, 400% zoom, a
+// forced-colours theme and flipping the OS theme with the site open still need checking by hand.
 
 const SPIN_TIMEOUT = 6000; // the spin is 3s; allow for a slow CI machine
 const AXE_TIMEOUT = 15000; // a full-page scan, after a spin, on a slow machine
@@ -30,12 +31,28 @@ function failFavorites() {
 }
 
 describe.each([
-  [375, 667],
-  [1280, 800],
-])('no WCAG A or AA violations at %i × %i', (width, height) => {
+  ['light', 375, 667],
+  ['light', 1280, 800],
+  ['dark', 375, 667],
+  ['dark', 1280, 800],
+] as const)('no WCAG A or AA violations in the %s theme at %i × %i', (theme, width, height) => {
   beforeEach(async () => {
     await page.viewport(width, height);
+    setTheme(theme); // before renderApp, so the app starts in this theme
   });
+
+  if (theme === 'dark') {
+    it('on the home page after switching to dark with a click', async () => {
+      setTheme('light');
+      await renderApp('/');
+      expect(document.documentElement.dataset.theme).toBe('light');
+      await userEvent.click(screen.getByRole('switch', { name: 'Dark mode' }));
+      expect(document.documentElement.dataset.theme).toBe('dark');
+      // No waiting for transitions: the switch changes every colour at once (applyTheme), so the
+      // page must pass straight after the click.
+      await expectNoAxeViolations();
+    });
+  }
 
   it('on the home page, idle, with favorites', async () => {
     seedFavorites({ mine: ['entry03', 'entry08'], counts: { entry07: 4 } });

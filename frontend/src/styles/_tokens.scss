@@ -25,6 +25,9 @@ $focus-width: 0.125rem;
 $tap-target: 2.75rem; // 44px at default text size: the minimum comfortable touch target
 $frog-card-height: 5rem; // one collapsed card: a 3.5rem image slot plus 0.75rem padding above and below
 $favorite-size: 2rem; // the heart button for a mouse: above WCAG 2.2's 24px minimum
+$toggle-width: 3.75rem; // the dark-mode switch's track
+$toggle-height: 2rem;
+$toggle-thumb: 1.5rem;
 
 $page-max-width: 80rem; // three-column mode
 $stacked-max-width: 48rem; // stacked mode: keeps lines readable on a tablet or half-width window

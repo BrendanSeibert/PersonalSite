@@ -13,6 +13,18 @@
     --text-color-column-layout-heading-right: #{p.$sky-800};
 }
 
+:root[data-theme="dark"] .d-column-layout {
+    --surface-color-column-layout-middle: #{p.$sand-900};
+    --surface-color-column-layout-left: #{p.$sage-950};
+    --surface-color-column-layout-right: #{p.$sky-900};
+    --border-color-column-layout-middle: #{p.$sand-700};
+    --border-color-column-layout-left: #{p.$sage-700};
+    --border-color-column-layout-right: #{p.$sky-700};
+    --text-color-column-layout-heading-middle: #{p.$sienna-300};
+    --text-color-column-layout-heading-left: #{p.$sage-300};
+    --text-color-column-layout-heading-right: #{p.$sky-300};
+}
+
 .column-layout {
     // Small screens first: one column, rows in DOM order.
     display: grid;

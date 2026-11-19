@@ -4,41 +4,62 @@
 //
 // Four anchor colours (marked "anchor"), with lighter and darker shades made by changing only
 // their HSL lightness (and, for the greyish sky and sage, raising saturation at the ends so the
-// hue survives). Steps run from 50 (palest) to 900 (darkest). Every text pairing the site uses
-// meets WCAG AA (4.5:1) and every focus ring, border-as-control and payline meets 3:1; see the
-// "Colour" section of the README for the pairings and their ratios (contrast.test.ts checks them).
-// Burnt sienna is kept although nothing uses it at the moment; it is the one exception to keeping
-// only the shades the site uses.
+// hue survives). Steps run from 50 (palest) to 950 (darkest). Every text pairing the site uses,
+// in both the light and the dark theme, meets WCAG AA (4.5:1) and every focus ring,
+// border-as-control and payline meets 3:1; see the "Colour" section of the README for the pairings
+// and their ratios (contrast.test.ts checks them).
+// Burnt sienna is the dark theme's accent (headings in sand panels, links, hearts, the selected
+// tab, the Spin button and the payline). Only sienna-750 and sienna-800 are unused, kept on
+// purpose; they are the one exception to keeping only the shades the site uses.
 
-// Burnt sienna: not used at the moment, kept so it can come back (for example as an accent).
-// Derived from the anchor #984216 (sienna-600), which is not used directly.
-$sienna-750: #743211;
-$sienna-800: #622b0e;
+// Burnt sienna: the dark theme's accent. Derived from the anchor #984216 (sienna-600), which is
+// not used directly.
+$sienna-200: #f5cfbc; // hover on the dark-mode accent
+$sienna-300: #ebad8e; // dark-mode accent: headings in sand panels, links, hearts, selected tab, Spin button
+$sienna-400: #dd895f; // dark-mode payline
+$sienna-750: #743211; // unused, kept on purpose
+$sienna-800: #622b0e; // unused, kept on purpose
+$sienna-950: #25160e; // text on the dark-mode Spin button
 
-// Ivory sand: page and middle-column surfaces, text on the green nav and buttons.
+// Ivory sand: page and middle-column surfaces, text on the green nav and buttons; in the dark
+// theme the middle column, Frog Library and About panels, and sand cards.
 $sand-50: #fbf9f6; // the spinner window and the empty image slot
 $sand-100: #f5f0ea; // the page
 $sand-150: #f0e9e0; // the middle column
 $sand-200: #e4d6c5; // anchor
 $sand-300: #d8c4ab;
+$sand-600: #63584b;
+$sand-700: #4a4136;
+$sand-800: #393128;
+$sand-900: #241f19;
 
-// Stormy sky: body text, the right column, focus rings.
+// Stormy sky: body text, the right column, focus rings; in the dark theme the page, the right
+// column and sky cards.
 $sky-100: #ebf2f4;
 $sky-200: #d5e2e7;
 $sky-300: #b1cad3;
 $sky-500: #78898f; // anchor
+$sky-600: #54676d;
 $sky-700: #3e5056;
 $sky-800: #2f3d42;
+$sky-850: #263236;
 $sky-900: #20292d;
+$sky-950: #111a1c; // the dark-mode page
 
 // Sage green: the main colour (the nav bar, buttons, the payline, hearts, headings, the selected
-// tab) and the left column (and the spinner in it).
+// tab) and the left column (and the spinner in it); in the dark theme the left column and sage
+// cards.
 $sage-100: #f1f4eb;
 $sage-200: #e1e8d4;
 $sage-300: #c7d4b0;
 $sage-500: #8d957e; // anchor
+$sage-600: #5f6751;
+$sage-700: #484e3b;
 $sage-800: #3b422e; // the main colour
+$sage-850: #303626;
 $sage-900: #292f1e; // hover on the main colour: hsl(81 22% 15%)
+$sage-950: #1e2216;
 
 $shadow: rgba(32, 41, 45, 0.12); // sky-900 at 12%
+$shadow-dark: rgba(0, 0, 0, 0.4); // shadows need more weight on a dark page
 $transparent: transparent;

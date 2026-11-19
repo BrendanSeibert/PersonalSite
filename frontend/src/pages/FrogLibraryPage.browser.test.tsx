@@ -247,6 +247,9 @@ describe.each([
     expect(screen.getByRole('button', { name: firstHeart })).toHaveFocus();
 
     main.focus();
+    // Back from the page: first the dark-mode switch (the nav bar's last control), then the last link.
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(screen.getByRole('switch', { name: 'Dark mode' })).toHaveFocus();
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
     expect(screen.getByRole('link', { name: 'About' })).toHaveFocus();
   });

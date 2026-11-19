@@ -15,6 +15,9 @@
     "frogLibrary": "Frog Library",
     "about": "About"
   },
+  "theme": {
+    "toggle": "Dark mode"
+  },
   "home": {
     "middle": {
       "heading": "About Me",

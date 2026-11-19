@@ -5,6 +5,10 @@
     --text-color-error-page-heading: #{p.$sage-800};
 }
 
+:root[data-theme="dark"] .d-error-page {
+    --text-color-error-page-heading: #{p.$sienna-300};
+}
+
 .error-page {
     width: 100%;
     max-width: t.$stacked-max-width;

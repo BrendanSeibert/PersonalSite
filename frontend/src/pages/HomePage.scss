@@ -6,6 +6,11 @@
     --text-color-home-page-link-hover: #{p.$sage-900};
 }
 
+:root[data-theme="dark"] .d-home-page {
+    --text-color-home-page-link: #{p.$sienna-300};
+    --text-color-home-page-link-hover: #{p.$sienna-200};
+}
+
 .home-page-intro {
     font-size: t.$font-size-lg;
 }

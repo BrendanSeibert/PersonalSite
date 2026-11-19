@@ -28,7 +28,8 @@ const TEXT = 4.5; // WCAG AA, normal text
 const UI = 3; // WCAG AA, controls, focus rings, state indicators
 
 // Mirrors the README's colour table: [where, foreground, background, minimum].
-const PAIRINGS: [string, string, string, number][] = [
+type Pairing = [string, string, string, number];
+const LIGHT_PAIRINGS: Pairing[] = [
   ['body text on the page', 'sky-900', 'sand-100', TEXT],
   ['body text on the middle column', 'sky-900', 'sand-150', TEXT],
   ['body text on the left column', 'sky-900', 'sage-100', TEXT],
@@ -69,6 +70,65 @@ const PAIRINGS: [string, string, string, number][] = [
   ['card focus ring on the spinner window', 'sky-700', 'sand-50', UI],
 ];
 
+// Dark theme: one row per individual foreground/background pair.
+const DARK_PAIRINGS: Pairing[] = [
+  ['body text on the page', 'sand-100', 'sky-950', TEXT],
+  ['body text on the middle column', 'sand-100', 'sand-900', TEXT],
+  ['body text on the left column', 'sand-100', 'sage-950', TEXT],
+  ['body text on the right column', 'sand-100', 'sky-900', TEXT],
+  ['body text on a sand card', 'sand-100', 'sand-800', TEXT],
+  ['body text on a sage card', 'sand-100', 'sage-850', TEXT],
+  ['body text on a sky card', 'sand-100', 'sky-850', TEXT],
+  ['middle column heading (and Frog Library, About)', 'sienna-300', 'sand-900', TEXT],
+  ['left column heading', 'sage-300', 'sage-950', TEXT],
+  ['spinner result line', 'sage-300', 'sage-950', TEXT],
+  ['right column heading', 'sky-300', 'sky-900', TEXT],
+  ['page-not-found and error headings', 'sienna-300', 'sky-950', TEXT],
+  ['link in the middle column', 'sienna-300', 'sand-900', TEXT],
+  ['link in the middle column on hover', 'sienna-200', 'sand-900', TEXT],
+  ['nav bar title', 'sand-50', 'sage-900', TEXT],
+  ['nav links', 'sand-100', 'sage-900', TEXT],
+  ['nav link on hover', 'sage-900', 'sand-200', TEXT],
+  ['nav outline and focus ring', 'sand-300', 'sage-900', UI],
+  ['"Spin the wheel" button', 'sienna-950', 'sienna-300', TEXT],
+  ['"Spin the wheel" button on hover', 'sienna-950', 'sienna-200', TEXT],
+  ['"Spin the wheel" button against its column', 'sienna-300', 'sage-950', UI],
+  ['page focus ring on the page', 'sky-300', 'sky-950', UI],
+  ['page focus ring on the middle column', 'sky-300', 'sand-900', UI],
+  ['page focus ring on the left column', 'sky-300', 'sage-950', UI],
+  ['page focus ring on the right column', 'sky-300', 'sky-900', UI],
+  ['payline', 'sienna-400', 'sky-950', UI],
+  ['heart on a sand card', 'sienna-300', 'sand-800', UI],
+  ['heart on a sage card', 'sienna-300', 'sage-850', UI],
+  ['heart on a sky card', 'sienna-300', 'sky-850', UI],
+  ['heart on its hover surface', 'sienna-300', 'sky-950', UI],
+  ['heart focus ring on a sand card', 'sky-300', 'sand-800', UI],
+  ['heart focus ring on a sage card', 'sky-300', 'sage-850', UI],
+  ['heart focus ring on a sky card', 'sky-300', 'sky-850', UI],
+  ['tab text', 'sky-300', 'sky-900', TEXT],
+  ['tab text on hover', 'sky-300', 'sky-800', TEXT],
+  ['selected tab text', 'sand-50', 'sky-900', TEXT],
+  ['selected tab bar', 'sienna-300', 'sky-900', UI],
+  ['card focus ring on the spinner window', 'sky-300', 'sky-950', UI],
+];
+
+// Theme switch in the nav bar, checked on both nav surfaces (sage-800 in light, sage-900 in dark).
+const TOGGLE_PAIRINGS: Pairing[] = ['sage-800', 'sage-900'].flatMap((nav): Pairing[] => [
+  [`switch track outline on ${nav}`, 'sand-300', nav, UI],
+  [`switch track outline on hover on ${nav}`, 'sand-50', nav, UI],
+  [`inactive switch icon on ${nav}`, 'sand-100', nav, UI],
+  [`switch thumb against the track on ${nav}`, 'sand-200', nav, UI],
+]).concat([['active switch icon on the thumb', 'sage-900', 'sand-200', UI]]);
+
+const withTheme =
+  (theme: string) =>
+  ([where, fg, bg, min]: Pairing): Pairing => [`${theme}: ${where}`, fg, bg, min];
+const ALL_PAIRINGS: Pairing[] = [
+  ...LIGHT_PAIRINGS.map(withTheme('light')),
+  ...DARK_PAIRINGS.map(withTheme('dark')),
+  ...TOGGLE_PAIRINGS.map(withTheme('toggle')),
+];
+
 describe('the contrast formula', () => {
   it('gives 21:1 for black on white and 1:1 for a colour on itself', () => {
     expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 5);
@@ -77,10 +137,10 @@ describe('the contrast formula', () => {
 });
 
 it('reads the palette (guards against the regex silently matching nothing)', () => {
-  expect(Object.keys(COLOURS).length).toBeGreaterThanOrEqual(15);
+  expect(Object.keys(COLOURS).length).toBeGreaterThanOrEqual(30);
 });
 
-describe.each(PAIRINGS)('%s: %s on %s', (_where, fg, bg, min) => {
+describe.each(ALL_PAIRINGS)('%s: %s on %s', (_where, fg, bg, min) => {
   it(`is at least ${min}:1`, () => {
     expect(COLOURS[fg], `${fg} is in the palette`).toBeDefined();
     expect(COLOURS[bg], `${bg} is in the palette`).toBeDefined();

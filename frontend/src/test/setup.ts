@@ -15,8 +15,9 @@ afterEach(() => {
   cleanup(); // remove rendered components between tests
   server.resetHandlers(); // undo any per-test handler overrides
   resetFavorites(); // the in-memory favorites fake starts empty in every test
+  delete document.documentElement.dataset.theme; // a dark theme must not leak into the next test
   try {
-    localStorage.clear(); // the favorites panel remembers its mode there
+    localStorage.clear(); // the favorites panel and the theme remember their choice there
   } catch {
     // storage blocked: nothing to clear
   }

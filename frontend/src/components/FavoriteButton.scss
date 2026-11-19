@@ -6,6 +6,11 @@
     --surface-color-favorite-button-hover: #{p.$sand-50};
 }
 
+:root[data-theme="dark"] .d-favorite-button {
+    --text-color-favorite-button: #{p.$sienna-300};
+    --surface-color-favorite-button-hover: #{p.$sky-950};
+}
+
 .favorite-button {
     display: inline-flex;
     flex: none;

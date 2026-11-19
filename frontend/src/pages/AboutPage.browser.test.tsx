@@ -178,6 +178,9 @@ describe.each([
     expect(main.contains(document.activeElement) && document.activeElement !== main).toBe(false);
 
     main.focus();
+    // Back from the page: first the dark-mode switch (the nav bar's last control), then the last link.
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(screen.getByRole('switch', { name: 'Dark mode' })).toHaveFocus();
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
     expect(screen.getByRole('link', { name: 'Frog Library' })).toHaveFocus();
   });

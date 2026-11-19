@@ -88,6 +88,26 @@ describe('Navbar', () => {
     expect(navItems()).toEqual(['link:Frog Library', 'link:About']);
   });
 
+  it('puts the dark-mode switch in the banner, after the nav and outside it', () => {
+    renderWithProviders(<Navbar />);
+    const banner = screen.getByRole('banner');
+    const toggle = within(banner).getByRole('switch', { name: 'Dark mode' });
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    expect(nav).not.toContainElement(toggle);
+    expect(nav.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('makes the switch the last focusable element in the banner', () => {
+    renderWithProviders(<Navbar />, { route: '/does-not-exist' });
+    const banner = screen.getByRole('banner');
+    const links = within(banner).getAllByRole('link');
+    const toggle = within(banner).getByRole('switch', { name: 'Dark mode' });
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
   it('has the colour and layout classes on its root', () => {
     renderWithProviders(<Navbar />);
     expect(screen.getByRole('banner')).toHaveClass('d-navbar', 'navbar');

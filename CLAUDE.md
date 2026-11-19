@@ -57,15 +57,16 @@ CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including `npm run l
 - **`backend/src/`:** `server.ts` (thin startup wiring, keep-alive timeouts of 65s/66s; don't lower them), `lifecycle.ts` (testable migrate-or-exit and clean shutdown; migrations use their own pool without the 5 s timeouts), `app.ts` (builds the Express app with no side effects), `config.ts` (validates env vars), `db.ts` (pool, shared `Db` type), `migrate.ts`, `visitor.ts` (the `ex3_visitor` cookie), `security.ts` (headers, rate limits, `Origin` check), `staticSite.ts` (serves the build in production), `routes/health.ts`, `routes/favorites.ts`.
 - **`backend/tests/`:** `unit/` (no database) and `integration/` (real PostgreSQL in Docker).
 - **`frontend/src/`:**
-  - Setup and routing: `main.tsx` (mounts React, i18n, router, TanStack Query), `queryClient.ts` (reads retry once, never on a 4xx), `paths.ts` (`PATHS`), `routes.tsx` (pages sit inside an `errorElement` route that shows `ErrorPage`).
+  - Setup and routing: `main.tsx` (one line: calls `startApp`), `startApp.tsx` (applies the theme, then mounts React, i18n, router, TanStack Query; tested in `startApp.test.tsx`), `queryClient.ts` (reads retry once, never on a 4xx), `paths.ts` (`PATHS`), `routes.tsx` (pages sit inside an `errorElement` route that shows `ErrorPage`).
   - Data and text: `api/favorites.ts` (endpoint calls with checked data), `i18n/` (`en.json`, `translate.ts`, `fillSlots.tsx` for links inside a sentence), `context/` (`I18nProvider`, `useI18n()`).
-  - `styles/`: `_palette.scss`, `_tokens.scss`, convention and contrast tests.
+  - `styles/`: `_palette.scss`, `_tokens.scss`, `themeInvariant.ts` (the dark-block opt-out marker), convention and contrast tests.
+  - `theme/`: `theme.ts` (pure: `parseTheme`, `resolveTheme`, `toggleTheme`), `themeStorage.ts` (`localStorage` key `ex3.theme`, `systemPrefersDark`, `watchSystemTheme`, `watchStoredTheme` (other tabs), `applyTheme`, `initialTheme`, `bootstrapTheme`) and `useTheme.ts`. `startApp` calls `bootstrapTheme()` before rendering.
   - `components/`:
-    - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`, `NewTabLink` (links that open a new tab).
+    - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`, `NewTabLink` (links that open a new tab), `ThemeToggle` (the dark mode switch in the nav bar).
     - Spinner and cards: `FrogSpinner`, `FrogCard`, `frogEntries.ts` (entries, card tones, `IMAGES`), `frogReel.ts` (pure reel maths), `frogExpansion.ts` (pure open/close rules), `useCardExpansion.ts` + `ExpandableFrogCard.tsx`.
     - Favorites: `FavoriteButton` + `useFavorite.ts`, `FavoritesPanel` + `favoritesTabs.ts` (pure tab keyboard rule), `FavoritesStatus` (announces failed saves, on every page).
   - `pages/`: `HomePage`, `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `ErrorPage` (shown when a page fails to render; the nav bar stays), `contactLinks.ts`.
-  - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `renderWithProviders` (also returns its `queryClient`), `renderApp.tsx` (mounts the real routes for browser tests; `routesWithPage` adds a test page), `browserHelpers.ts` (shared layout helpers), `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
+  - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `matchMedia.ts` (`fakeMatchMedia`), `renderWithProviders` (also returns its `queryClient`), `renderApp.tsx` (mounts the real routes for browser tests; `routesWithPage` adds a test page), `browserHelpers.ts` (shared layout helpers), `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
 
 Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from React hooks and components, so it can be unit tested.
 
@@ -78,9 +79,10 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 
 ## Frontend conventions (enforced by tests)
 
-`styleConventions.test.ts` and `noHardcodedText.test.tsx` enforce the first four of these.
+`styleConventions.test.ts` and `noHardcodedText.test.tsx` enforce the first four of these, and the dark-block rule.
 
 - **Colours:** literals (`#hex`, `rgb()`, and colour keywords like `green` or `blue`) appear only in `src/styles/_palette.scss`. Each component maps palette colours to roles once, in a `.d-<component>` block of custom properties named `--<text|surface|border|shadow>-color-<component>[-<part>][-<state>]`.
+- **Dark block:** every `.d-<component>` block is followed by a `:root[data-theme="dark"] .d-<component>` block that sets exactly the same roles, even where the value is unchanged. Components keep reading `var(--x)`. The CSS keys off the attribute only, never `@media (prefers-color-scheme)`. A new role needs a dark value, or the parity test fails. The one opt-out: a sheet whose colours are the same in both themes starts with `// theme-invariant: <reason>` and has no dark block (only `ThemeToggle.scss` today). `styles/themeInvariant.ts` reads the marker for both `styleConventions.test.ts` and `theme.browser.test.tsx`, which checks that an invariant component's roles really stay the same, and that every other component changes at least one. Adding a new opt-out also means updating the expected list in both tests.
 - **Sizes:** use `rem` (or `fr`, `%`, `vw`, `dvh`, `clamp()`) with tokens from `src/styles/_tokens.scss`. The only `px` allowed is a `1px` hairline.
 - **Text:** every user-facing string, including `aria-label`s and page titles, goes in `src/i18n/en.json` and is read with `t()` from `useI18n()`. No hard-coded text.
 - **Class names:** a component root has `d-<name>` (colours) and `<name>` (layout). Child classes start with the component name. Exception: `NewTabLink` has no styles and no `.scss`; the caller passes its own link class.
@@ -89,14 +91,19 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 
 ## Colour
 
-- The palette comes from four anchors: Burnt Sienna `#984216`, Ivory Sand `#E4D6C5`, Stormy Sky `#78898F` and Sage Green `#8D957E`. Other shades are lighter or darker versions of the same hues. Only shades the site uses are in the file, except `sienna-750` and `sienna-800`, which are unused but kept on purpose.
+- The palette comes from four anchors: Burnt Sienna `#984216`, Ivory Sand `#E4D6C5`, Stormy Sky `#78898F` and Sage Green `#8D957E`. Other shades are lighter or darker versions of the same hues. Only shades the site uses are in the file, except `sienna-750` and `sienna-800`, which are unused but kept on purpose (too dark for text on the dark page, too saturated for large surfaces).
 - The main colour is `sage-800` (`#3b422e`), used for the nav bar, buttons, payline, hearts, headings and the selected tab, with `sage-900` for hover. The page background is `sand-100`. Body text is `sky-900`. Focus rings are `sky-700` (`sand-300` on the nav bar).
+- Dark mode is keyed by `<html data-theme="light|dark">`, set by JS. The first theme follows the browser (live, until the visitor uses the switch). The switch's choice is remembered in `localStorage` (`ex3.theme`), like the panel tab, and the stored value is checked against an allow-list (`parseTheme`) before it touches the DOM. `color-scheme` (in `AppLayout.scss` and the `index.html` meta) makes native parts follow.
+- A choice made or cleared in another tab applies straight away (the `storage` event, `watchStoredTheme`).
+- Switching is atomic: `applyTheme` sets `data-theme-switching` for a moment, and `AppLayout.scss` turns transitions off while it is set, so nothing fades through low-contrast in-between colours. The switch thumb's slide is the one motion kept (`ThemeToggle.scss`).
+- `<html>` has its own background (`AppLayout.scss`) so overscroll shows the page colour. It must equal `--surface-color-app-layout` in each theme, and `theme.browser.test.tsx` checks that it does.
+- Dark mode's accent is Burnt Sienna (`sienna-300` for headings in sand panels, links, hearts, the selected tab bar and the Spin button; `sienna-400` for the payline). The page is `sky-950`, text is `sand-100`, and the nav bar is `sage-900`. Columns and cards are one step lighter shades of their own family. Shades are still lighter or darker versions of the four anchor hues.
 - Card surfaces against panels (about 1.2:1), panel borders (about 1.4:1) and the spinner window border (`sage-500`, about 2.9:1) are below 3:1 on purpose. Cards are identified by their title text, and the window border is decoration. Don't "fix" them.
 
 ## Accessibility (WCAG 2.x AA)
 
-- New colour pairings must meet AA: 4.5:1 for text, 3:1 for non-text. Add each one to `frontend/src/styles/contrast.test.ts`.
-- **A new page or UI state gets a case in `src/a11y.browser.test.tsx`** (axe scans at a phone and a laptop size, plus text-spacing overrides on the Frog Library). One deliberate exception: `target-size` is skipped while the landed card is open, because it floats over the Spin button on purpose. It closes on an outside click, Escape, or focus moving away.
+- New colour pairings must meet AA: 4.5:1 for text, 3:1 for non-text. Add each one to `frontend/src/styles/contrast.test.ts`: `LIGHT_PAIRINGS`, `DARK_PAIRINGS`, or `TOGGLE_PAIRINGS` (the switch, checked on both nav bar colours). Dark mode needs its own pairings, so a new colour usually needs one in each list.
+- **A new page or UI state gets a case in `src/a11y.browser.test.tsx`** (axe scans at a phone and a laptop size, in both themes, plus text-spacing overrides on the Frog Library). One deliberate exception: `target-size` is skipped while the landed card is open, because it floats over the Spin button on purpose. It closes on an outside click, Escape, or focus moving away.
 - Layout browser tests (`layout.browser.test.tsx`) cover 9 viewport sizes from `test/viewports.ts`.
 - Cards other than `fitsRow` cards must grow to show their whole title (WCAG 1.4.12). Only the spinner's landed card and concealed reel cards (`fitsRow`) are one row tall, with titles cut at two lines. The full name appears in the status line.
 - The home page's DOM and Tab order (Middle, Left, Right) differs from the visual order (Left, Middle, Right) on purpose. Don't reorder it.
@@ -111,6 +118,7 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
   - an entry in `NAV_ITEMS` in `Navbar.tsx`, if it belongs in the nav
 - After every navigation, including Back and Forward, `AppLayout` scrolls to the top and focuses `<main>`. `AppLayout` sets the page language, not the title.
 - The nav bar has links only. Every `NAV_ITEMS` entry needs a `to`. The nav bar hides the link to the current page.
+- The dark mode switch (`ThemeToggle`) is not a nav item. It sits after `<nav>`, inside the `.navbar-end` wrapper, always rightmost. It is a `role="switch"` button named "Dark mode" (the name never changes; `aria-checked` carries the state).
 - Links that open a new tab use `NewTabLink` (`components/NewTabLink.tsx`; pass `pdf` for a PDF link, and the caller's link class as `className`).
 
 ## Frogs (spinner entries)

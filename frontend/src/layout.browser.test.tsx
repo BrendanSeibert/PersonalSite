@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { expectNoHorizontalScroll, navItems, rect, SAGE_800_RGB } from './test/browserHelpers';
+import { expectNoHorizontalScroll, navItems, rect, SAGE_800_RGB, themeSwitch } from './test/browserHelpers';
 import { renderApp } from './test/renderApp';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS, type Layout } from './test/viewports';
 
@@ -44,6 +44,7 @@ function expectNavbarTitleAndButtonsApart() {
   for (const item of navItems()) {
     expect(overlaps(title, rect(item)), `title overlaps "${item.textContent}"`).toBe(false);
   }
+  expect(overlaps(title, rect(themeSwitch())), 'title overlaps the theme switch').toBe(false);
 }
 
 function expectNavbarPinnedOnOneRow() {
@@ -58,7 +59,14 @@ function expectNavbarPinnedOnOneRow() {
 
   expect(items).toHaveLength(2); // the current page's link is hidden
   expect(title.left).toBeCloseTo(contentLeft, 0);
-  expect(items.at(-1)!.right).toBeCloseTo(contentRight, 0);
+  const toggle = rect(themeSwitch());
+  // The switch is the rightmost element, after the last link, on the links' row.
+  expect(toggle.right).toBeCloseTo(contentRight, 0);
+  expect(items.at(-1)!.right).toBeLessThanOrEqual(toggle.left + 0.5);
+  expect(Math.abs(toggle.top + toggle.height / 2 - (items[0].top + items[0].height / 2))).toBeLessThanOrEqual(0.5);
+  expect(toggle.height).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
+  expect(toggle.width).toBeGreaterThanOrEqual(TAP_TARGET_PX - 0.5);
+  expect(overlaps(title, toggle), 'title overlaps the theme switch').toBe(false);
   expectNavbarTitleAndButtonsApart();
   for (const item of items) {
     expect(item.top).toBeCloseTo(items[0].top, 0);

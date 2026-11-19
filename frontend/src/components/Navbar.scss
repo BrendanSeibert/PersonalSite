@@ -14,6 +14,19 @@
     --border-color-navbar-focus: #{p.$sand-300};
 }
 
+:root[data-theme="dark"] .d-navbar {
+    --surface-color-navbar: #{p.$sage-900};
+    --shadow-color-navbar: #{p.$shadow-dark};
+    --text-color-navbar-title: #{p.$sand-50};
+    --text-color-navbar-link: #{p.$sand-100};
+    --surface-color-navbar-link: #{p.$transparent};
+    --border-color-navbar-link: #{p.$sand-300};
+    --text-color-navbar-link-hover: #{p.$sage-900};
+    --surface-color-navbar-link-hover: #{p.$sand-200};
+    --border-color-navbar-link-hover: #{p.$sand-200};
+    --border-color-navbar-focus: #{p.$sand-300};
+}
+
 .navbar {
     display: flex;
     flex-wrap: wrap;
@@ -32,8 +45,14 @@
         color: var(--text-color-navbar-title);
     }
 
-    .navbar-links {
-        margin-inline-start: auto; // stays at the far right, also after wrapping to its own line
+    // The links and the switch stay together, the switch rightmost, also after wrapping to its own line.
+    .navbar-end {
+        display: flex;
+        flex-wrap: wrap; // only at very large text, when links and switch no longer fit on one line
+        justify-content: flex-end;
+        align-items: center;
+        gap: t.$space-3;
+        margin-inline-start: auto;
     }
 
     .navbar-list {

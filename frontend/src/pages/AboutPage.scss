@@ -8,6 +8,12 @@
     --text-color-about-page-heading: #{p.$sage-800};
 }
 
+:root[data-theme="dark"] .d-about-page {
+    --surface-color-about-page: #{p.$sand-900};
+    --border-color-about-page: #{p.$sand-700};
+    --text-color-about-page-heading: #{p.$sienna-300};
+}
+
 // The home page's grid with one column: sized to its content when stacked, reaching the bottom of
 // the screen when wide. Always the stacked width, so lines stay readable.
 .about-page {

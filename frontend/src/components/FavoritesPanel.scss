@@ -12,6 +12,15 @@
     --border-color-favorites-panel-tab-selected: #{p.$sage-800};
 }
 
+:root[data-theme="dark"] .d-favorites-panel {
+    --border-color-favorites-panel-tabs: #{p.$sky-700};
+    --text-color-favorites-panel-tab: #{p.$sky-300};
+    --surface-color-favorites-panel-tab: #{p.$transparent};
+    --surface-color-favorites-panel-tab-hover: #{p.$sky-800};
+    --text-color-favorites-panel-tab-selected: #{p.$sand-50};
+    --border-color-favorites-panel-tab-selected: #{p.$sienna-300};
+}
+
 $tab-bar: 0.1875rem; // the selected tab's bar
 
 .favorites-panel {
