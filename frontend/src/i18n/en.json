@@ -21,7 +21,7 @@
   "home": {
     "middle": {
       "heading": "About Me",
-      "intro": "I’m a software engineer with 5+ years of experience building reactive, user-friendly web components. I’m also an amateur frog enthusiast with 28+ years experience. My recent work has largely been in TypeScript, SolidJS, and Angular, but I’m more interested in providing a rich user experience than in using any particular framework or language. Lately I’ve been dabbling in React, and I’m enjoying it so far. When it comes to amphibians, most of my hands-on experience has been in northwestern Pennsylvania, but I’m interested in critters of all kinds and locales.",
+      "intro": "I’m a software engineer with 5+ years of experience building reactive, user-friendly web components. I’m also an amateur frog enthusiast with 28+ years experience. My recent work has largely been in TypeScript, SolidJS, and Angular, but I’m more interested in providing a rich user experience than in using any particular framework or language. Lately I’ve been getting reacquainted with React, and I’m enjoying it so far. When it comes to amphibians, most of my hands-on experience has been in northwestern Pennsylvania, but I’m interested in critters of all kinds and locales.",
       "contact": "Here’s {resume}, or you can {email} directly. I’m also on {linkedIn}, and you can check out the code for this site on my {gitHub}.",
       "resume": "my resume",
       "email": "email me",
@@ -82,7 +82,7 @@
   },
   "about": {
     "heading": "About",
-    "lead": "This site is an exploration of building software with Claude. For this project I wanted to experiment with different methods of Claude‑assisted development, working faster and trying new approaches. Claude helped plan features, orchestrate agents, maintain design paradigms and review the code, while I set the standards, made the calls and reviewed the changes before committing. I used Opus 5.5 and Fable 5.1 for planning, building and orchestrating, and Sonnet 5.5 for the parallel agents. I also built on the habits from my first Claude project (ToDoApp, on {gitHub}), which served as a style guide. Here’s the workflow I ended up with, and the lessons that shaped it.",
+    "lead": "This site is an exploration in building software with Claude. For this project I wanted to experiment with different methods of Claude‑assisted development, working faster and trying new approaches. Claude helped plan features, orchestrate agents, maintain design paradigms and review the code, while I set the standards, made the calls and reviewed the changes before committing. I used Opus 5.5 and Fable 5.1 for planning, building and orchestrating, and Sonnet 5.5 for the parallel agents. I also built on the habits from my first Claude project (ToDoApp, on {gitHub}), which served as a style guide. Here’s the workflow I ended up with, and the lessons that shaped it.",
     "gitHub": "my GitHub",
     "loop": {
       "heading": "The loop",
