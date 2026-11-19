@@ -1,21 +1,53 @@
 @use "../styles/palette" as p;
 @use "../styles/tokens" as t;
 
-// The same colour roles as the home page's middle column, so its README contrast pairings apply.
+// The panel, heading and link roles match the home page's middle column, so its README contrast
+// pairings apply. Every text pairing is in contrast.test.ts; the rails and borders are decoration,
+// and the chips and cards against the panel are below 3:1 on purpose (their words identify them).
 .d-about-page {
     --surface-color-about-page: #{p.$sand-150};
     --border-color-about-page: #{p.$sand-300};
     --text-color-about-page-heading: #{p.$sage-800};
+    --text-color-about-page-muted: #{p.$sky-700};
+    --text-color-about-page-link: #{p.$sage-800};
+    --text-color-about-page-link-hover: #{p.$sage-900};
+    --surface-color-about-page-aside: #{p.$sky-100};
+    --text-color-about-page-aside-heading: #{p.$sky-800};
+    --surface-color-about-page-who-claude: #{p.$sage-200};
+    --surface-color-about-page-who-me: #{p.$sand-200};
+    --surface-color-about-page-who-tests: #{p.$sky-200};
+    --surface-color-about-page-layer-1: #{p.$sage-100};
+    --surface-color-about-page-layer-2: #{p.$sky-100};
+    --surface-color-about-page-layer-3: #{p.$sand-200};
+    --surface-color-about-page-step: #{p.$sage-800};
+    --text-color-about-page-step: #{p.$sand-50};
+    --surface-color-about-page-card: #{p.$sand-100};
+    --border-color-about-page-rail: #{p.$sage-500};
 }
 
 :root[data-theme="dark"] .d-about-page {
     --surface-color-about-page: #{p.$sand-900};
     --border-color-about-page: #{p.$sand-700};
     --text-color-about-page-heading: #{p.$sienna-300};
+    --text-color-about-page-muted: #{p.$sky-300};
+    --text-color-about-page-link: #{p.$sienna-300};
+    --text-color-about-page-link-hover: #{p.$sienna-200};
+    --surface-color-about-page-aside: #{p.$sky-900};
+    --text-color-about-page-aside-heading: #{p.$sky-300};
+    --surface-color-about-page-who-claude: #{p.$sage-850};
+    --surface-color-about-page-who-me: #{p.$sand-800};
+    --surface-color-about-page-who-tests: #{p.$sky-850};
+    --surface-color-about-page-layer-1: #{p.$sage-850};
+    --surface-color-about-page-layer-2: #{p.$sky-850};
+    --surface-color-about-page-layer-3: #{p.$sand-800};
+    --surface-color-about-page-step: #{p.$sienna-300};
+    --text-color-about-page-step: #{p.$sienna-950};
+    --surface-color-about-page-card: #{p.$sand-800};
+    --border-color-about-page-rail: #{p.$sage-600};
 }
 
-// The home page's grid with one column: sized to its content when stacked, reaching the bottom of
-// the screen when wide. Always the stacked width, so lines stay readable.
+// One column at the stacked width, so lines stay readable; sized to its content at every width.
+// The page is longer than a screen, so it scrolls like the Frog Library.
 .about-page {
     display: grid;
     flex: 1; // fill the height left under the nav bar, like the home page's layout
@@ -26,37 +58,255 @@
     margin-inline: auto;
     padding: t.$gutter;
 
-    @include t.wide-layout {
-        align-content: stretch; // the one row grows to the bottom, like the home page's columns
+    // :where() keeps this at the specificity of one class, so a section's own heading rule (the
+    // aside's) wins wherever it sits in the file, not only because it comes later.
+    :where(h3) {
+        margin-block: t.$space-6 t.$space-2;
+        font-size: t.$font-size-md;
+        color: var(--text-color-about-page-heading);
     }
+}
 
-    .about-page-panel {
-        @include t.panel;
-        background-color: var(--surface-color-about-page);
-        border-color: var(--border-color-about-page);
+// ---- Panel and prose -------------------------------------------------------------------------
 
-        h2 { color: var(--text-color-about-page-heading); }
+.about-page-panel {
+    @include t.panel;
+    background-color: var(--surface-color-about-page);
+    border-color: var(--border-color-about-page);
+    text-align: start; // long prose reads better left-aligned than centred
+
+    h2 {
+        text-align: center;
+        color: var(--text-color-about-page-heading);
     }
+}
 
-    .about-page-intro {
-        font-size: t.$font-size-lg; // the same lead size as the home page's intro
-    }
+.about-page-lead {
+    font-size: t.$font-size-lg; // the same lead size as the home page's intro
+    text-wrap: pretty; // evens out the line lengths, so the lead reads as one block at any width
+}
 
-    // A citation: smaller than the body, and the long URL may break anywhere on a narrow screen.
-    .about-page-source {
+.about-page-link {
+    color: var(--text-color-about-page-link);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+
+    &:hover { color: var(--text-color-about-page-link-hover); }
+}
+
+.about-page-figure {
+    margin: t.$space-5 0;
+
+    figcaption {
+        margin-top: t.$space-3;
         font-size: t.$font-size-sm;
-        overflow-wrap: anywhere;
+        color: var(--text-color-about-page-muted);
+    }
+}
+
+.about-page-aside {
+    margin-block: t.$space-5;
+    padding: t.$space-4;
+    border-radius: t.$radius-md;
+    background-color: var(--surface-color-about-page-aside);
+
+    h3 {
+        margin-top: 0;
+        color: var(--text-color-about-page-aside-heading);
     }
 
-    // Looks like the rest of the citation (same colour and size), plus an underline so it reads as
-    // a link without relying on colour.
-    .about-page-source-link {
-        color: inherit;
-        text-decoration: underline;
-        text-underline-offset: 0.15em;
+    > :last-child { margin-bottom: 0; }
+}
 
-        &:hover {
-            text-decoration-thickness: 0.12em;
+.about-page-credits {
+    margin-top: t.$space-6;
+    padding-top: t.$space-4;
+    border-top: t.$border-width solid var(--border-color-about-page);
+
+    > :last-child { margin-bottom: 0; }
+}
+
+// A citation: smaller than the body, and the long URL may break anywhere on a narrow screen.
+.about-page-source {
+    font-size: t.$font-size-sm;
+    overflow-wrap: anywhere;
+}
+
+// Looks like the rest of the citation (same colour and size), plus an underline so it reads as a
+// link without relying on colour.
+.about-page-source-link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+
+    &:hover { text-decoration-thickness: 0.12em; }
+}
+
+// ---- The loop and the orchestrated passes: numbered steps on a rail ---------------------------
+
+$step-size: 2rem; // the numbered circle; the rail and the title row are sized from it
+
+.about-page-pipeline {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+
+    > li {
+        position: relative;
+        padding: 0 0 t.$space-4 t.$space-7;
+        counter-increment: step;
+
+        // The rail between numbers, centred under the circle.
+        &::after {
+            content: "";
+            position: absolute;
+            top: $step-size;
+            bottom: 0;
+            left: calc((#{$step-size} - #{t.$focus-width}) / 2);
+            border-left: t.$focus-width solid var(--border-color-about-page-rail);
         }
+
+        &:last-child::after { display: none; }
+
+        // The step number in a circle.
+        &::before {
+            content: counter(step);
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: grid;
+            place-items: center;
+            width: $step-size;
+            height: $step-size;
+            border-radius: 50%;
+            background-color: var(--surface-color-about-page-step);
+            color: var(--text-color-about-page-step);
+            font-weight: 700;
+        }
+    }
+}
+
+.about-page-pipeline-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: t.$space-2;
+    min-height: $step-size; // the title sits level with its circle
+
+    strong { font-size: t.$font-size-md; }
+}
+
+.about-page-pipeline-body {
+    margin: t.$space-1 0 0;
+}
+
+.about-page-who {
+    padding: 0 t.$space-2;
+    border-radius: t.$radius-sm;
+    font-size: t.$font-size-sm;
+
+    // One class per tone (WHO_TONE in aboutContent.ts): every Claude role shares the first.
+    &.is-claude { background-color: var(--surface-color-about-page-who-claude); }
+    &.is-me { background-color: var(--surface-color-about-page-who-me); }
+    &.is-tests { background-color: var(--surface-color-about-page-who-tests); }
+}
+
+.about-page-loopback {
+    margin: 0;
+    padding: t.$space-3 t.$space-4;
+    border: t.$border-width dashed var(--border-color-about-page-rail);
+    border-radius: t.$radius-md;
+}
+
+// The review stage's fan-out: one chip per lens, in a row that wraps.
+.about-page-lenses-label {
+    margin: t.$space-2 0 t.$space-1;
+    font-size: t.$font-size-sm;
+}
+
+.about-page-lenses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: t.$space-2;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    > li {
+        padding: t.$space-1 t.$space-3;
+        border: t.$border-width solid var(--border-color-about-page-rail);
+        border-radius: t.$radius-lg;
+        background-color: var(--surface-color-about-page-layer-1);
+        font-size: t.$font-size-sm;
+        // Keeps the panel's overflow-wrap: anywhere. The row wraps whole chips first; a word is cut
+        // only when one chip is wider than the row (very large text on a phone), never overflowing it.
+    }
+}
+
+// ---- Guardrail layers: a funnel, each layer narrower than the one above ------------------------
+
+.about-page-layers {
+    display: grid;
+    justify-items: center;
+    gap: t.$space-1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    > li {
+        width: 100%;
+        min-width: min(100%, 16rem); // the narrowest layer stays readable on a phone
+        padding: t.$space-2 t.$space-4;
+        border-radius: t.$radius-md;
+        text-align: center;
+        background-color: var(--surface-color-about-page-layer-1);
+
+        &:nth-child(3n + 2) { background-color: var(--surface-color-about-page-layer-2); }
+        &:nth-child(3n) { background-color: var(--surface-color-about-page-layer-3); }
+        &:nth-child(2) { width: 93%; }
+        &:nth-child(3) { width: 86%; }
+        &:nth-child(4) { width: 79%; }
+        &:nth-child(5) { width: 72%; }
+        &:nth-child(6) { width: 65%; }
+        &:nth-child(7) { width: 58%; }
+
+        // The last layer is me, on the step colours.
+        &:last-child {
+            background-color: var(--surface-color-about-page-step);
+            color: var(--text-color-about-page-step);
+        }
+
+        strong { display: block; }
+        span { font-size: t.$font-size-sm; }
+    }
+}
+
+// ---- Lessons ---------------------------------------------------------------------------------
+
+.about-page-lessons {
+    display: grid;
+    gap: t.$space-3;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: lesson;
+
+    > li {
+        padding: t.$space-3 t.$space-4;
+        border: t.$border-width solid var(--border-color-about-page);
+        border-radius: t.$radius-md;
+        background-color: var(--surface-color-about-page-card);
+        counter-increment: lesson;
+
+        h4 {
+            margin: 0 0 t.$space-1;
+            font-size: t.$font-size-md;
+            color: var(--text-color-about-page-heading);
+
+            &::before { content: counter(lesson) ". "; }
+        }
+
+        p { margin: t.$space-1 0 0; }
     }
 }

@@ -68,6 +68,15 @@ const LIGHT_PAIRINGS: Pairing[] = [
   ['heart focus ring on a sky card', 'sky-700', 'sky-200', UI],
   ['heart on its hover surface', 'sage-800', 'sand-50', UI],
   ['card focus ring on the spinner window', 'sky-700', 'sand-50', UI],
+  ['About figure caption on the panel', 'sky-700', 'sand-150', TEXT],
+  ['About lesson heading on a lesson card', 'sage-800', 'sand-100', TEXT],
+  ['About "who" chip, Claude tone', 'sky-900', 'sage-200', TEXT],
+  ['About "who" chip, me tone, and the third funnel layer', 'sky-900', 'sand-200', TEXT],
+  ['About "who" chip, tests tone', 'sky-900', 'sky-200', TEXT],
+  ['About first funnel layer and lens chips', 'sky-900', 'sage-100', TEXT],
+  ['About second funnel layer and the "What’s next" aside', 'sky-900', 'sky-100', TEXT],
+  ['About "What’s next" heading', 'sky-800', 'sky-100', TEXT],
+  ['About step number and last funnel layer', 'sand-50', 'sage-800', TEXT],
 ];
 
 // Dark theme: one row per individual foreground/background pair.
@@ -110,6 +119,14 @@ const DARK_PAIRINGS: Pairing[] = [
   ['selected tab text', 'sand-50', 'sky-900', TEXT],
   ['selected tab bar', 'sienna-300', 'sky-900', UI],
   ['card focus ring on the spinner window', 'sky-300', 'sky-950', UI],
+  ['About figure caption on the panel', 'sky-300', 'sand-900', TEXT],
+  ['About lesson heading on a lesson card', 'sienna-300', 'sand-800', TEXT],
+  ['About "who" chip (Claude tone), first funnel layer and lens chips', 'sand-100', 'sage-850', TEXT],
+  ['About "who" chip (me tone), third funnel layer and lesson cards', 'sand-100', 'sand-800', TEXT],
+  ['About "who" chip (tests tone) and second funnel layer', 'sand-100', 'sky-850', TEXT],
+  ['About "What’s next" aside', 'sand-100', 'sky-900', TEXT],
+  ['About "What’s next" heading', 'sky-300', 'sky-900', TEXT],
+  ['About step number and last funnel layer', 'sienna-950', 'sienna-300', TEXT],
 ];
 
 // Theme switch in the nav bar, checked on both nav surfaces (sage-800 in light, sage-900 in dark).

@@ -112,6 +112,20 @@ it('the source link on the About page takes its text from en.json too', async ()
   expect(findHardcodedText()).toEqual([]);
 });
 
+it('the GitHub link and the loopback label on the About page take their words from en.json too', async () => {
+  // Without their placeholders the marked-up sentences would drop these elements entirely.
+  const dictionary = markUp(en);
+  const about = dictionary.about as Dictionary;
+  about.lead = '⟦about.lead⟧ {gitHub}';
+  (about.loop as Dictionary).loopback = '{label} ⟦about.loop.loopback⟧';
+  renderMarkedUp('/about', dictionary);
+  await screen.findByText('⟦about.heading⟧');
+
+  expect(screen.getByRole('link', { name: /^⟦about\.gitHub⟧ ?⟦link\.newTab⟧$/ })).toBeInTheDocument();
+  expect(screen.getByText('⟦about.loop.loopbackLabel⟧').tagName).toBe('STRONG');
+  expect(findHardcodedText()).toEqual([]);
+});
+
 it('every string on / comes from en.json after a spin, with the landed card open', async () => {
   const user = userEvent.setup();
   const { container } = renderMarkedUp('/');

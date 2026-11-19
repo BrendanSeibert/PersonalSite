@@ -138,10 +138,14 @@ describe.each([
     await expect
       .element(page.getByRole('link', { name: 'https://www.paherps.com/herps/frogs-toads/ (opens in a new tab)', exact: true }))
       .toBeInTheDocument();
+    await expect.element(page.getByRole('link', { name: 'my GitHub (opens in a new tab)', exact: true })).toBeInTheDocument();
   });
 
-  it('on the Frog Library under the text-spacing overrides', async () => {
-    await renderApp('/frog-library');
+  it.each([
+    ['the Frog Library', '/frog-library'],
+    ['the About page', '/about'],
+  ])('on %s under the text-spacing overrides', async (_name, url) => {
+    await renderApp(url);
     const undo = applyTextSpacing();
     try {
       await expectNoAxeViolations();

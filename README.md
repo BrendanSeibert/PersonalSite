@@ -86,6 +86,9 @@ the techniques I used:
 - **Building on the last project.** My previous Claude-assisted project served as a style guide,
   so this one started with a proven set of conventions instead of from scratch.
 
+The longer story, with the workflow diagrams and what I learned along the way, is on the site's
+[About page](https://graceful-learning-production-d3776046.up.railway.app/about).
+
 ## Tech stack
 
 - **Frontend:** React 19 + Vite 8, React Router 8, TanStack Query 5, Sass
@@ -403,6 +406,12 @@ Light pairings (`LIGHT_PAIRINGS`). Text needs 4.5:1; rows marked "needs 3" are n
 | Heart focus ring on the card tones | `sky-700` on `sand-200`, `sage-200`, `sky-200` | 5.9, 6.7, 6.4 (needs 3) |
 | Heart on its hover surface | `sage-800` on `sand-50` | 10.0 (needs 3) |
 | Card focus ring on the spinner window | `sky-700` on `sand-50` | 8.0 (needs 3) |
+| About page: figure captions | `sky-700` on `sand-150` | 7.0 |
+| About page: lesson headings on their cards | `sage-800` on `sand-100` | 9.2 |
+| About page: "who" chips (Claude, me, tests tones; me shares `sand-200` with the third funnel layer) | `sky-900` on `sage-200`, `sand-200`, `sky-200` | 11.8, 10.4, 11.2 |
+| About page: first and second funnel layers, lens chips, "What's next" aside | `sky-900` on `sage-100`, `sky-100` | 13.3, 13.1 |
+| About page: "What's next" heading | `sky-800` on `sky-100` | 9.9 |
+| About page: step numbers and the funnel's last layer | `sand-50` on `sage-800` | 10.0 |
 
 ### Dark mode
 
@@ -432,6 +441,11 @@ Dark pairings (`DARK_PAIRINGS`):
 | Favorites tabs: selected text | `sand-50` on `sky-900` | 14.11 |
 | Favorites tabs: the selected tab's bar | `sienna-300` on `sky-900` | 7.70 (needs 3) |
 | Card focus ring on the spinner window | `sky-300` on `sky-950` | 10.32 (needs 3) |
+| About page: figure captions | `sky-300` on `sand-900` | 9.54 |
+| About page: lesson headings on their cards | `sienna-300` on `sand-800` | 6.63 |
+| About page: "who" chips, funnel layers, lens chips, lesson cards | `sand-100` on `sage-850`, `sand-800`, `sky-850` | 11.02, 11.27, 11.64 |
+| About page: "What's next" aside and its heading | `sand-100`, `sky-300` on `sky-900` | 13.08, 8.65 |
+| About page: step numbers and the funnel's last layer | `sienna-950` on `sienna-300` | 9.09 |
 
 The switch (`TOGGLE_PAIRINGS`) is checked on both nav bar colours (`sage-800` in light,
 `sage-900` in dark); every row needs 3:

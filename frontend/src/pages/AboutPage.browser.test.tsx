@@ -2,20 +2,56 @@ import { screen, within } from '@testing-library/react';
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import en from '../i18n/en.json';
-import { expectNoHorizontalScroll, navItemNames as navItems, rect } from '../test/browserHelpers';
+import {
+  expectNoHorizontalScroll,
+  navItemNames as navItems,
+  rect,
+  SAGE_800_RGB,
+  SAGE_900_RGB,
+  setTheme,
+  SIENNA_200_RGB,
+  SIENNA_300_RGB,
+} from '../test/browserHelpers';
 import { renderApp } from '../test/renderApp';
+import { applyTextSpacing } from '../test/textSpacing';
 import { expectedLayout, VIEWPORTS } from '../test/viewports';
+import { GUARDRAIL_LAYERS, LESSONS, LOOP_STEPS, PASS_LENSES, PASS_STAGES } from './aboutContent';
 
 const PANEL_RADIUS_PX = 12; // $radius-lg, fixed: the probe below uses the same mixin, so it can't catch a change
 const STACKED_MAX_PX = 768; // $stacked-max-width (48rem)
 
 const panel = () => document.querySelector<HTMLElement>('.about-page-panel')!;
-const intro = () => screen.getByText(en.about.intro);
+const lead = () => document.querySelector<HTMLElement>('.about-page-lead')!;
 const body = () => screen.getByText(en.about.body);
 const source = () => document.querySelector<HTMLElement>('.about-page-source')!;
+const credits = () => document.querySelector<HTMLElement>('.about-page-credits')!;
+const funnelLayers = () => [...document.querySelectorAll<HTMLElement>('.about-page-layers > li')];
+const lensChips = () => [...document.querySelectorAll<HTMLElement>('.about-page-lenses > li')];
+
+// Everything that holds words, with how many of each the page has: the prose, each step and its
+// "who" chip, each lens chip, funnel layer and lesson card. The chips and step circles are what
+// overflow first at large text. Exact counts, so a whole diagram going missing fails too.
+const STEPS = LOOP_STEPS.length + PASS_STAGES.length;
+const TEXT_BOXES: [selector: string, count: number][] = [
+  ['.about-page-pipeline > li', STEPS],
+  ['.about-page-pipeline-head', STEPS],
+  ['.about-page-who', STEPS],
+  ['.about-page-loopback', 1],
+  ['.about-page-lenses > li', PASS_LENSES.length],
+  ['.about-page-layers > li', GUARDRAIL_LAYERS.length],
+  ['.about-page-lessons > li', LESSONS.length],
+  ['.about-page-aside', 1],
+  ['figcaption', 3],
+];
 
 function expectNotClipped() {
-  for (const element of [panel(), intro(), body(), source()]) {
+  const boxes = [panel(), lead(), body(), source()];
+  for (const [selector, count] of TEXT_BOXES) {
+    const found = [...document.querySelectorAll<HTMLElement>(selector)];
+    expect(found, selector).toHaveLength(count);
+    boxes.push(...found);
+  }
+  for (const element of boxes) {
     expect(element.scrollHeight, `${element.className} height`).toBeLessThanOrEqual(element.clientHeight + 1);
     expect(element.scrollWidth, `${element.className} width`).toBeLessThanOrEqual(element.clientWidth + 1);
   }
@@ -45,7 +81,7 @@ describe.each(VIEWPORTS)('the About page at %i × %i (%s)', (width, height) => {
     expectCentredAndCapped(STACKED_MAX_PX);
   });
 
-  it('looks like the home page’s middle column', () => {
+  it('looks like the home page’s middle column, but left-aligned under a centred heading', () => {
     // A throwaway copy of the home middle column, styled by the real ColumnLayout.scss and HomePage.scss.
     const probe = document.createElement('div');
     probe.className = 'd-column-layout column-layout';
@@ -62,7 +98,6 @@ describe.each(VIEWPORTS)('the About page at %i × %i (%s)', (width, height) => {
       borderTopLeftRadius: column.borderTopLeftRadius,
       paddingTop: column.paddingTop,
       paddingLeft: column.paddingLeft,
-      textAlign: column.textAlign,
       headingColor: homeHeading.color,
       headingSize: homeHeading.fontSize,
       introSize: homeIntro.fontSize,
@@ -78,31 +113,60 @@ describe.each(VIEWPORTS)('the About page at %i × %i (%s)', (width, height) => {
       borderTopLeftRadius: style.borderTopLeftRadius,
       paddingTop: style.paddingTop,
       paddingLeft: style.paddingLeft,
-      textAlign: style.textAlign,
       headingColor: heading.color,
       headingSize: heading.fontSize,
-      introSize: getComputedStyle(intro()).fontSize,
+      introSize: getComputedStyle(lead()).fontSize,
     }).toEqual(expected);
     expect(parseFloat(style.borderTopLeftRadius)).toBe(PANEL_RADIUS_PX);
+    // Long prose reads better left-aligned; the heading stays centred like the home page's.
+    expect(style.textAlign).toBe('start');
+    expect(heading.textAlign).toBe('center');
   });
 
-  if (layout === 'rows') {
-    it('sizes the panel to its content when stacked', () => {
-      const style = getComputedStyle(panel());
-      const contentBottom = rect(source()).bottom + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
-      expect(Math.abs(rect(panel()).bottom - contentBottom)).toBeLessThanOrEqual(1);
-    });
-  } else {
-    it('reaches the bottom of the screen when wide, without scrolling the page', () => {
-      const pad = parseFloat(getComputedStyle(screen.getByRole('main')).paddingBottom);
-      expect(Math.abs(rect(panel()).bottom - (window.innerHeight - pad))).toBeLessThanOrEqual(1);
-      expect(document.documentElement.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
-    });
-  }
+  it(`sizes the panel to its content (${layout}), and the page scrolls when it is taller than the screen`, () => {
+    const style = getComputedStyle(panel());
+    const contentBottom = rect(credits()).bottom + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+    expect(Math.abs(rect(panel()).bottom - contentBottom)).toBeLessThanOrEqual(1);
+    expect(rect(source()).bottom).toBeLessThanOrEqual(rect(credits()).bottom + 1); // the citation closes the panel
+    const pad = parseFloat(getComputedStyle(screen.getByRole('main')).paddingBottom);
+    const pageBottom = rect(panel()).bottom + pad + window.scrollY;
+    expect(Math.abs(document.documentElement.scrollHeight - Math.max(pageBottom, window.innerHeight))).toBeLessThanOrEqual(1);
+  });
 
   it('shows all the text, with the lead larger than the body', () => {
     expectNotClipped();
-    expect(parseFloat(getComputedStyle(intro()).fontSize)).toBeGreaterThan(parseFloat(getComputedStyle(body()).fontSize));
+    expect(parseFloat(getComputedStyle(lead()).fontSize)).toBeGreaterThan(parseFloat(getComputedStyle(body()).fontSize));
+  });
+
+  it('tapers the funnel, but never narrower than 16rem or the full width', () => {
+    const layers = funnelLayers();
+    expect(layers).toHaveLength(GUARDRAIL_LAYERS.length);
+    const listWidth = rect(layers[0]!.parentElement!).width;
+    const sixteenRem = 16 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const floor = Math.min(sixteenRem, listWidth);
+    for (const [index, layer] of layers.entries()) {
+      expect(rect(layer).width, `layer ${index + 1}`).toBeGreaterThanOrEqual(floor - 1);
+      if (index > 0) expect(rect(layer).width).toBeLessThanOrEqual(rect(layers[index - 1]!).width + 1);
+    }
+    const [first, last] = [rect(layers[0]!).width, rect(layers.at(-1)!).width];
+    if (listWidth <= sixteenRem + 1) {
+      // Narrower than the floor (the smallest phone): no room to taper, so every layer is full width.
+      for (const layer of layers) expect(rect(layer).width).toBeCloseTo(listWidth, 0);
+    } else {
+      // Room to taper: the last layer is narrower than the first, down to 58% or the floor.
+      expect(last).toBeLessThan(first - 1);
+      expect(last).toBeCloseTo(Math.max(listWidth * 0.58, floor), 0);
+    }
+  });
+
+  it('fits every lens chip’s words on its chip, in a row that wraps', () => {
+    const chips = lensChips();
+    expect(chips).toHaveLength(5);
+    const row = rect(chips[0]!.parentElement!);
+    for (const chip of chips) {
+      expect(chip.scrollWidth, chip.textContent!).toBeLessThanOrEqual(chip.clientWidth + 1);
+      expect(rect(chip).right).toBeLessThanOrEqual(row.right + 1);
+    }
   });
 
   it('shows the source link in the citation’s own colour and size, underlined', () => {
@@ -123,6 +187,50 @@ describe.each(VIEWPORTS)('the About page at %i × %i (%s)', (width, height) => {
 
   it('shows Home and Frog Library in the nav', () => {
     expect(navItems()).toEqual(['Home', 'Frog Library']);
+  });
+});
+
+describe.each([
+  ['light', SAGE_800_RGB, SAGE_900_RGB],
+  ['dark', SIENNA_300_RGB, SIENNA_200_RGB],
+] as const)('the GitHub link in the %s theme', (theme, colour, hover) => {
+  beforeEach(async () => {
+    await page.viewport(1280, 800);
+    setTheme(theme); // before renderApp, so the page starts in this theme
+    await renderApp('/about');
+  });
+
+  it('is in the link colour and underlined, so it never relies on colour alone', () => {
+    const link = within(lead()).getByRole('link', { name: /^my GitHub/ });
+    expect(document.documentElement.dataset.theme).toBe(theme);
+    expect(getComputedStyle(link).color).toBe(colour);
+    expect(getComputedStyle(link).textDecorationLine).toBe('underline');
+  });
+
+  it('turns the hover colour under the pointer', async () => {
+    const link = within(lead()).getByRole('link', { name: /^my GitHub/ });
+    await userEvent.hover(link);
+    expect(getComputedStyle(link).color).toBe(hover);
+    await userEvent.unhover(link);
+    expect(getComputedStyle(link).color).toBe(colour);
+  });
+});
+
+describe.each([
+  [320, 568],
+  [375, 667],
+  [1280, 800],
+])('the About page under the WCAG 1.4.12 text-spacing overrides at %i × %i', (width, height) => {
+  beforeEach(async () => {
+    await page.viewport(width, height);
+    await renderApp('/about');
+    return applyTextSpacing(); // its cleanup removes the overrides after each test
+  });
+
+  // axe (a11y.browser.test.tsx) can't see clipped text, so the clipping is checked here.
+  it('clips no text in any chip, step, layer or card, and never scrolls sideways', () => {
+    expectNotClipped();
+    expectNoHorizontalScroll();
   });
 });
 
@@ -161,7 +269,7 @@ describe.each([
     await clickAboutAndCheck();
   });
 
-  it('keyboard: Enter on About focuses the page; Tab reaches the source link, then leaves; Shift+Tab reaches Frog Library', async () => {
+  it('keyboard: Enter on About focuses the page; Tab reaches GitHub, then the source link, then leaves; Shift+Tab reaches Frog Library', async () => {
     await renderApp('/');
     screen.getByRole('link', { name: 'About' }).focus();
     await userEvent.keyboard('{Enter}');
@@ -170,7 +278,9 @@ describe.each([
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(main).toHaveFocus();
 
-    // The source link is the page's one Tab stop; the next Tab moves on past the page, never back to the nav.
+    // The page's two Tab stops, in reading order; the next Tab moves on past the page, never back to the nav.
+    await userEvent.keyboard('{Tab}');
+    expect(within(main).getByRole('link', { name: /^my GitHub/ })).toHaveFocus();
     await userEvent.keyboard('{Tab}');
     expect(within(main).getByRole('link', { name: new RegExp(`^${en.about.sourceUrl}`) })).toHaveFocus();
     await userEvent.keyboard('{Tab}');

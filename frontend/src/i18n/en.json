@@ -82,7 +82,171 @@
   },
   "about": {
     "heading": "About",
-    "intro": "This site is an exploration into developing with Claude. I mainly used the Opus 5.5 model, though I used Fable 5.1 for some of the bigger tasks. My last Claude assisted project was built with Sonnet 5.5, and details about its construction can be found on my GitHub. This time around I wanted to try to lean more into AI assisted development and put something together rapidly. I did less line by line code checking, instead leaning on fresh Claude sessions for code reviews. I also used the previous project as a style guide, and that helped to speed up development. I still had Claude throw together plan documents for bigger changes. I find it reduces the number of miscommunications and helps catch some unexpected behaviors before implementation.",
+    "lead": "This site is an exploration of building software with Claude. For this project I wanted to experiment with different methods of Claude‑assisted development, working faster and trying new approaches. Claude helped plan features, orchestrate agents, maintain design paradigms and review the code, while I set the standards, made the calls and reviewed the changes before committing. I used Opus 5.5 and Fable 5.1 for planning, building and orchestrating, and Sonnet 5.5 for the parallel agents. I also built on the habits from my first Claude project (ToDoApp, on {gitHub}), which served as a style guide. Here’s the workflow I ended up with, and the lessons that shaped it.",
+    "gitHub": "my GitHub",
+    "loop": {
+      "heading": "The loop",
+      "caption": "Every sizeable feature on this site went through these steps. Deciding and committing stay with me.",
+      "loopback": "{label} wherever the code ended up differing from the plan gets written down, and that feeds the next plan.",
+      "loopbackLabel": "And back to the start:",
+      "steps": {
+        "plan": {
+          "title": "Plan",
+          "body": "A Markdown plan for each sizeable feature: the goal, the decisions, the steps and a test strategy, with the how and the why of each step. Plans live outside the repo, so the codebase stays clean."
+        },
+        "reviewPlan": {
+          "title": "Review the plan",
+          "body": "A new session with no stake in the plan checks it against the actual code and current library APIs: is it sound, are there security gaps, will it run, are the package versions current?"
+        },
+        "decide": {
+          "title": "Decide",
+          "body": "I settle every open decision, and push back wherever the plan isn’t what I want."
+        },
+        "build": {
+          "title": "Build",
+          "body": "Claude implements the plan step by step, running the tests as it goes."
+        },
+        "prove": {
+          "title": "Prove",
+          "body": "Unit tests, integration tests against a real database, real-browser tests at nine screen sizes, an accessibility scan and a smoke test of the production image. Each new test is broken on purpose once, to show it can fail."
+        },
+        "reviewChange": {
+          "title": "Review the change",
+          "body": "A deliberately hostile review that looks for every way the change is wrong, fragile, insecure or hard to test."
+        },
+        "commit": {
+          "title": "Commit",
+          "body": "Claude never commits. I read the diff and commit it myself."
+        }
+      }
+    },
+    "who": {
+      "claude": "Claude",
+      "fresh": "A fresh Claude session",
+      "me": "Me",
+      "tests": "The tests",
+      "orchestrator": "Opus orchestrator",
+      "agents": "Sonnet agents"
+    },
+    "passes": {
+      "heading": "Scaling up: orchestrated passes",
+      "caption": "The loop at a larger scale: the same plan, review and verify steps, run in parallel.",
+      "lensesLabel": "Each reviewer reads through five lenses:",
+      "lenses": {
+        "idiomatic": "Idiomatic code",
+        "framework": "Framework alignment",
+        "security": "Security",
+        "testability": "Testability",
+        "comments": "Comments"
+      },
+      "stages": {
+        "split": {
+          "title": "Split",
+          "body": "For a repo-wide quality pass, the codebase is cut into slices."
+        },
+        "review": {
+          "title": "Review in parallel",
+          "body": "One reviewer per slice, side by side, each reading whole files, not just a diff."
+        },
+        "verify": {
+          "title": "Verify",
+          "body": "Every finding is checked against the code itself before it reaches a plan."
+        },
+        "fix": {
+          "title": "Fix in parallel",
+          "body": "Each plan runs as its own agent, in its own git worktree."
+        },
+        "merge": {
+          "title": "Merge",
+          "body": "Each merge is reviewed before it lands in my working tree, uncommitted, for me to review."
+        }
+      }
+    },
+    "guardrails": {
+      "heading": "Guardrails: rules Claude can’t forget",
+      "caption": "Each layer catches what slipped past the one above it, and most of them exist because of a mistake. A change that breaks the house rules fails loudly, no matter who or what wrote it.",
+      "layers": {
+        "rulebook": {
+          "name": "The rulebook (CLAUDE.md)",
+          "catches": "Loaded into every session: the conventions, the deliberate exceptions, and the bar for calling work done"
+        },
+        "conventions": {
+          "name": "Convention tests",
+          "catches": "Colours only from the palette, sizes in rem, every word from the dictionary"
+        },
+        "contrast": {
+          "name": "Computed contrast",
+          "catches": "Every colour pairing checked against WCAG AA, in both themes"
+        },
+        "browser": {
+          "name": "Real browser and axe",
+          "catches": "Layout at nine screen sizes; accessibility rules on every page"
+        },
+        "integration": {
+          "name": "Integration and smoke tests",
+          "catches": "A real database; the production image’s headers, caching and limits"
+        },
+        "ci": {
+          "name": "CI and Dependabot",
+          "catches": "Every push; a vulnerable package fails the build"
+        },
+        "me": {
+          "name": "Me",
+          "catches": "Every diff, every commit"
+        }
+      }
+    },
+    "lessons": {
+      "heading": "Eight lessons",
+      "happenedLabel": "What happened:",
+      "nowLabel": "What I do now:",
+      "items": {
+        "sentences": {
+          "title": "Fix bugs while they’re still sentences",
+          "happened": "An early plan rested on a wrong assumption about how one of the tools worked. A review caught it before any code existed.",
+          "now": "Nothing bigger than a tweak starts without a reviewed plan."
+        },
+        "freshEyes": {
+          "title": "Get a fresh pair of eyes",
+          "happened": "A new session reviewing a plan found a long list of problems that the session that wrote it had missed.",
+          "now": "The session that wrote something never reviews it."
+        },
+        "makeItATest": {
+          "title": "If it matters, make it a test",
+          "happened": "In my first project, the styling conventions lived in my head and in prose.",
+          "now": "Here they are tests, so a stray colour or a hard-coded word fails the build."
+        },
+        "canFail": {
+          "title": "A test that can’t fail isn’t a test",
+          "happened": "Some early assertions turned out to check nothing at all.",
+          "now": "Every plan has a breakage step: break the code, watch the test fail, put it back."
+        },
+        "compute": {
+          "title": "Compute, don’t estimate",
+          "happened": "Estimated colour contrast ratios didn’t hold up when they were actually measured.",
+          "now": "A test computes every pairing straight from the palette."
+        },
+        "realBrowser": {
+          "title": "A simulated browser isn’t a browser",
+          "happened": "A layout bug that the simulated-browser tests passed showed up only in a real browser.",
+          "now": "Layout and focus changes get real-browser tests."
+        },
+        "setupFirst": {
+          "title": "Check the setup before the code",
+          "happened": "A failed deploy sent Claude hunting through the code when the real problem was a skipped setup step.",
+          "now": "Deploy problems start with the hosting checklist."
+        },
+        "knowYourMachine": {
+          "title": "Know your machine",
+          "happened": "A few quirks of my development setup caused confusing failures that had nothing to do with the code.",
+          "now": "Each workaround is written into the project’s instructions for Claude, so no session trips on the same one twice."
+        }
+      }
+    },
+    "next": {
+      "heading": "What’s next",
+      "body": "An admin page for managing the site, more frogs, a way for visitors to submit their own frogs, and more."
+    },
     "body": "All images and drawings on the site are my own, so no need for licensing. I’m just a casual frog enjoyer, and I didn’t want to wing it, so all frog facts on this site (excluding those about cats) came from paherps.com.",
     "source": "Pa Herp Identification, {url}, accessed November 16, 2026",
     "sourceUrl": "https://www.paherps.com/herps/frogs-toads/"

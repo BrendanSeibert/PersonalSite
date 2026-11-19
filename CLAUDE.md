@@ -65,7 +65,7 @@ CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including `npm run l
     - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`, `NewTabLink` (links that open a new tab), `ThemeToggle` (the dark mode switch in the nav bar).
     - Spinner and cards: `FrogSpinner`, `FrogCard`, `frogEntries.ts` (entries, card tones, `IMAGES`), `frogReel.ts` (pure reel maths), `frogExpansion.ts` (pure open/close rules), `useCardExpansion.ts` + `ExpandableFrogCard.tsx`.
     - Favorites: `FavoriteButton` + `useFavorite.ts`, `FavoritesPanel` + `favoritesTabs.ts` (pure tab keyboard rule), `FavoritesStatus` (announces failed saves, on every page).
-  - `pages/`: `HomePage`, `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `ErrorPage` (shown when a page fails to render; the nav bar stays), `contactLinks.ts`.
+  - `pages/`: `HomePage`, `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `ErrorPage` (shown when a page fails to render; the nav bar stays), `contactLinks.ts`, `aboutContent.ts` (pure: the About page's list order, from `en.json`'s key order, and who does each step).
   - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `matchMedia.ts` (`fakeMatchMedia`), `renderWithProviders` (also returns its `queryClient`), `renderApp.tsx` (mounts the real routes for browser tests; `routesWithPage` adds a test page), `browserHelpers.ts` (shared layout helpers), `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
 
 Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from React hooks and components, so it can be unit tested.
@@ -103,7 +103,7 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 ## Accessibility (WCAG 2.x AA)
 
 - New colour pairings must meet AA: 4.5:1 for text, 3:1 for non-text. Add each one to `frontend/src/styles/contrast.test.ts`: `LIGHT_PAIRINGS`, `DARK_PAIRINGS`, or `TOGGLE_PAIRINGS` (the switch, checked on both nav bar colours). Dark mode needs its own pairings, so a new colour usually needs one in each list.
-- **A new page or UI state gets a case in `src/a11y.browser.test.tsx`** (axe scans at a phone and a laptop size, in both themes, plus text-spacing overrides on the Frog Library). One deliberate exception: `target-size` is skipped while the landed card is open, because it floats over the Spin button on purpose. It closes on an outside click, Escape, or focus moving away.
+- **A new page or UI state gets a case in `src/a11y.browser.test.tsx`** (axe scans at a phone and a laptop size, in both themes, plus text-spacing overrides on the Frog Library and the About page; axe can't see clipped text, so `AboutPage.browser.test.tsx` also checks that nothing clips under those overrides). One deliberate exception: `target-size` is skipped while the landed card is open, because it floats over the Spin button on purpose. It closes on an outside click, Escape, or focus moving away.
 - Layout browser tests (`layout.browser.test.tsx`) cover 9 viewport sizes from `test/viewports.ts`.
 - Cards other than `fitsRow` cards must grow to show their whole title (WCAG 1.4.12). Only the spinner's landed card and concealed reel cards (`fitsRow`) are one row tall, with titles cut at two lines. The full name appears in the status line.
 - The home page's DOM and Tab order (Middle, Left, Right) differs from the visual order (Left, Middle, Right) on purpose. Don't reorder it.
