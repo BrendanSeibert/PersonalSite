@@ -22,9 +22,8 @@
     "middle": {
       "heading": "About Me",
       "intro": "I’m a software engineer with 5+ years of experience building reactive, user-friendly web components. I’m also an amateur frog enthusiast with 28+ years experience. My recent work has largely been in TypeScript, SolidJS, and Angular, but I’m more interested in providing a rich user experience than in using any particular framework or language. Lately I’ve been getting reacquainted with React, and I’m enjoying it so far. When it comes to amphibians, most of my hands-on experience has been in northwestern Pennsylvania, but I’m interested in critters of all kinds and locales.",
-      "contact": "Here’s {resume}, or you can {email} directly. I’m also on {linkedIn}, and you can check out the code for this site on my {gitHub}.",
+      "contact": "Here’s {resume}. Feel free to reach out to me on {linkedIn}, and you can check out the code for this site on my {gitHub}.",
       "resume": "my resume",
-      "email": "email me",
       "linkedIn": "LinkedIn",
       "gitHub": "GitHub"
     },

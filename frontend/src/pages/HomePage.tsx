@@ -5,7 +5,7 @@ import { NewTabLink } from '../components/NewTabLink';
 import { usePageTitle } from '../components/usePageTitle';
 import { useI18n } from '../context/I18nContext';
 import { fillSlots } from '../i18n/fillSlots';
-import { EMAIL_ADDRESS, GITHUB_URL, LINKEDIN_URL, RESUME_URL } from './contactLinks';
+import { GITHUB_URL, LINKEDIN_URL, RESUME_URL } from './contactLinks';
 import './HomePage.scss';
 
 export function HomePage() {
@@ -25,11 +25,6 @@ export function HomePage() {
                   <NewTabLink className="home-page-link" href={RESUME_URL} pdf>
                     {t('home.middle.resume')}
                   </NewTabLink>
-                ),
-                email: (
-                  <a className="home-page-link" href={`mailto:${EMAIL_ADDRESS}`}>
-                    {t('home.middle.email')}
-                  </a>
                 ),
                 linkedIn: (
                   <NewTabLink className="home-page-link" href={LINKEDIN_URL}>

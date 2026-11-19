@@ -129,7 +129,6 @@ describe.each([
       'my resume (PDF, opens in a new tab)',
       'LinkedIn (opens in a new tab)',
       'GitHub (opens in a new tab)',
-      'email me',
     ]) {
       await expect.element(page.getByRole('link', { name, exact: true })).toBeInTheDocument();
     }

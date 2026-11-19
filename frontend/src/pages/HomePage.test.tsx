@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderWithProviders } from '../test/renderWithProviders';
-import { EMAIL_ADDRESS, GITHUB_URL, LINKEDIN_URL, RESUME_URL } from './contactLinks';
+import { GITHUB_URL, LINKEDIN_URL, RESUME_URL } from './contactLinks';
 import { HomePage } from './HomePage';
 import { waitForHomeToSettle } from '../test/settle';
 
@@ -35,7 +35,6 @@ describe('HomePage', () => {
     for (const hidden of hiddenTexts) {
       expect(hidden.textContent).toMatch(/^ \((PDF, )?opens in a new tab\)$/); // a leading space
     }
-    expect(screen.getByRole('link', { name: 'email me' })).toHaveAccessibleName('email me'); // a mail app, not a tab
     await waitForHomeToSettle();
   });
 
@@ -50,13 +49,9 @@ describe('HomePage', () => {
     await waitForHomeToSettle();
   });
 
-  it('links the words "email me" with mailto:, without the address showing', async () => {
+  it('has no mailto: link, whatever its words', async () => {
     renderWithProviders(<HomePage />);
-    expect(EMAIL_ADDRESS).toBe('brendanseibertmail@gmail.com');
-    const email = screen.getByRole('link', { name: 'email me' });
-    expect(email).toHaveAttribute('href', 'mailto:brendanseibertmail@gmail.com');
-    expect(email).not.toHaveAttribute('target');
-    expect(screen.getByRole('main').textContent).not.toContain('brendanseibertmail@gmail.com');
+    expect(screen.getByRole('main').querySelector('a[href^="mailto:"]')).toBeNull();
     await waitForHomeToSettle();
   });
 
@@ -93,7 +88,7 @@ describe('HomePage', () => {
     // What is drawn: the new-tab warnings are for screen readers only (tested above).
     for (const hidden of paragraph.querySelectorAll('.visually-hidden')) hidden.remove();
     expect(paragraph.textContent).toBe(
-      'Here’s my resume, or you can email me directly. I’m also on LinkedIn, and you can check out the ' +
+      'Here’s my resume. Feel free to reach out to me on LinkedIn, and you can check out the ' +
         'code for this site on my GitHub.',
     );
     await waitForHomeToSettle();

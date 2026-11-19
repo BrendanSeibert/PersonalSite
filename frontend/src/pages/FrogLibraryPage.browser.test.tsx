@@ -254,7 +254,7 @@ describe.each([
     expect(screen.getByRole('link', { name: 'About' })).toHaveFocus();
   });
 
-  it('keyboard into the home page: Tab goes on through the About Me links (resume, email, LinkedIn, GitHub) to the spinner, not back to the nav', async () => {
+  it('keyboard into the home page: Tab goes on through the About Me links (resume, LinkedIn, GitHub) to the spinner, not back to the nav', async () => {
     await renderApp('/frog-library');
     screen.getByRole('link', { name: 'Home' }).focus();
     await userEvent.keyboard('{Enter}');
@@ -263,7 +263,7 @@ describe.each([
 
     const main = within(screen.getByRole('main'));
     // Each name starts with the link's word; the new-tab links add a screen-reader-only warning.
-    for (const word of ['my resume', 'email me', 'LinkedIn', 'GitHub']) {
+    for (const word of ['my resume', 'LinkedIn', 'GitHub']) {
       await userEvent.keyboard('{Tab}');
       expect(main.getByRole('link', { name: new RegExp(`^${word}( ?\\(.*opens in a new tab\\))?$`) })).toHaveFocus();
     }

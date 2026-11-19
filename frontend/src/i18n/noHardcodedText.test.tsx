@@ -85,17 +85,17 @@ it.each([
 
 it('the links in the About Me section take their words from en.json too', async () => {
   // The marked-up contact sentence has no placeholders, so its links would not render at all.
-  // Keep the placeholders here, so the resume, email, LinkedIn and GitHub words are checked as well.
+  // Keep the placeholders here, so the resume, LinkedIn and GitHub words are checked as well.
   const dictionary = markUp(en);
   const middle = (dictionary.home as Dictionary).middle as Dictionary;
-  middle.contact = '⟦home.middle.contact⟧ {resume} {email} {linkedIn} {gitHub}';
+  middle.contact = '⟦home.middle.contact⟧ {resume} {linkedIn} {gitHub}';
   renderMarkedUp('/', dictionary);
   await waitForHomeToSettle('⟦favorites.loading⟧');
 
   expect(
     // (jsdom drops the space before the hidden new-tab warning; a real browser keeps it.)
-    screen.getAllByRole('link', { name: /^⟦home\.middle\.(resume|email|linkedIn|gitHub)⟧( ?⟦link\.newTab(Pdf)?⟧)?$/ }),
-  ).toHaveLength(4);
+    screen.getAllByRole('link', { name: /^⟦home\.middle\.(resume|linkedIn|gitHub)⟧( ?⟦link\.newTab(Pdf)?⟧)?$/ }),
+  ).toHaveLength(3);
   // The new-tab warnings come from en.json too.
   expect(screen.getByRole('link', { name: /^⟦home\.middle\.resume⟧ ?⟦link\.newTabPdf⟧$/ })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /^⟦home\.middle\.gitHub⟧ ?⟦link\.newTab⟧$/ })).toBeInTheDocument();
