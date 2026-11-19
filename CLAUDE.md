@@ -4,11 +4,22 @@ A personal site. React 19 + Vite frontend, Node 24 + Express 5 + TypeScript back
 
 Libraries beyond those: React Router 8, TanStack Query 5 and `pg`. Tests use Vitest, Supertest, React Testing Library, MSW and Playwright (Chromium). Pages: Home (`/`), Frog Library (`/frog-library`) and About (`/about`).
 
-## Environment
+## Git Policy
 
-- Windows, PowerShell 5.1: **never chain commands with `&&`**. Run them one per line, or use `;`.
+- **NEVER commit, stage or push anything** unless the user explicitly asks. Leave all changes uncommitted in the working tree for them to review. Do not run `git add` or `git rm --cached`.
+
+## Environment (Windows)
+
+- The dev machine is Windows with Git Bash and PowerShell 5.1.
+- In PowerShell 5.1, **never chain commands with `&&`**. Run them one per line, or use `;`. Don't use PowerShell reserved words or automatic variables (such as `$input`, `$args`, `$host`) as variable names.
+- Git Bash rewrites POSIX-style paths and arguments (for example `/dev/null` or `/api/...`). For path-sensitive commands, use `MSYS_NO_PATHCONV=1` or run them in PowerShell.
+- **Do not use sed for code or JSON edits.** Use the Edit tool, because sed silently fails or mangles `\n` on this machine.
+- Use the Write tool, not shell heredocs, for long files such as plan documents.
 - Ports bind to `127.0.0.1` on purpose. Don't remove that.
-- If Vitest reports "failed to find the runner", the working directory has a lowercase drive letter (`c:\`). `cd` to `C:\...` and run it again. It has also happened from Git Bash, so prefer PowerShell for frontend tests.
+- If Vitest reports "failed to find the runner":
+  1. Check the working directory's drive letter. A lowercase `c:\` loads Vitest twice, so `cd` to `C:\...` and run again.
+  2. If that doesn't fix it, clear the Vite cache (`node_modules/.vite`) before bisecting.
+  3. It has also happened from Git Bash, so prefer PowerShell for frontend tests.
 - Some config exists to avoid Windows problems. Don't remove it: `usePolling: true` in `frontend/vite.config.ts`, `nodemon --legacy-watch` in the backend `dev` script, `init: true` on the `backend` and `frontend` services, and `.gitattributes` forcing LF on `*.sh` and `Caddyfile`.
 
 ## Setup and commands
@@ -28,6 +39,15 @@ Libraries beyond those: React Router 8, TanStack Query 5 and `pg`. Tests use Vit
 | Integration tests (real PostgreSQL) | `docker compose -p ex3-test -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from backend-tests`, then always `docker compose -p ex3-test -f docker-compose.test.yml down -v` |
 | Production image | `docker build -t ex3 .` |
 | Image smoke test (Git Bash) | `sh scripts/smoke.sh` (prints `smoke ok`) |
+
+## Verification
+
+- After a change, run the relevant suite. Before saying work is done, run the full suite (backend and frontend unit tests, browser tests, integration tests, and the smoke test when the image or backend changed), plus a type check. Report results per suite, and say plainly if any were skipped or failed.
+- Browser tests run in real Chromium, where focus behaves differently from jsdom. Use browser tests to check focus and accessibility changes.
+- Every test assertion must actually check behaviour. No placeholder or vacuous assertions.
+- Compute colour contrast ratios exactly with a script. Never estimate them.
+- After a batch of edits to a plan or doc, re-read the file to confirm the edits landed correctly.
+- For visual and CSS changes, check existing container and media queries first. Confirm the result with screenshots at mobile and desktop widths.
 
 CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including browser tests and `scripts/check-dist.sh`), `integration` and `image` (smoke) jobs, plus `npm audit --omit=dev --audit-level=high`. Dependabot runs weekly.
 
@@ -130,9 +150,12 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 - No `X-Powered-By`, only generic error messages, no source maps. The container runs as `node`, and the image contains no source or `.env`.
 - Never disable database certificate verification.
 
-## Git
+## Plan Documents
 
-- **Never commit.** The user makes all git commits. Leave changes in the working tree for them to review.
+- Plans are `.md` files kept **outside the repo**, in a sibling directory named `<repo name>_Plans` (for this repo, `../EX3_Plans/`). Create it if it doesn't exist. Never put plans inside the repo. Name new ones `<Feature> Implementation Plan.md`.
+- Write plans for a junior developer, explaining both HOW and WHY for each step.
+- When reviewing a plan, check it against the actual code and current package versions and APIs, and give numbered findings.
+- Save a backup before rewriting a plan, and flag conflicts with companion plans in the same `_Plans` directory.
 
 ## Docs
 
