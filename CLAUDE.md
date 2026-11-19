@@ -1,0 +1,139 @@
+# EX3
+
+A personal site. React 19 + Vite frontend, Node 24 + Express 5 + TypeScript backend, PostgreSQL 16, all run with Docker Compose. `README.md` has the full details; this file covers the rules to follow when changing code.
+
+Libraries beyond those: React Router 8, TanStack Query 5 and `pg`. Tests use Vitest, Supertest, React Testing Library, MSW and Playwright (Chromium). Pages: Home (`/`), Frog Library (`/frog-library`) and About (`/about`).
+
+## Environment
+
+- Windows, PowerShell 5.1: **never chain commands with `&&`**. Run them one per line, or use `;`.
+- Ports bind to `127.0.0.1` on purpose. Don't remove that.
+- If Vitest reports "failed to find the runner", the working directory has a lowercase drive letter (`c:\`). `cd` to `C:\...` and run it again. It has also happened from Git Bash, so prefer PowerShell for frontend tests.
+- Some config exists to avoid Windows problems. Don't remove it: `usePolling: true` in `frontend/vite.config.ts`, `nodemon --legacy-watch` in the backend `dev` script, `init: true` on the `backend` and `frontend` services, and `.gitattributes` forcing LF on `*.sh` and `Caddyfile`.
+
+## Setup and commands
+
+- First run: `cp .env.example .env`. Never commit `.env`. Database passwords use only letters, digits, `-` and `_`, because they go inside a URL.
+- To run tests outside Docker (again whenever a `package-lock.json` changes): `npm ci` in `backend/` and `frontend/`, then `npx playwright install chromium` in `frontend/`.
+
+| Task | Command |
+| --- | --- |
+| Start the dev stack | `docker compose up --build` (http://localhost:5173, API on :3000, health at `/api/health`) |
+| After a `package.json` change | `docker compose up --build -V` (renews `node_modules`, keeps the database) |
+| Reset the database | `docker compose down -v` (also needed after changing `POSTGRES_*` values) |
+| Backend logs | `docker compose logs -f backend` |
+| Backend unit tests (type check + 90% coverage) | `cd backend` then `npm test` |
+| Frontend unit tests (type check + 90% coverage) | `cd frontend` then `npm test` |
+| Frontend browser tests (Chromium, a few minutes) | `cd frontend` then `npm run test:browser` |
+| Integration tests (real PostgreSQL) | `docker compose -p ex3-test -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from backend-tests`, then always `docker compose -p ex3-test -f docker-compose.test.yml down -v` |
+| Production image | `docker build -t ex3 .` |
+| Image smoke test (Git Bash) | `sh scripts/smoke.sh` (prints `smoke ok`) |
+
+CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including browser tests and `scripts/check-dist.sh`), `integration` and `image` (smoke) jobs, plus `npm audit --omit=dev --audit-level=high`. Dependabot runs weekly.
+
+## Project map
+
+- **Root:** `Dockerfile` (3-stage production image, runs as `node`), `docker-compose.yml` (dev), `docker-compose.test.yml` (integration), `docker-compose.prod.yml` + `Caddyfile` (optional self-hosting), `scripts/check-dist.sh` (fails on inline script/style or source maps), `scripts/smoke.sh`.
+- **`backend/src/`:** `server.ts` (startup, clean shutdown, keep-alive timeouts of 65s/66s; don't lower them), `app.ts` (builds the Express app with no side effects), `config.ts` (validates env vars), `db.ts` (pool, shared `Db` type), `migrate.ts`, `visitor.ts` (the `ex3_visitor` cookie), `security.ts` (headers, rate limits, `Origin` check), `staticSite.ts` (serves the build in production), `routes/health.ts`, `routes/favorites.ts`.
+- **`backend/tests/`:** `unit/` (no database) and `integration/` (real PostgreSQL in Docker).
+- **`frontend/src/`:**
+  - Setup and routing: `main.tsx` (mounts React, i18n, router, TanStack Query), `paths.ts` (`PATHS`), `routes.tsx`.
+  - Data and text: `api/favorites.ts` (endpoint calls with checked data), `i18n/` (`en.json`, `translate.ts`, `fillSlots.tsx` for links inside a sentence), `context/` (`I18nProvider`, `useI18n()`).
+  - `styles/`: `_palette.scss`, `_tokens.scss`, convention and contrast tests.
+  - `components/`:
+    - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`.
+    - Spinner and cards: `FrogSpinner`, `FrogCard`, `frogEntries.ts` (entries, card tones, `IMAGES`), `frogReel.ts` (pure reel maths), `frogExpansion.ts` (pure open/close rules), `useCardExpansion.ts` + `ExpandableFrogCard.tsx`.
+    - Favorites: `FavoriteButton` + `useFavorite.ts`, `FavoritesPanel`, `FavoritesStatus` (announces failed saves, on every page).
+  - `pages/`: `HomePage` (also holds `NewTabLink`), `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `contactLinks.ts`.
+  - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `renderWithProviders`, `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
+
+Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from React hooks and components, so it can be unit tested.
+
+## How requests flow
+
+- **Dev:** browser → Vite dev server (proxies `/api`) → Express → PostgreSQL.
+- **Production:** one container. Express serves the built app and the API behind the host's TLS proxy, in front of a managed PostgreSQL.
+- **Favorites:** a heart press updates every heart for that frog optimistically, then sends `PUT` (like) or `DELETE` (unlike) to `/api/favorites/:entryId` with the cookie. The backend answers with the new count, and the page refetches `GET /api/favorites/mine` and `/top`. On failure the heart flips back and `FavoritesStatus` announces it.
+- **Health:** `/api/health` runs `SELECT 1`. It's used by the Docker health check and the smoke test, not by the page.
+
+## Frontend conventions (enforced by tests)
+
+`styleConventions.test.ts` and `noHardcodedText.test.tsx` enforce the first four of these.
+
+- **Colours:** literals (`#hex`, `rgb()`, and colour keywords like `green` or `blue`) appear only in `src/styles/_palette.scss`. Each component maps palette colours to roles once, in a `.d-<component>` block of custom properties named `--<text|surface|border|shadow>-color-<component>[-<part>][-<state>]`.
+- **Sizes:** use `rem` (or `fr`, `%`, `vw`, `dvh`, `clamp()`) with tokens from `src/styles/_tokens.scss`. The only `px` allowed is a `1px` hairline.
+- **Text:** every user-facing string, including `aria-label`s and page titles, goes in `src/i18n/en.json` and is read with `t()` from `useI18n()`. No hard-coded text.
+- **Class names:** a component root has `d-<name>` (colours) and `<name>` (layout). Child classes start with the component name.
+- **Styles:** one `.scss` file per component, next to it, starting with `@use "../styles/palette" as p;` and/or `@use "../styles/tokens" as t;`.
+- **Mixins:** use the ones in `_tokens.scss` instead of re-implementing them. `wide-layout` holds the one breakpoint: three columns above 64rem, stacked rows (Middle, Left, Right) at 64rem and below. `button-shape` is for buttons and nav links. `panel` gives the rounded, bordered look; the page sets its own `background-color`, `border-color` and heading colour.
+
+## Colour
+
+- The palette comes from four anchors: Burnt Sienna `#984216`, Ivory Sand `#E4D6C5`, Stormy Sky `#78898F` and Sage Green `#8D957E`. Other shades are lighter or darker versions of the same hues. Only shades the site uses are in the file, except `sienna-750` and `sienna-800`, which are unused but kept on purpose.
+- The main colour is `sage-800` (`#3b422e`), used for the nav bar, buttons, payline, hearts, headings and the selected tab, with `sage-900` for hover. The page background is `sand-100`. Body text is `sky-900`. Focus rings are `sky-700` (`sand-300` on the nav bar).
+- Card surfaces against panels (about 1.2:1), panel borders (about 1.4:1) and the spinner window border (`sage-500`, about 2.9:1) are below 3:1 on purpose. Cards are identified by their title text, and the window border is decoration. Don't "fix" them.
+
+## Accessibility (WCAG 2.x AA)
+
+- New colour pairings must meet AA: 4.5:1 for text, 3:1 for non-text. Add each one to `frontend/src/styles/contrast.test.ts`.
+- **A new page or UI state gets a case in `src/a11y.browser.test.tsx`** (axe scans at a phone and a laptop size, plus text-spacing overrides on the Frog Library). One deliberate exception: `target-size` is skipped while the landed card is open, because it floats over the Spin button on purpose. It closes on an outside click, Escape, or focus moving away.
+- Layout browser tests (`layout.browser.test.tsx`) cover 9 viewport sizes from `test/viewports.ts`.
+- Cards other than `fitsRow` cards must grow to show their whole title (WCAG 1.4.12). Only the spinner's landed card and concealed reel cards (`fitsRow`) are one row tall, with titles cut at two lines. The full name appears in the status line.
+- The home page's DOM and Tab order (Middle, Left, Right) differs from the visual order (Left, Middle, Right) on purpose. Don't reorder it.
+
+## Pages and navigation
+
+- A new page needs:
+  - a route in `routes.tsx`
+  - its URL in `paths.ts` (`PATHS`)
+  - exactly one `<main tabIndex={-1}>` with an `aria-label` from the same key as its title
+  - a `usePageTitle('<key>')` call (with no key it shows the site name only, as on Home; the format is `app.pageTitle` in `en.json`)
+  - an entry in `NAV_ITEMS` in `Navbar.tsx`, if it belongs in the nav
+- After every navigation, including Back and Forward, `AppLayout` scrolls to the top and focuses `<main>`. `AppLayout` sets the page language, not the title.
+- The nav bar has links only. Every `NAV_ITEMS` entry needs a `to`. The nav bar hides the link to the current page.
+- Links that open a new tab use `NewTabLink`, or add `<span className="visually-hidden"> {t('link.newTab')}</span>` (with the leading space). PDF links use `link.newTabPdf`.
+
+## Frogs (spinner entries)
+
+- Entries live in `frontend/src/i18n/en.json` under `frogSpinner.entries`. Each has a `title` (must be unique) and a `blurb`. The file order is the reel order. The ids (`entry01`...) never appear on screen.
+- The Frog Library shows the same entries, all open, in the same order and colours.
+- Card colours are assigned automatically, so neighbouring cards always differ.
+- Adding or removing a frog also needs a **new numbered migration** that inserts it into or deletes it from `frogs` (for example `INSERT INTO frogs (id, position) VALUES ('entry21', 21);`). `seedFrogs.test.ts` checks that the seed plus later migrations match `en.json`. Removing a frog removes its likes.
+- Images go in `frontend/src/assets/frog-entries/` (about 160px square, WebP, since each appears five times on the reel). Import each one in `frogEntries.ts` and add it to `IMAGES`. Images are decorative (`alt=""`) unless they add information, in which case their alt text goes in `en.json`.
+
+## Favorites
+
+- The heart is the only way to favorite a frog. Landing on one in the spinner never does.
+- Visitors are anonymous. On the first like, the backend sets an `ex3_visitor` cookie: a random ID signed by the server, `HttpOnly`, `SameSite=Lax`, `Path=/api`, lasting 400 days and renewed on each like. Reading lists never sets it. An unsigned or forged ID counts as no cookie.
+- The only data stored is the visitor ID and which frogs it liked, with timestamps. No IP addresses or user agents.
+- Each ID can like each frog once, and counts never go negative. Only frogs in the `frogs` table can be liked.
+- The panel tab choice is remembered in `localStorage`.
+
+## Backend and database
+
+- Migrations are numbered `.sql` files in `backend/migrations/`, applied in order at startup, each in a transaction, and recorded in `schema_migrations`. A failure stops the backend. **Never edit an applied migration.** Add the next number instead. The seed (`002_seed_frogs.sql`) never runs again.
+- Tables: `frogs` (id, display position) and `favorites` (one row per visitor and frog). A frog's tally is its row count.
+- Env vars are validated in `config.ts`, and bad values stop startup:
+  - `COOKIE_SECURE` must be `true` over HTTPS, and `true` also turns on HSTS.
+  - `NODE_ENV=production` refuses `COOKIE_SECURE=false`, a missing `VISITOR_SECRET`, and a database without TLS (unless `DATABASE_PRIVATE_NETWORK=true`). It also turns on the rate limits and the `Origin` check.
+  - `TRUST_PROXY` is a hop count, never `true`.
+  - `DATABASE_URL` accepts only `sslmode=verify-full`, or no `sslmode` together with `DATABASE_CA_CERT` or `DATABASE_PRIVATE_NETWORK=true`.
+  - `STATIC_DIR` is set only in the production image.
+  - Error messages must never print the database URL.
+- In production, `/assets/*` is cached for a year (`immutable`), `index.html` is `no-cache`, and all of `/api` is `no-store`. Page URLs return `index.html`. `/api/*`, `/assets/*` and any path whose last segment contains a dot get a JSON 404.
+
+## Security (keep intact)
+
+- Strict CSP (`default-src 'none'`, no `'unsafe-inline'`). Never add inline scripts or styles. Fix the code, not the CSP.
+- `frame-ancestors 'none'` and `X-Frame-Options`. No CORS headers. `PUT`/`DELETE` requests with a foreign `Origin` get a `403`.
+- Production rate limits per address: 600 API requests and 60 likes/unlikes per 15 minutes, and 30 new visitors per hour. Request bodies are capped at 10 KB, and database queries have timeouts.
+- No `X-Powered-By`, only generic error messages, no source maps. The container runs as `node`, and the image contains no source or `.env`.
+- Never disable database certificate verification.
+
+## Git
+
+- **Never commit.** The user makes all git commits. Leave changes in the working tree for them to review.
+
+## Docs
+
+When behaviour, commands or conventions change, update this file, and update `README.md` if it covers the same thing.
