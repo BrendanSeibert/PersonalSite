@@ -22,7 +22,7 @@ signing up for anything.
   <img src="docs/screenshots/frog-library.webp" width="49%" alt="The Frog Library: a grid of cards in alternating sand, sage and sky tones, each with a hand-drawn frog, its name, a short description and a heart button.">
 </p>
 
-It's also an exploration of building software with Claude. For this project I wanted to experiment more and lean in
+It's also an exploration in building software with Claude. For this project I wanted to experiment more and lean in
 further than before. Claude helped to plan features, orchestrate 
 agents and review the code, with help from custom skills I wrote for those jobs. I set the
 standards, made the calls and reviewed the changes before committing. The site is small,
