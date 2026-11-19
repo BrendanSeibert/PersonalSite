@@ -2,7 +2,7 @@
 # Development still uses backend/Dockerfile and frontend/Dockerfile through docker-compose.yml.
 
 # ---- 1. Build the frontend ----------------------------------------------------
-FROM node:24-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /build
 COPY frontend/package*.json ./
 # No install scripts: none of the packages the build needs has one (only dev tools: esbuild, fsevents, @parcel/watcher).
@@ -12,7 +12,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---- 2. Build the backend -----------------------------------------------------
-FROM node:24-alpine AS backend
+FROM node:26-alpine AS backend
 WORKDIR /build
 COPY backend/package*.json ./
 # No install scripts: none of the packages the build needs has one (only dev tools: esbuild, fsevents, @parcel/watcher).
@@ -22,7 +22,7 @@ COPY backend/ ./
 RUN npm run build && npm prune --omit=dev
 
 # ---- 3. Runtime: nothing but what runs ----------------------------------------
-FROM node:24-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production \
     STATIC_DIR=/app/public
 WORKDIR /app
