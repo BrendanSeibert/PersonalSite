@@ -1,6 +1,6 @@
 # EX3
 
-A personal site. React 19 + Vite frontend, Node 24 + Express 5 + TypeScript backend, PostgreSQL 16, all run with Docker Compose. `README.md` has the full details; this file covers the rules to follow when changing code.
+A personal site. React 19 + Vite frontend, Node 24 + Express 5 + TypeScript backend, PostgreSQL 16, all run with Docker Compose. `README.md` is the human-facing overview (what the site is, how to run, configure and deploy it); this file holds the rules to follow when changing code.
 
 Libraries beyond those: React Router 8, TanStack Query 5 and `pg`. Tests use Vitest, Supertest, React Testing Library, MSW and Playwright (Chromium). Pages: Home (`/`), Frog Library (`/frog-library`) and About (`/about`).
 
@@ -118,7 +118,7 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
   - an entry in `NAV_ITEMS` in `Navbar.tsx`, if it belongs in the nav
 - After every navigation, including Back and Forward, `AppLayout` scrolls to the top and focuses `<main>`. `AppLayout` sets the page language, not the title.
 - The nav bar has links only. Every `NAV_ITEMS` entry needs a `to`. The nav bar hides the link to the current page.
-- The dark mode switch (`ThemeToggle`) is not a nav item. It sits after `<nav>`, inside the `.navbar-end` wrapper, always rightmost. It is a `role="switch"` button named "Dark mode" (the name never changes; `aria-checked` carries the state).
+- The dark mode switch (`ThemeToggle`) is not a nav item. It sits after `<nav>`, inside the `.navbar-end` wrapper, always rightmost. At very large text `.navbar-end` wraps (it overflowed at 200%), and the switch stays rightmost after wrapping. It is a `role="switch"` button named "Dark mode" (the name never changes; `aria-checked` carries the state).
 - Links that open a new tab use `NewTabLink` (`components/NewTabLink.tsx`; pass `pdf` for a PDF link, and the caller's link class as `className`).
 
 ## Frogs (spinner entries)
@@ -168,3 +168,6 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 ## Docs
 
 When behaviour, commands or conventions change, update this file, and update `README.md` if it covers the same thing.
+
+- Don't copy rules from this file into `README.md`. Link to the section instead. The README keeps only what a person needs to run, test, configure, deploy or debug the site, plus the contrast tables and architecture diagrams.
+- README screenshots live in `docs/screenshots/`. If a change alters the home page's look noticeably, retake the affected shots in the same change.
