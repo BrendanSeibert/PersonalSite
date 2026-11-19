@@ -1,22 +1,9 @@
 import { screen, within } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { routes } from './routes';
-import { renderWithProviders } from './test/renderWithProviders';
+import { expectNoHorizontalScroll, navItems, rect, SAGE_800_RGB } from './test/browserHelpers';
+import { renderApp } from './test/renderApp';
 import { expectedLayout, TAP_TARGET_PX, VIEWPORTS, type Layout } from './test/viewports';
-import { waitForHomeToSettle } from './test/settle';
-
-async function renderApp(url = '/') {
-  const router = createMemoryRouter(routes, { initialEntries: [url] });
-  renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  // Let the layout settle into its final content.
-  if (url === '/') await waitForHomeToSettle();
-  else await screen.findByRole('heading', { level: 2 });
-}
-
-// The nav's links.
-const navItems = () => [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-link')];
 
 function columns() {
   const middle = screen.getByRole('main');
@@ -25,14 +12,8 @@ function columns() {
   return { middle, left, right };
 }
 
-const rect = (element: Element) => element.getBoundingClientRect();
-
 const overlaps = (a: DOMRect, b: DOMRect) =>
   a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
-
-function expectNoHorizontalScroll() {
-  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
-}
 
 function expectColumnOrder(layout: Layout) {
   const { middle, left, right } = columns();
@@ -142,11 +123,10 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
 
   if (width === 375 || width === 1280) {
     it('draws the nav bar, the "Spin the wheel" button and the middle heading in the main green (sage-800)', () => {
-      const SAGE_800 = 'rgb(59, 66, 46)';
-      expect(getComputedStyle(document.querySelector('.navbar')!).backgroundColor).toBe(SAGE_800);
-      expect(getComputedStyle(screen.getByRole('button', { name: 'Spin the wheel' })).backgroundColor).toBe(SAGE_800);
+      expect(getComputedStyle(document.querySelector('.navbar')!).backgroundColor).toBe(SAGE_800_RGB);
+      expect(getComputedStyle(screen.getByRole('button', { name: 'Spin the wheel' })).backgroundColor).toBe(SAGE_800_RGB);
       const heading = within(columns().middle).getByRole('heading', { level: 2 });
-      expect(getComputedStyle(heading).color).toBe(SAGE_800);
+      expect(getComputedStyle(heading).color).toBe(SAGE_800_RGB);
     });
   }
 
@@ -174,7 +154,6 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
   });
 });
 
-// The nav has different items on each page, so its layout is checked on both.
 // The nav has different links on each page, so its layout is checked on the other pages too.
 describe.each(['/frog-library', '/about'])('the nav bar on %s', (url) => {
   describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {

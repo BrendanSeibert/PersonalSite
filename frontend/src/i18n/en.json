@@ -36,7 +36,7 @@
     "likes": { "one": "{count} like", "other": "{count} likes" },
     "loading": "Loading favorites...",
     "unavailable": "Favorites are unavailable right now.",
-    "saveFailed": "Couldn't save your favorite. Please try again.",
+    "saveFailed": "Couldn’t save your favorite. Please try again.",
     "mine": {
       "tab": "Your Favorites",
       "empty": "No favorites yet. Select the heart-shaped Favorite button on any frog to add it here."
@@ -54,23 +54,23 @@
     "entries": {
       "entry01": { "title": "Eastern Cricket Frog", "blurb": "Acris crepitans. A small frog with rough skin. Its color can be greenish, brown, tan, or yellow." },
       "entry02": { "title": "Eastern American Toad", "blurb": "Anaxyrus americanus. A medium-sized lumpy frog. Its color can be brown, red, olive, or gray." },
-      "entry03": { "title": "Fowler's Toad", "blurb": "Anaxyrus fowleri. Get a load of this lunatic. A medium-sized frog. Its color is typically brown to gray." },
-      "entry04": { "title": "Cope's Gray Treefrog", "blurb": "Hyla chrysoscelis. Just try and look away from this moderate-sized beauty. Its color is typically gray or greenish gray." },
+      "entry03": { "title": "Fowler’s Toad", "blurb": "Anaxyrus fowleri. Get a load of this lunatic. A medium-sized frog. Its color is typically brown to gray." },
+      "entry04": { "title": "Cope’s Gray Treefrog", "blurb": "Hyla chrysoscelis. Just try and look away from this moderate-sized beauty. Its color is typically gray or greenish gray." },
       "entry05": { "title": "Gray Treefrog", "blurb": "Hyla versicolor. Honestly not sure why Cope prefers the other one because this is another moderate-sized frog. Its color is also usually gray or greenish gray." },
       "entry06": { "title": "American Bullfrog", "blurb": "Lithobates catesbeianus. A LARGE frog. Its color typically falls between green and brown." },
       "entry07": { "title": "Green Frog", "blurb": "Lithobates clamitans. You are never going to guess what color this frog is. Of note it is a large frog." },
-      "entry08": { "title": "Atlantic Coast Leopard Frog", "blurb": "Lithobates kauffeldi. Spots on this guy like you wouldn't believe. This is a medium-sized frog. Its color can vary from bright green to dark brown." },
-      "entry09": { "title": "Pickerel Frog", "blurb": "Lithobates palustris. Walleye'll be. A moderate-sized frog. This frog's color is usually brown or tan." },
+      "entry08": { "title": "Atlantic Coast Leopard Frog", "blurb": "Lithobates kauffeldi. Spots on this guy like you wouldn’t believe. This is a medium-sized frog. Its color can vary from bright green to dark brown." },
+      "entry09": { "title": "Pickerel Frog", "blurb": "Lithobates palustris. Walleye’ll be. A moderate-sized frog. This frog’s color is usually brown or tan." },
       "entry10": { "title": "Northern Leopard Frog", "blurb": "Lithobates pipiens. This is a moderate-sized frog whose color is often bright green, dark greenish brown, or brown." },
       "entry11": { "title": "Wood Frog", "blurb": "Lithobates sylvaticus. As close to a tree as a frog can be. This is a moderate-sized frog with a color that can be gray brown, dark brown, or reddish brown." },
-      "entry12": { "title": "Mountain Chorus Frog", "blurb": "Pseudacris brachyphona. If you're feeling froggy jump. This bad boy is a small frog whose color can be anywhere between tan and light brown." },
+      "entry12": { "title": "Mountain Chorus Frog", "blurb": "Pseudacris brachyphona. If you’re feeling froggy jump. This bad boy is a small frog whose color can be anywhere between tan and light brown." },
       "entry13": { "title": "Spring Peeper", "blurb": "Pseudacris crucifer. Peep this fella. A small frog with a color that is mostly different shades of brown." },
       "entry14": { "title": "Upland Chorus Frog", "blurb": "Pseudacris feriarum. This is a small frog. Its main color can be gray, tan, or greenish brown." },
       "entry15": { "title": "New Jersey Chorus Frog", "blurb": "Pseudacris kalmi. The king of chorus frogs and a small frog. Its color can be gray, tan, or greenish brown." },
-      "entry16": { "title": "Western Chorus Frog", "blurb": "Pseudacris triseriata. It's no New Jersey Chorus Frog, but it might be the stripiest of the lot. A small frog whose main color can be gray, tan, or greenish brown." },
+      "entry16": { "title": "Western Chorus Frog", "blurb": "Pseudacris triseriata. It’s no New Jersey Chorus Frog, but it might be the stripiest of the lot. A small frog whose main color can be gray, tan, or greenish brown." },
       "entry17": { "title": "Eastern Spadefoot", "blurb": "Scaphiopus holbrookii. A small frog with the coolest name in town. Its color can be dark brown, gray, or blackish gray." },
-      "entry18": { "title": "Greg", "blurb": "Felis catus. A beautiful medium-sized tabby cat. He's often found chewing through treat bags, lounging in sunbeams, or being loud when you're trying to sleep." },
-      "entry19": { "title": "Sophie", "blurb": "Felis catus. A beautiful small-sized tuxedo cat. She's often found sleeping on warm clean laundry, hiding beneath a couch, or perched in a lap." }
+      "entry18": { "title": "Greg", "blurb": "Felis catus. A beautiful medium-sized tabby cat. He’s often found chewing through treat bags, lounging in sunbeams, or being loud when you’re trying to sleep." },
+      "entry19": { "title": "Sophie", "blurb": "Felis catus. A beautiful small-sized tuxedo cat. She’s often found sleeping on warm clean laundry, hiding beneath a couch, or perched in a lap." }
     }
   },
   "frogLibrary": {
@@ -86,5 +86,9 @@
   },
   "notFound": {
     "heading": "Page not found"
+  },
+  "error": {
+    "heading": "Something went wrong",
+    "body": "Please reload the page, or go back to the home page."
   }
 }

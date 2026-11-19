@@ -1,3 +1,6 @@
+# Used only by docker-compose.prod.yml. app:3000 must match the image's PORT (default 3000). Caddy is the
+# one proxy hop in front of the app, which is why the compose file sets TRUST_PROXY=1. Caddy passes the
+# original Host header through, which the backend's Origin check relies on.
 {$SITE_ADDRESS} {
     encode zstd gzip
     reverse_proxy app:3000

@@ -1,3 +1,4 @@
+import { NewTabLink } from '../components/NewTabLink';
 import { usePageTitle } from '../components/usePageTitle';
 import { useI18n } from '../context/I18nContext';
 import { fillSlots } from '../i18n/fillSlots';
@@ -21,12 +22,10 @@ export function AboutPage() {
         <p className="about-page-source">
           {fillSlots(t('about.source'), {
             // The citation shows its URL as written; the link only makes it clickable (new tab).
-            // A screen reader also hears that it opens a new tab.
             url: (
-              <a className="about-page-source-link" href={PAHERPS_URL} target="_blank" rel="noopener noreferrer">
+              <NewTabLink className="about-page-source-link" href={PAHERPS_URL}>
                 {t('about.sourceUrl')}
-                <span className="visually-hidden"> {t('link.newTab')}</span>
-              </a>
+              </NewTabLink>
             ),
           })}
         </p>

@@ -1,7 +1,8 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { ensureVisitorId, readVisitorId, signVisitorId, VISITOR_COOKIE } from '../../src/visitor.js';
+import { randomUUID } from 'node:crypto';
+import { readVisitorId, setVisitorCookie, signVisitorId, VISITOR_COOKIE } from '../../src/visitor.js';
 
 const SECRET = 'a-test-secret-that-is-long-enough-to-be-real';
 const ID = '3f2b8c1e-9a4d-4e6f-8b2a-1c3d5e7f9a0b';
@@ -14,7 +15,9 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function app({ ensure = false, secure = false } = {}) {
   const a = express();
   a.get('/api/probe', (req, res) => {
-    const id = ensure ? ensureVisitorId(req, res, { secure, secret: SECRET }) : readVisitorId(req, SECRET);
+    // Mirrors the like route: work out the ID, then set the cookie.
+    const id = ensure ? (readVisitorId(req, SECRET) ?? randomUUID()) : readVisitorId(req, SECRET);
+    if (ensure && id) setVisitorCookie(res, id, { secure, secret: SECRET });
     res.json({ id: id ?? null });
   });
   return a;
@@ -77,8 +80,8 @@ describe('readVisitorId', () => {
   });
 });
 
-describe('ensureVisitorId', () => {
-  it('issues a new v4 UUID, signed, with the right cookie attributes', async () => {
+describe('setVisitorCookie', () => {
+  it('sets the signed ID with the right cookie attributes, and readVisitorId accepts it back', async () => {
     const res = await request(app({ ensure: true })).get('/api/probe');
     expect(res.body.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     const cookie = res.headers['set-cookie']![0]!;
@@ -88,6 +91,9 @@ describe('ensureVisitorId', () => {
     expect(cookie).toContain('Path=/api');
     expect(cookie).toContain('Max-Age=34560000'); // 400 days
     expect(cookie).not.toContain('Secure');
+    // The value is accepted by the reader: a client sending it back is recognised as the same visitor.
+    const sent = /^ex3_visitor=([^;]+);/.exec(cookie)![1]!;
+    expect(await read(`${VISITOR_COOKIE}=${decodeURIComponent(sent)}`)).toBe(res.body.id);
   });
 
   it('adds Secure only when asked', async () => {

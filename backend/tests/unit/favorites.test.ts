@@ -11,6 +11,7 @@ const COOKIE = `${VISITOR_COOKIE}=${signVisitorId(ID, DEV_VISITOR_SECRET)}`;
 type Call = { sql: string; params: unknown[] };
 
 // A fake database: answers each kind of query from canned data, and records every call.
+// Answers by the query's opening words; the SQL's exact behaviour (order, ties, conflicts) is checked against real PostgreSQL in tests/integration/favorites.integration.test.ts.
 function fakeDb({
   frogs = ['entry01', 'entry02', 'entry07'],
   mine = [] as string[],
@@ -48,15 +49,13 @@ describe('GET /api/favorites/mine', () => {
     expect(visitorCookie(res)).toBeUndefined();
   });
 
-  it('with a cookie: the visitor is a parameter, never in the SQL, and the order is the frogs’ position', async () => {
+  it('with a cookie: the visitor is a parameter, never in the SQL', async () => {
     const { app, calls } = fakeDb({ mine: ['entry02', 'entry07'] });
     const res = await request(app).get('/api/favorites/mine').set('Cookie', COOKIE);
     expect(res.body).toEqual({ entryIds: ['entry02', 'entry07'] });
     expect(calls).toHaveLength(1);
     expect(calls[0]!.params).toEqual([ID]);
     expect(calls[0]!.sql).not.toContain(ID);
-    expect(calls[0]!.sql).toMatch(/JOIN frogs/);
-    expect(calls[0]!.sql).toMatch(/ORDER BY frogs\.position/);
     expect(visitorCookie(res)).toBeUndefined(); // reads never set the cookie
   });
 
@@ -72,15 +71,13 @@ describe('GET /api/favorites/mine', () => {
 });
 
 describe('GET /api/favorites/top', () => {
-  it('asks for the top ten, joined to frogs, ties by position, and maps the rows', async () => {
+  it('asks for the top ten and maps the rows', async () => {
     const { app, calls } = fakeDb({ top: [{ entry_id: 'entry07', count: 5 }, { entry_id: 'entry01', count: 2 }] });
     const res = await request(app).get('/api/favorites/top');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ top: [{ entryId: 'entry07', count: 5 }, { entryId: 'entry01', count: 2 }] });
     expect(TOP_FAVORITES).toBe(10);
     expect(calls[0]!.params).toEqual([10]);
-    expect(calls[0]!.sql).toMatch(/JOIN frogs/);
-    expect(calls[0]!.sql).toMatch(/ORDER BY count DESC, frogs\.position LIMIT \$1/);
     expect(visitorCookie(res)).toBeUndefined();
   });
 });
@@ -97,7 +94,6 @@ describe('PUT /api/favorites/:entryId', () => {
     expect(cookie).toMatch(/HttpOnly/);
     expect(calls.map((c) => c.sql.split(' ')[0])).toEqual(['SELECT', 'INSERT', 'SELECT']);
     expect(calls[0]!.params).toEqual(['entry07']);
-    expect(calls[1]!.sql).toMatch(/ON CONFLICT DO NOTHING/);
     expect(calls[1]!.params).toEqual([issued, 'entry07']);
     expect(calls[2]!.params).toEqual(['entry07']);
   });
@@ -121,6 +117,7 @@ describe('PUT /api/favorites/:entryId', () => {
     const res = await request(app).put('/api/favorites/entry07');
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Unknown frog' });
+    expect(res.headers['set-cookie']).toBeUndefined(); // no cookie for a like that was not stored
   });
 
   it('lets other insert errors reach the error handler as a generic 500', async () => {
@@ -130,6 +127,7 @@ describe('PUT /api/favorites/:entryId', () => {
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Internal server error' });
     expect(res.text).not.toContain('secret detail');
+    expect(res.headers['set-cookie']).toBeUndefined(); // no cookie for a like that was not stored
     expect(spy).toHaveBeenCalled();
   });
 });
@@ -149,7 +147,6 @@ describe('DELETE /api/favorites/:entryId', () => {
     const res = await request(app).delete('/api/favorites/entry07').set('Cookie', COOKIE);
     expect(res.body).toEqual({ entryId: 'entry07', favorited: false, count: 2 });
     const del = calls.find((c) => c.sql.startsWith('DELETE'))!;
-    expect(del.sql).toMatch(/WHERE visitor_id = \$1 AND entry_id = \$2/);
     expect(del.params).toEqual([ID, 'entry07']);
     expect(visitorCookie(res)).toBeUndefined();
   });

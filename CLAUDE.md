@@ -49,23 +49,23 @@ Libraries beyond those: React Router 8, TanStack Query 5 and `pg`. Tests use Vit
 - After a batch of edits to a plan or doc, re-read the file to confirm the edits landed correctly.
 - For visual and CSS changes, check existing container and media queries first. Confirm the result with screenshots at mobile and desktop widths.
 
-CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including browser tests and `scripts/check-dist.sh`), `integration` and `image` (smoke) jobs, plus `npm audit --omit=dev --audit-level=high`. Dependabot runs weekly.
+CI (`.github/workflows/ci.yml`) runs `backend`, `frontend` (including `npm run lint`, browser tests, `scripts/check-dist.test.sh` and `scripts/check-dist.sh`), `integration` and `image` (smoke) jobs, plus `npm audit --omit=dev --audit-level=high`. Dependabot runs weekly.
 
 ## Project map
 
-- **Root:** `Dockerfile` (3-stage production image, runs as `node`), `docker-compose.yml` (dev), `docker-compose.test.yml` (integration), `docker-compose.prod.yml` + `Caddyfile` (optional self-hosting), `scripts/check-dist.sh` (fails on inline script/style or source maps), `scripts/smoke.sh`.
-- **`backend/src/`:** `server.ts` (startup, clean shutdown, keep-alive timeouts of 65s/66s; don't lower them), `app.ts` (builds the Express app with no side effects), `config.ts` (validates env vars), `db.ts` (pool, shared `Db` type), `migrate.ts`, `visitor.ts` (the `ex3_visitor` cookie), `security.ts` (headers, rate limits, `Origin` check), `staticSite.ts` (serves the build in production), `routes/health.ts`, `routes/favorites.ts`.
+- **Root:** `Dockerfile` (3-stage production image, runs as `node`), `docker-compose.yml` (dev), `docker-compose.test.yml` (integration), `docker-compose.prod.yml` + `Caddyfile` (optional self-hosting), `scripts/check-dist.sh` (fails on inline script/style or source maps), `scripts/check-dist.test.sh` (its fixture test), `scripts/smoke.sh`.
+- **`backend/src/`:** `server.ts` (thin startup wiring, keep-alive timeouts of 65s/66s; don't lower them), `lifecycle.ts` (testable migrate-or-exit and clean shutdown; migrations use their own pool without the 5 s timeouts), `app.ts` (builds the Express app with no side effects), `config.ts` (validates env vars), `db.ts` (pool, shared `Db` type), `migrate.ts`, `visitor.ts` (the `ex3_visitor` cookie), `security.ts` (headers, rate limits, `Origin` check), `staticSite.ts` (serves the build in production), `routes/health.ts`, `routes/favorites.ts`.
 - **`backend/tests/`:** `unit/` (no database) and `integration/` (real PostgreSQL in Docker).
 - **`frontend/src/`:**
-  - Setup and routing: `main.tsx` (mounts React, i18n, router, TanStack Query), `paths.ts` (`PATHS`), `routes.tsx`.
+  - Setup and routing: `main.tsx` (mounts React, i18n, router, TanStack Query), `queryClient.ts` (reads retry once, never on a 4xx), `paths.ts` (`PATHS`), `routes.tsx` (pages sit inside an `errorElement` route that shows `ErrorPage`).
   - Data and text: `api/favorites.ts` (endpoint calls with checked data), `i18n/` (`en.json`, `translate.ts`, `fillSlots.tsx` for links inside a sentence), `context/` (`I18nProvider`, `useI18n()`).
   - `styles/`: `_palette.scss`, `_tokens.scss`, convention and contrast tests.
   - `components/`:
-    - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`.
+    - Layout: `AppLayout`, `Navbar`, `ColumnLayout`, `usePageTitle.ts`, `NewTabLink` (links that open a new tab).
     - Spinner and cards: `FrogSpinner`, `FrogCard`, `frogEntries.ts` (entries, card tones, `IMAGES`), `frogReel.ts` (pure reel maths), `frogExpansion.ts` (pure open/close rules), `useCardExpansion.ts` + `ExpandableFrogCard.tsx`.
-    - Favorites: `FavoriteButton` + `useFavorite.ts`, `FavoritesPanel`, `FavoritesStatus` (announces failed saves, on every page).
-  - `pages/`: `HomePage` (also holds `NewTabLink`), `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `contactLinks.ts`.
-  - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `renderWithProviders`, `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
+    - Favorites: `FavoriteButton` + `useFavorite.ts`, `FavoritesPanel` + `favoritesTabs.ts` (pure tab keyboard rule), `FavoritesStatus` (announces failed saves, on every page).
+  - `pages/`: `HomePage`, `FrogLibraryPage`, `AboutPage`, `NotFoundPage`, `ErrorPage` (shown when a page fails to render; the nav bar stays), `contactLinks.ts`.
+  - `test/`: jsdom and browser setup, MSW server and handlers, `favoritesFake.ts`, `renderWithProviders` (also returns its `queryClient`), `renderApp.tsx` (mounts the real routes for browser tests; `routesWithPage` adds a test page), `browserHelpers.ts` (shared layout helpers), `viewports.ts`, `axe.ts` (`expectNoAxeViolations`), `textSpacing.ts` (WCAG 1.4.12 overrides).
 
 Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from React hooks and components, so it can be unit tested.
 
@@ -83,7 +83,7 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
 - **Colours:** literals (`#hex`, `rgb()`, and colour keywords like `green` or `blue`) appear only in `src/styles/_palette.scss`. Each component maps palette colours to roles once, in a `.d-<component>` block of custom properties named `--<text|surface|border|shadow>-color-<component>[-<part>][-<state>]`.
 - **Sizes:** use `rem` (or `fr`, `%`, `vw`, `dvh`, `clamp()`) with tokens from `src/styles/_tokens.scss`. The only `px` allowed is a `1px` hairline.
 - **Text:** every user-facing string, including `aria-label`s and page titles, goes in `src/i18n/en.json` and is read with `t()` from `useI18n()`. No hard-coded text.
-- **Class names:** a component root has `d-<name>` (colours) and `<name>` (layout). Child classes start with the component name.
+- **Class names:** a component root has `d-<name>` (colours) and `<name>` (layout). Child classes start with the component name. Exception: `NewTabLink` has no styles and no `.scss`; the caller passes its own link class.
 - **Styles:** one `.scss` file per component, next to it, starting with `@use "../styles/palette" as p;` and/or `@use "../styles/tokens" as t;`.
 - **Mixins:** use the ones in `_tokens.scss` instead of re-implementing them. `wide-layout` holds the one breakpoint: three columns above 64rem, stacked rows (Middle, Left, Right) at 64rem and below. `button-shape` is for buttons and nav links. `panel` gives the rounded, bordered look; the page sets its own `background-color`, `border-color` and heading colour.
 
@@ -111,7 +111,7 @@ Keep pure logic (such as `frogReel.ts` and `frogExpansion.ts`) separate from Rea
   - an entry in `NAV_ITEMS` in `Navbar.tsx`, if it belongs in the nav
 - After every navigation, including Back and Forward, `AppLayout` scrolls to the top and focuses `<main>`. `AppLayout` sets the page language, not the title.
 - The nav bar has links only. Every `NAV_ITEMS` entry needs a `to`. The nav bar hides the link to the current page.
-- Links that open a new tab use `NewTabLink`, or add `<span className="visually-hidden"> {t('link.newTab')}</span>` (with the leading space). PDF links use `link.newTabPdf`.
+- Links that open a new tab use `NewTabLink` (`components/NewTabLink.tsx`; pass `pdf` for a PDF link, and the caller's link class as `className`).
 
 ## Frogs (spinner entries)
 

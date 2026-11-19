@@ -1,10 +1,13 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'react';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import en from '../i18n/en.json';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { FrogCard } from './FrogCard';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
+
+type CardProps = ComponentProps<typeof FrogCard>;
 
 const entry: FrogEntry = FROG_ENTRIES[1]; // "Eastern American Toad", tone "sage"
 
@@ -120,10 +123,9 @@ describe('FrogCard', () => {
       expect(card.querySelector('.frog-card-image-empty')).not.toBeNull();
     });
 
-    it('cannot be combined with concealed or expansion (checked by the compiler)', () => {
-      // @ts-expect-error: `full` and `concealed` together are meaningless, so the props forbid it.
-      const bad = <FrogCard entry={entry} full concealed />;
-      expect(bad).toBeTruthy();
+    it('cannot be combined with concealed or expansion (checked by tsc -b in npm test)', () => {
+      expectTypeOf<{ entry: FrogEntry; full: true }>().toExtend<CardProps>();
+      expectTypeOf<{ entry: FrogEntry; full: true; concealed: true }>().not.toExtend<CardProps>();
     });
   });
 
@@ -174,9 +176,8 @@ describe('FrogCard', () => {
     });
 
     it('never has a heart on a concealed reel card (checked by the compiler)', () => {
-      // @ts-expect-error: a concealed card has no title and spins, so it can't take a heart.
-      const bad = <FrogCard entry={entry} concealed heart />;
-      expect(bad).toBeTruthy();
+      expectTypeOf<{ entry: FrogEntry; concealed: true }>().toExtend<CardProps>();
+      expectTypeOf<{ entry: FrogEntry; concealed: true; heart: true }>().not.toExtend<CardProps>();
       const card = renderCard({ concealed: true });
       expect(card.querySelector('.frog-card-corner')).toBeNull();
     });

@@ -85,5 +85,7 @@ describe('serving the frontend build', () => {
     const res = await request(broken).get('/about');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/application\/json/);
+    // Capital F is how you know the error handler answered; the catch-all says "Not found".
+    expect(res.body).toEqual({ error: 'Not Found' });
   });
 });

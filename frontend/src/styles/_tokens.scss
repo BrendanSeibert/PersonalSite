@@ -33,7 +33,10 @@ $transition: 0.15s ease;
 
 // Three columns only when the screen is wider than 64rem (1024px at default text size).
 // At 64rem or less (phones, tablets in portrait, narrow windows) the columns stack.
-// Width only, by design: see Decision 1 in the plan.
+// Width only, by design: width can't tell a landscape tablet from a laptop, and three columns suit
+// both, so phones, portrait tablets and narrow windows stack and everything wider gets three columns.
+// (An input-type query such as `(hover: hover)` was considered and rejected: it would make touch
+// tablets always stack.)
 @mixin wide-layout {
     @media (width > 64rem) {
         @content;

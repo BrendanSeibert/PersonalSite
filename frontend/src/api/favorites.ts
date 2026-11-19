@@ -6,9 +6,20 @@ const KNOWN = new Set<string>(FROG_ENTRIES.map((entry) => entry.id));
 const isKnown = (id: unknown): id is EntryId => typeof id === 'string' && KNOWN.has(id);
 const isCount = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0;
 
+// A response the server answered with an error status (not a network failure).
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function request(url: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(url, { credentials: 'same-origin', ...init });
-  if (!res.ok) throw new Error(`${init?.method ?? 'GET'} ${url} failed with status ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, `${init?.method ?? 'GET'} ${url} failed with status ${res.status}`);
   return res.json();
 }
 

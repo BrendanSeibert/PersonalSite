@@ -17,6 +17,18 @@ describe('createPool', () => {
     await pool.end();
   });
 
+  it('lets the caller replace the timeouts', async () => {
+    const pool = createPool(url, undefined, { statement_timeout: 600000, query_timeout: 600000, max: 1 });
+    expect(pool.options).toMatchObject({
+      connectionString: url,
+      connectionTimeoutMillis: 2000,
+      query_timeout: 600000,
+      statement_timeout: 600000,
+      max: 1,
+    });
+    await pool.end();
+  });
+
   it('has exactly one error listener', async () => {
     const pool = createPool(url);
     expect(pool.listenerCount('error')).toBe(1);

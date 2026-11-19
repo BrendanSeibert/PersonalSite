@@ -7,14 +7,15 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { Navbar } from './Navbar';
 import { waitForHomeToSettle } from '../test/settle';
 
-// The nav's items in order, as "role:name", so links and the About button are told apart.
+// The nav's items in order, as "link:name". The nav holds links only, so anything else fails here.
 function navItems() {
   const nav = screen.getByRole('navigation', { name: 'Main' });
   return within(nav)
     .getAllByRole('listitem')
     .map((item) => {
       const control = item.firstElementChild as HTMLElement;
-      return `${control.tagName === 'A' ? 'link' : 'button'}:${control.textContent}`;
+      expect(control.tagName).toBe('A');
+      return `link:${control.textContent}`;
     });
 }
 

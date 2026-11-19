@@ -52,7 +52,7 @@ describe('security headers', () => {
   it('sends the other headers', async () => {
     const res = await request(createApp({ db: frogDb() })).get('/api/health');
     expect(res.headers['x-content-type-options']).toBe('nosniff');
-    expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
+    expect(res.headers['x-frame-options']).toBe('DENY');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['cross-origin-resource-policy']).toBe('same-origin');
     expect(res.headers['cross-origin-opener-policy']).toBe('same-origin');

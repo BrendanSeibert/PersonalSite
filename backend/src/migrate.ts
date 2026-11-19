@@ -34,7 +34,8 @@ export async function migrate(pool: MigrationPool, dir: URL = MIGRATIONS_DIR): P
         await client.query('INSERT INTO schema_migrations (name) VALUES ($1)', [name]);
         await client.query('COMMIT');
       } catch (err) {
-        await client.query('ROLLBACK');
+        // A broken connection makes ROLLBACK fail too; PostgreSQL rolls back when the session ends.
+        await client.query('ROLLBACK').catch(() => {});
         throw new Error(`Migration ${name} failed`, { cause: err });
       }
       console.log(`Applied migration ${name}`);

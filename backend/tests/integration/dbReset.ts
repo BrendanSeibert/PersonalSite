@@ -4,8 +4,11 @@ import { MIGRATIONS_DIR } from '../../src/migrate.js';
 
 const SEED = '002_seed_frogs.sql';
 // A later migration that only adds or removes frog rows (no schema change), such as
-// 004_remove_entry20.sql. Replaying these after the seed gives the current crop.
-const FROG_ROWS_ONLY = (sql: string) => /\b(INSERT INTO|DELETE FROM) frogs\b/.test(sql) && !/\b(CREATE|ALTER|DROP)\b/i.test(sql);
+// 004_remove_entry20.sql. Replaying these after the seed gives the current crop. A frog migration must
+// contain only INSERT INTO / DELETE FROM frogs; one that also changes the schema is not replayed here.
+const code = (sql: string) => sql.replace(/--.*$/gm, '');
+const FROG_ROWS_ONLY = (sql: string) =>
+  /\b(INSERT INTO|DELETE FROM) frogs\b/.test(code(sql)) && !/\b(CREATE|ALTER|DROP)\b/i.test(code(sql));
 
 // Puts the frogs back to the current crop (the seed plus later frog migrations) and removes every
 // like, so each test starts the same.

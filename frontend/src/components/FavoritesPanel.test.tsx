@@ -11,6 +11,7 @@ import { server } from '../test/server';
 import { FavoriteButton } from './FavoriteButton';
 import { FavoritesPanel, MODE_STORAGE_KEY } from './FavoritesPanel';
 import { FROG_ENTRIES } from './frogEntries';
+import { MINE_KEY } from './useFavorite';
 
 const MINE = 'Your Favorites';
 const ALL_TIME = 'All Time Favorites';
@@ -168,8 +169,10 @@ describe('FavoritesPanel', () => {
 
   it('switches to All Time Favorites on click: the top ten, ranked, with counts seen and spoken', async () => {
     // Frogs 1..12 get 1..12 likes; you liked frog 12.
-    seedFavorites({ counts: Object.fromEntries(FROG_ENTRIES.slice(0, 12).map((e, i) => [e.id, i + 1])) });
-    seedFavorites({ mine: ['entry12'], counts: { entry12: 12 } });
+    seedFavorites({
+      mine: ['entry12'],
+      counts: Object.fromEntries(FROG_ENTRIES.slice(0, 12).map((e, i) => [e.id, i + 1])),
+    });
     const top = countTopRequests();
     const user = userEvent.setup();
     renderPanel();
@@ -352,9 +355,9 @@ describe('FavoritesPanel', () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'allTime');
     seedFavorites({ counts: { entry01: 2 } });
     server.use(http.get('/api/favorites/mine', () => new HttpResponse(null, { status: 500 })));
-    renderPanel();
+    const { queryClient } = renderPanel();
     await list(ALL_TIME);
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await waitFor(() => expect(queryClient.getQueryState(MINE_KEY)?.status).toBe('error'));
     expect(heart(title(0))).toHaveAttribute('aria-disabled', 'true');
   });
 

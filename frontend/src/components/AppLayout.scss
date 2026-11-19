@@ -51,6 +51,9 @@ body {
     border: 0;
 }
 
+// Reduced motion: near-instant transitions everywhere. !important beats every component's own
+// transition; 0.01ms, not 0s, because a 0s transition fires no transitionend, and the spinner waits
+// for that event to land.
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

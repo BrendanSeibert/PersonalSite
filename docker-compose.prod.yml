@@ -54,8 +54,12 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data                     # certificates
       - caddy_config:/config
+    # Wait for the app's health check, so visitors don't get 502s while it migrates. Trade-off: the
+    # image's check first runs after its 30 s interval, so Caddy can start up to ~30 s later on a cold
+    # start. To shorten that, add a healthcheck override on app with start_interval: 2s (Docker Engine 25+).
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
 volumes:
   db_data:

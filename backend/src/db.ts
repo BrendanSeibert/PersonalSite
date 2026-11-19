@@ -4,7 +4,7 @@ import pg from 'pg';
 // Values always travel separately from the SQL ($1, $2, ...): never put them in the string.
 export type Db = { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
 
-export function createPool(databaseUrl: string, caCert?: string): pg.Pool {
+export function createPool(databaseUrl: string, caCert?: string, overrides: pg.PoolConfig = {}): pg.Pool {
   const pool = new pg.Pool({
     connectionString: databaseUrl,
     // A provider with its own certificate authority: trust exactly that one. rejectUnauthorized keeps
@@ -13,6 +13,7 @@ export function createPool(databaseUrl: string, caCert?: string): pg.Pool {
     connectionTimeoutMillis: 2000, // max wait to open a connection
     query_timeout: 5000, // max wait for an answer (enforced by Node)
     statement_timeout: 5000, // max query run time (enforced by PostgreSQL)
+    ...overrides, // the migration pool replaces the timeouts (server.ts)
   });
   pool.on('error', (err) => {
     console.error('Idle database connection error (the pool will reconnect):', err.message);

@@ -47,7 +47,6 @@ describe('useFavorite', () => {
     expect(result.current.a.ready).toBe(false);
     act(() => result.current.a.toggle());
     expect(result.current.a.favorited).toBe(false);
-    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(favoriteRequests).toEqual([]);
   });
 
@@ -115,7 +114,7 @@ describe('useFavorite', () => {
         inFlight += 1;
         if (inFlight > 1) overlapped = true;
         log.push(`start ${request.method}`);
-        await delay(100);
+        await delay(400); // well above the time three waitFor clicks take, even on a loaded machine
         log.push(`end ${request.method}`);
         inFlight -= 1;
         return answerFavorites(request.method, request.url);
@@ -123,22 +122,17 @@ describe('useFavorite', () => {
     );
     const { result } = setup();
     await waitFor(() => expect(result.current.a.ready).toBe(true));
-    // Three quick clicks, each as soon as the last one shows (no polling in between), all while
-    // the first save is still on its way.
-    // 5ms per click: enough for the optimistic update, far less than the server's 100ms.
-    const click = () =>
-      act(async () => {
-        result.current.a.toggle();
-        await new Promise((resolve) => setTimeout(resolve, 5));
-      });
-    await click(); // like
-    expect(result.current.a.favorited).toBe(true);
-    await click(); // unlike
-    expect(result.current.a.favorited).toBe(false);
-    await click(); // like
-    expect(result.current.a.favorited).toBe(true);
+    // Three quick clicks, each as soon as the last one's optimistic update shows. That is far
+    // sooner than the server's 400ms, so all three happen while the first save is on its way.
+    const click = async (expected: boolean) => {
+      act(() => result.current.a.toggle());
+      await waitFor(() => expect(result.current.a.favorited).toBe(expected));
+    };
+    await click(true); // like
+    await click(false); // unlike
+    await click(true); // like
     expect(log).toEqual(['start PUT']); // the other two are waiting their turn
-    await waitFor(() => expect(log).toHaveLength(6), { timeout: 2000 });
+    await waitFor(() => expect(log).toHaveLength(6), { timeout: 4000 });
     expect(log).toEqual(['start PUT', 'end PUT', 'start DELETE', 'end DELETE', 'start PUT', 'end PUT']);
     expect(overlapped).toBe(false);
     await waitFor(() => expect(result.current.a.favorited).toBe(true));

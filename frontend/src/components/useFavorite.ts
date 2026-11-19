@@ -30,6 +30,9 @@ export function useFavorite(entryId: EntryId) {
     },
     // Put back what was there; the refetch below then brings the server's truth.
     onError: (_error, _favorited, context) => queryClient.setQueryData(MINE_KEY, context?.before),
+    // Returned on purpose: the save counts as finished only once both lists are refetched, so the
+    // next queued save for this frog (same scope) starts from the server's truth, and
+    // FavoritesStatus never sees a save as done while the page still shows the optimistic state.
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: MINE_KEY }),

@@ -39,6 +39,8 @@ export function securityHeaders({ https }: { https: boolean }): RequestHandler[]
     referrerPolicy: { policy: 'no-referrer' },
     crossOriginResourcePolicy: { policy: 'same-origin' },
     crossOriginOpenerPolicy: { policy: 'same-origin' },
+    // The same as frame-ancestors 'none', for browsers that only read this header.
+    xFrameOptions: { action: 'deny' },
   });
   const permissions: RequestHandler = (_req, res, next) => {
     res.set('Permissions-Policy', PERMISSIONS_POLICY);
@@ -49,7 +51,8 @@ export function securityHeaders({ https }: { https: boolean }): RequestHandler[]
 
 export type Limits = { reads: number; writes: number; newVisitors: number };
 
-// reads: every /api request; a page load is three, so 600 in 15 minutes is forty page loads a minute.
+// reads: every /api request; a page load makes one or two (the visitor's list, plus the top list while
+// All Time is shown), so 600 in 15 minutes is 40 requests a minute, about 20 to 40 page loads a minute.
 // writes: likes and unlikes; enough to toggle every frog three times in 15 minutes.
 // newVisitors: likes without a valid cookie, per hour; each would create a new visitor, so a new vote.
 // The cookie is signed, so a script can't skip this limit with made-up IDs. 30 leaves room for many
@@ -84,6 +87,8 @@ export function createLimiters(limits: Limits, visitorSecret: string): RequestHa
 
 // Browsers send Origin on every PUT and DELETE. One that names another site is refused.
 // No Origin at all (curl, scripts) passes: such a request carries no visitor's cookie, and the limits cover it.
+// Relies on the proxy passing the site's Host header through (Caddy does). Behind a proxy that rewrites
+// Host, compare against a configured list of site origins instead; never drop the check.
 export const sameOriginWrites: RequestHandler = (req, res, next) => {
   const origin = req.get('origin');
   if (!isWrite(req.method) || origin === undefined) return next();

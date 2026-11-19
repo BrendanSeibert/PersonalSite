@@ -1,35 +1,18 @@
 import { screen, within } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import en from '../i18n/en.json';
-import { routes } from '../routes';
-import { renderWithProviders } from '../test/renderWithProviders';
+import { expectNoHorizontalScroll, navItemNames as navItems, rect } from '../test/browserHelpers';
+import { renderApp } from '../test/renderApp';
 import { expectedLayout, VIEWPORTS } from '../test/viewports';
-import { waitForHomeToSettle } from '../test/settle';
 
 const PANEL_RADIUS_PX = 12; // $radius-lg, fixed: the probe below uses the same mixin, so it can't catch a change
 const STACKED_MAX_PX = 768; // $stacked-max-width (48rem)
 
-async function renderApp(url: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [url] });
-  renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  if (url === '/') await waitForHomeToSettle();
-  else await screen.findByRole('heading', { level: 2 });
-  return router;
-}
-
-const rect = (element: Element) => element.getBoundingClientRect();
 const panel = () => document.querySelector<HTMLElement>('.about-page-panel')!;
 const intro = () => screen.getByText(en.about.intro);
 const body = () => screen.getByText(en.about.body);
 const source = () => document.querySelector<HTMLElement>('.about-page-source')!;
-const navItems = () =>
-  [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-link')].map((item) => item.textContent);
-
-function expectNoHorizontalScroll() {
-  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
-}
 
 function expectNotClipped() {
   for (const element of [panel(), intro(), body(), source()]) {

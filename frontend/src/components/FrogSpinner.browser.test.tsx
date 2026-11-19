@@ -199,7 +199,7 @@ describe.each(VIEWPORTS)('at %i × %i (%s)', (width, height) => {
       row.nextElementSibling!,
       row.nextElementSibling!.nextElementSibling!,
     ].map(colour);
-    // At rest the payline shows entry 1, so the row above is entry 20: the wrap-around.
+    // At rest the payline shows the first entry, so the row above is the last one: the wrap-around.
     expect(on).not.toBe(above);
     expect(on).not.toBe(below);
     expect(new Set([on, below, next]).size).toBe(3); // all three tones are in use
@@ -265,8 +265,7 @@ describe.each([
     expect(payline()).not.toBe('none');
     expect(document.querySelector('.frog-spinner-strip .favorite-button')).toBeNull(); // no hearts on the reel
     const before = getComputedStyle(strip).transform;
-    await wait(200);
-    expect(getComputedStyle(strip).transform).not.toBe(before);
+    await vi.waitFor(() => expect(getComputedStyle(strip).transform).not.toBe(before), { timeout: 1000 });
     await waitForLanding(title(first)); // no second click: Playwright would wait for aria-disabled to clear
     expect(payline()).toBe('none');
   });
@@ -487,8 +486,15 @@ describe.each([
       const init = { bubbles: true, pointerType: 'touch', isPrimary: true };
       document.body.dispatchEvent(new PointerEvent('pointerdown', init));
       document.body.dispatchEvent(new PointerEvent('pointercancel', init));
+      // The page may not be tall enough to scroll at this viewport (then no scroll event ever fires),
+      // so wait for the event but fall back to a short timeout.
+      const scrolled = new Promise((resolve) => {
+        window.addEventListener('scroll', resolve, { once: true });
+        setTimeout(resolve, 300);
+      });
       window.scrollBy(0, 100);
-      await wait(50);
+      await scrolled;
+      await new Promise(requestAnimationFrame); // let any scroll-driven handler run
       expect(isOpen()).toBe(true);
     });
 

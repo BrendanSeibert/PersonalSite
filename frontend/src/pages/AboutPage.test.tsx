@@ -5,7 +5,7 @@ import { renderWithProviders } from '../test/renderWithProviders';
 import { AboutPage } from './AboutPage';
 import { PAHERPS_URL } from './contactLinks';
 
-// The citation as it reads on the page, unchanged from before the URL became a link.
+// The citation exactly as it reads on the page (the URL inside it is also a link).
 const CITATION =
   'Pa Herp Identification, https://www.paherps.com/herps/frogs-toads/, accessed November 16, 2026';
 

@@ -27,6 +27,6 @@ export function translate(dictionary: Dictionary, key: string, params?: Translat
 
   if (!params) return node;
   return node.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
-    name in params ? String(params[name]) : placeholder,
+    Object.hasOwn(params, name) ? String(params[name]) : placeholder,
   );
 }

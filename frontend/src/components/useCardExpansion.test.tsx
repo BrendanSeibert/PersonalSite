@@ -119,16 +119,41 @@ describe('useCardExpansion', () => {
     expect(isOpen()).toBe(true);
   });
 
-  it('scrolls an opened card into view, and removes its document listeners when it closes', async () => {
+  it('scrolls an opened card into view', async () => {
     const user = userEvent.setup();
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
     renderCards();
     await user.click(face());
     expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+  });
+
+  it('stops reacting to outside presses once closed', async () => {
+    const user = userEvent.setup();
+    renderCards();
+    await user.click(face());
+    await user.click(face());
+    expect(isOpen()).toBe(false);
+    fireEvent.pointerDown(document.body, { pointerType: 'mouse' });
+    fireEvent.pointerUp(document.body, { pointerType: 'mouse' });
+    fireEvent.click(document.body);
+    fireEvent.pointerCancel(document.body, { pointerType: 'touch' });
+    expect(isOpen()).toBe(false);
+    // Re-open: Escape must still close it, so a press was not left stuck as "held".
+    await user.click(face());
+    expect(isOpen()).toBe(true);
+    await user.keyboard('{Escape}');
+    expect(isOpen()).toBe(false);
+  });
+
+  it('removes all four document listeners when it closes', async () => {
+    const user = userEvent.setup();
+    renderCards();
+    await user.click(face());
     const remove = vi.spyOn(document, 'removeEventListener');
     await user.click(face());
-    expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
-    expect(remove).toHaveBeenCalledWith('click', expect.any(Function), true);
+    for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click']) {
+      expect(remove).toHaveBeenCalledWith(type, expect.any(Function), true);
+    }
   });
 
   it('makes the wrapper focusable by script and pointer only', () => {

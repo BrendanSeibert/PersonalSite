@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { screen } from '@testing-library/react';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from './renderWithProviders';
@@ -25,5 +26,16 @@ describe('renderWithProviders', () => {
     }
     renderWithProviders(<Probe />, { strict });
     expect(effect).toHaveBeenCalledTimes(runs);
+  });
+
+  it('returns the QueryClient it provides', () => {
+    const seen = vi.fn<(client: QueryClient) => void>();
+    function GrabClient() {
+      const client = useQueryClient();
+      useEffect(() => seen(client), [client]);
+      return null;
+    }
+    const { queryClient } = renderWithProviders(<GrabClient />);
+    expect(seen).toHaveBeenCalledWith(queryClient);
   });
 });

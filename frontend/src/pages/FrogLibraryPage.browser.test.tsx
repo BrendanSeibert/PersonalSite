@@ -1,39 +1,23 @@
 import { screen, within } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FrogCard } from '../components/FrogCard';
 import { FROG_ENTRIES, TONES } from '../components/frogEntries';
 import en from '../i18n/en.json';
-import type { Dictionary } from '../i18n/translate';
-import { routes } from '../routes';
+import { translate, type Dictionary } from '../i18n/translate';
+import { expectNoHorizontalScroll, navItemNames as navItems, rect } from '../test/browserHelpers';
+import { renderApp } from '../test/renderApp';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { expectedLayout, VIEWPORTS, type Layout } from '../test/viewports';
 import { FrogLibraryPage } from './FrogLibraryPage';
-import { waitForHomeToSettle } from '../test/settle';
 
 const IMAGE_MAX_PX = 192; // 12rem: the open layout's largest image, at 16px text
 const PANEL_RADIUS_PX = 12; // $radius-lg
 const STACKED_MAX_PX = 768; // $stacked-max-width (48rem)
 const PAGE_MAX_PX = 1280; // $page-max-width (80rem)
 
-async function renderApp(url: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [url] });
-  renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
-  if (url === '/') await waitForHomeToSettle();
-  else await screen.findByRole('heading', { level: 2, name: 'Frog Library' });
-  return router;
-}
-
-const rect = (element: Element) => element.getBoundingClientRect();
 const cards = () => [...document.querySelectorAll<HTMLElement>('.frog-library-page-grid > li > article')];
 const panel = () => document.querySelector<HTMLElement>('.frog-library-page-panel')!;
-const navItems = () =>
-  [...screen.getByRole('banner').querySelectorAll<HTMLElement>('.navbar-link')].map((item) => item.textContent);
-
-function expectNoHorizontalScroll() {
-  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
-}
 
 // Nothing in the card, its title or its description is cut off, vertically or sideways.
 function expectNotClipped(card: HTMLElement) {
@@ -259,7 +243,8 @@ describe.each([
     // The hearts are the library's only controls: Tab goes forward to the first card's, never back to the nav.
     await userEvent.keyboard('{Tab}');
     expect(nav.contains(document.activeElement)).toBe(false);
-    expect(screen.getByRole('button', { name: 'Favorite Eastern Cricket Frog' })).toHaveFocus();
+    const firstHeart = translate(en, 'favorites.toggle', { title: translate(en, FROG_ENTRIES[0].titleKey) });
+    expect(screen.getByRole('button', { name: firstHeart })).toHaveFocus();
 
     main.focus();
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
@@ -300,7 +285,7 @@ describe.each([
   });
 
   it('Back and Forward also start the page at the top and focus its <main>', async () => {
-    const router = await renderApp('/');
+    const { router } = await renderApp('/');
     await userEvent.click(screen.getByRole('link', { name: 'Frog Library' }));
     await screen.findByRole('heading', { level: 2, name: 'Frog Library' });
     window.scrollTo(0, document.documentElement.scrollHeight);

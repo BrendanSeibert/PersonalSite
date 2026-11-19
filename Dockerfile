@@ -5,7 +5,8 @@
 FROM node:24-alpine AS frontend
 WORKDIR /build
 COPY frontend/package*.json ./
-RUN npm ci
+# No install scripts: none of the packages the build needs has one (only dev tools: esbuild, fsevents, @parcel/watcher).
+RUN npm ci --ignore-scripts
 COPY frontend/ ./
 # tsc -b && vite build -> /build/dist
 RUN npm run build
@@ -14,7 +15,8 @@ RUN npm run build
 FROM node:24-alpine AS backend
 WORKDIR /build
 COPY backend/package*.json ./
-RUN npm ci
+# No install scripts: none of the packages the build needs has one (only dev tools: esbuild, fsevents, @parcel/watcher).
+RUN npm ci --ignore-scripts
 COPY backend/ ./
 # tsc -> /build/dist; then drop dev packages
 RUN npm run build && npm prune --omit=dev

@@ -8,7 +8,7 @@ export function fillSlots(text: string, slots: Record<string, ReactNode>): React
   // split() with a capture group alternates: text, placeholder name, text, placeholder name, ...
   return text.split(/\{(\w+)\}/).map((part, index) => {
     const isPlaceholder = index % 2 === 1;
-    const content = isPlaceholder ? (part in slots ? slots[part] : `{${part}}`) : part;
+    const content = isPlaceholder ? (Object.hasOwn(slots, part) ? slots[part] : `{${part}}`) : part;
     return <Fragment key={index}>{content}</Fragment>;
   });
 }

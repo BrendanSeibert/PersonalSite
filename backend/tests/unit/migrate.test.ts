@@ -1,9 +1,9 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { migrate, type MigrationPool } from '../../src/migrate.js';
+import { migrate, MIGRATIONS_DIR, type MigrationPool } from '../../src/migrate.js';
 
 // A fake pool with one client that records every query. `applied` is what schema_migrations holds;
 // `failOn` makes the query containing that text reject.
@@ -39,36 +39,45 @@ afterEach(async () => {
 
 describe('migrate', () => {
   it('on a fresh database: locks, creates the bookkeeping table, applies every file in order, unlocks', async () => {
+    await writeFile(join(dir, '003_c.sql'), 'SELECT 33');
+    await writeFile(join(dir, '001_a.sql'), 'SELECT 11');
+    await writeFile(join(dir, '002_b.sql'), 'SELECT 22');
     const { pool, queries, release } = fakePool();
-    const applied = await migrate(pool); // the real backend/migrations folder
-    expect(applied).toEqual(['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql']);
+    expect(await migrate(pool, dirUrl)).toEqual(['001_a.sql', '002_b.sql', '003_c.sql']);
 
     expect(queries[0]).toMatch(/^SELECT pg_advisory_lock/);
     expect(queries[1]).toMatch(/^CREATE TABLE IF NOT EXISTS schema_migrations/);
     expect(queries[2]).toMatch(/^SELECT name FROM schema_migrations/);
     // Each migration: BEGIN, its SQL, the record, COMMIT.
     const perFile = queries.slice(3, -1);
-    expect(perFile).toHaveLength(16);
-    for (let i = 0; i < 4; i += 1) {
+    expect(perFile).toHaveLength(12);
+    ['SELECT 11', 'SELECT 22', 'SELECT 33'].forEach((body, i) => {
       const [begin, sql, record, commit] = perFile.slice(i * 4, i * 4 + 4);
       expect(begin).toBe('BEGIN');
-      expect(sql).not.toBe('');
+      expect(sql).toBe(body);
       expect(record).toMatch(/^INSERT INTO schema_migrations/);
       expect(commit).toBe('COMMIT');
-    }
-    expect(perFile[1]).toMatch(/CREATE TABLE frogs/);
-    expect(perFile[5]).toMatch(/INSERT INTO frogs/);
-    expect(perFile[9]).toMatch(/CREATE TABLE favorites/);
-    expect(perFile[13]).toMatch(/DELETE FROM frogs WHERE id = 'entry20'/);
+    });
     expect(queries.at(-1)).toMatch(/^SELECT pg_advisory_unlock/);
     expect(release).toHaveBeenCalledTimes(1);
   });
 
+  it('the real migrations folder is well-formed: numbered from 001 without gaps, none empty, all applied', async () => {
+    const real = (await readdir(MIGRATIONS_DIR)).filter((f) => /^\d{3}_[a-z0-9_]+\.sql$/.test(f)).sort();
+    expect(real.length).toBeGreaterThan(0);
+    real.forEach((f, i) => expect(f.slice(0, 3)).toBe(String(i + 1).padStart(3, '0')));
+    for (const f of real) expect((await readFile(new URL(f, MIGRATIONS_DIR), 'utf8')).trim()).not.toBe('');
+
+    const { pool, queries } = fakePool();
+    expect(await migrate(pool)).toEqual(real);
+    expect(queries.slice(3, -1)).toHaveLength(real.length * 4);
+  });
+
   it('when everything is applied: only the lock, the bookkeeping and the unlock', async () => {
-    const { pool, queries } = fakePool({
-      applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql'],
-    });
-    expect(await migrate(pool)).toEqual([]);
+    await writeFile(join(dir, '001_a.sql'), 'SELECT 1');
+    await writeFile(join(dir, '002_b.sql'), 'SELECT 2');
+    const { pool, queries } = fakePool({ applied: ['001_a.sql', '002_b.sql'] });
+    expect(await migrate(pool, dirUrl)).toEqual([]);
     expect(queries).toHaveLength(4);
     expect(queries).not.toContain('BEGIN');
   });
@@ -112,9 +121,34 @@ describe('migrate', () => {
     expect(release).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps the migration's own error when ROLLBACK also fails", async () => {
+    await writeFile(join(dir, '001_x.sql'), 'BROKEN SQL');
+    const sqlError = new Error('syntax error');
+    const release = vi.fn();
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes('BROKEN')) throw sqlError;
+        if (sql === 'ROLLBACK') throw new Error('Connection terminated');
+        return { rows: [] };
+      }),
+      release,
+    };
+    const pool: MigrationPool = { connect: vi.fn(async () => client) };
+
+    const error = (await migrate(pool, dirUrl).then(
+      () => undefined,
+      (err: unknown) => err,
+    )) as Error;
+    expect(error.message).toBe('Migration 001_x.sql failed');
+    expect(error.cause).toBe(sqlError);
+    expect(client.query).toHaveBeenCalledWith('ROLLBACK');
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
   it('still releases the client when the unlock itself fails', async () => {
-    const { pool, release } = fakePool({ applied: ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql'], failOn: 'unlock' });
-    await expect(migrate(pool)).resolves.toEqual([]);
+    await writeFile(join(dir, '001_a.sql'), 'SELECT 1');
+    const { pool, release } = fakePool({ applied: ['001_a.sql'], failOn: 'unlock' });
+    await expect(migrate(pool, dirUrl)).resolves.toEqual([]);
     expect(release).toHaveBeenCalledTimes(1);
   });
 });

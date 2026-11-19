@@ -1,8 +1,9 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../routes';
+import { routesWithPage } from '../test/renderApp';
 import { MODE_STORAGE_KEY } from '../components/FavoritesPanel';
 import { seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
@@ -47,8 +48,24 @@ function renderMarkedUp(url: string, dictionary: Dictionary = markUp(en)) {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   document.title = '';
   document.documentElement.lang = '';
+});
+
+it('the error page, shown when a page throws, takes every string from en.json too', async () => {
+  function Boom(): never {
+    throw new Error('boom');
+  }
+  vi.spyOn(console, 'error').mockImplementation(() => {}); // React logs the caught error
+  const router = createMemoryRouter(routesWithPage({ path: 'boom', element: <Boom /> }), {
+    initialEntries: ['/boom'],
+  });
+  renderWithProviders(<RouterProvider router={router} />, { withRouter: false, dictionary: markUp(en) });
+  await screen.findByText('⟦error.body⟧');
+
+  expect(findHardcodedText()).toEqual([]);
+  expect(document.title).toBe('⟦app.pageTitle⟧');
 });
 
 it.each([

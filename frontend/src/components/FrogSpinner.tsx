@@ -16,6 +16,7 @@ function fitOpenCard(pick: HTMLDivElement) {
   const measure = () => {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
     const space = document.documentElement.clientHeight - pick.getBoundingClientRect().top - rem;
+    // Set through the CSSOM, which the strict CSP allows (style-src 'self'); only style="…" attributes in served HTML and <style> tags are blocked.
     pick.style.setProperty('--frog-spinner-pick-space', `${Math.max(space, 0)}px`);
   };
   measure();
@@ -67,6 +68,7 @@ export function FrogSpinner({ entries = FROG_ENTRIES, random = Math.random }: Pr
       <div className="frog-spinner-reel" data-phase={phase}>
         {/* Decorative: screen readers get the result from the status line and the landed card. */}
         <div className="frog-spinner-window" aria-hidden="true">
+          {/* CSSOM write, CSP-safe (see fitOpenCard) */}
           <ul
             className={phase === 'spinning' ? 'frog-spinner-strip frog-spinner-strip-spinning' : 'frog-spinner-strip'}
             style={{ '--frog-spinner-offset': offset } as CSSProperties}

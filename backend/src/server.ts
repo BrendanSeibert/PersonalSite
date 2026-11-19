@@ -2,19 +2,23 @@ import { loadConfig } from './config.js';
 import { createPool } from './db.js';
 import { createApp } from './app.js';
 import { migrate } from './migrate.js';
+import { createShutdown, migrateOrExit } from './lifecycle.js';
 import { PRODUCTION_LIMITS } from './security.js';
 
 const config = loadConfig(process.env);
 const pool = createPool(config.DATABASE_URL, config.DATABASE_CA_CERT);
 
+// Migrations get their own one-connection pool: waiting for another instance's migration lock,
+// or building an index, can take longer than the 5 s a web request is allowed.
+const MIGRATION_TIMEOUT_MS = 10 * 60 * 1000;
+const migrationPool = createPool(config.DATABASE_URL, config.DATABASE_CA_CERT, {
+  max: 1,
+  statement_timeout: MIGRATION_TIMEOUT_MS,
+  query_timeout: MIGRATION_TIMEOUT_MS,
+});
+
 // The tables must exist before the first request. If a migration fails, stop: Docker shows the error.
-try {
-  await migrate(pool);
-} catch (err) {
-  console.error('Database migration failed, not starting:', err);
-  await pool.end().catch(() => {});
-  process.exit(1);
-}
+await migrateOrExit({ run: () => migrate(migrationPool), migrationPool, appPool: pool, exit: process.exit });
 
 const production = config.NODE_ENV === 'production';
 const app = createApp({
@@ -28,32 +32,10 @@ const app = createApp({
 });
 
 const server = app.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`));
+// Do not lower: if Node closes an idle connection the hosting proxy is about to reuse, the proxy answers 502.
 server.keepAliveTimeout = 65_000; // longer than a hosting proxy's idle timeout (usually 60 s)
 server.headersTimeout = 66_000; // must exceed keepAliveTimeout
 
-let shuttingDown = false;
-
-function shutdown(signal: string) {
-  if (shuttingDown) return; // a second signal while we are already stopping: ignore it
-  shuttingDown = true;
-  console.log(`${signal} received, shutting down`);
-
-  // Safety net: if closing gets stuck, give up after 8 seconds (Docker's own limit is 10).
-  setTimeout(() => {
-    console.error('Shutdown took too long, forcing exit');
-    process.exit(1);
-  }, 8000).unref();
-
-  server.close(async (err) => {
-    // stop accepting new requests, finish the ones in progress
-    try {
-      await pool.end(); // then close the database connections
-    } catch (poolErr) {
-      console.error('Error while closing the database pool:', poolErr);
-    }
-    process.exit(err ? 1 : 0);
-  });
-}
-
+const shutdown = createShutdown({ server, pool, exit: process.exit });
 process.on('SIGTERM', () => shutdown('SIGTERM')); // sent by Docker and by nodemon
 process.on('SIGINT', () => shutdown('SIGINT')); // sent by Ctrl+C, and by nodemon first

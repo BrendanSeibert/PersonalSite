@@ -28,7 +28,7 @@ for i in $(seq 1 30); do
 done
 [ "$up" = yes ] || { echo "app never became healthy"; docker logs ex3-smoke-app; exit 1; }
 
-check() { "$@" || { echo "smoke check failed: $*"; exit 1; }; }
+check() { "$@" || { echo "smoke check failed: $*"; docker logs ex3-smoke-app 2>&1 | tail -50; exit 1; }; }
 
 check sh -c "curl -fs $base/api/health | grep -q '\"db\":\"up\"'"
 check sh -c "curl -fsI $base/about | grep -qi '^content-type: text/html'"

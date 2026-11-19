@@ -1,4 +1,4 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Request, Response } from 'express';
 
 export const VISITOR_COOKIE = 'ex3_visitor';
@@ -38,13 +38,9 @@ export function readVisitorId(req: Request, secret: string): string | undefined 
   return undefined;
 }
 
-// Only called by a like: the cookie is created on the first one, and every like renews its lifetime.
-export function ensureVisitorId(
-  req: Request,
-  res: Response,
-  { secure, secret }: { secure: boolean; secret: string },
-): string {
-  const id = readVisitorId(req, secret) ?? randomUUID();
+// Only called after a like is stored: the cookie is created on the first one, and every like
+// renews its lifetime.
+export function setVisitorCookie(res: Response, id: string, { secure, secret }: { secure: boolean; secret: string }) {
   res.cookie(VISITOR_COOKIE, signVisitorId(id, secret), {
     httpOnly: true,
     sameSite: 'lax',
@@ -52,5 +48,4 @@ export function ensureVisitorId(
     path: '/api',
     maxAge: VISITOR_MAX_AGE_MS,
   });
-  return id;
 }

@@ -1,13 +1,17 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FROG_ENTRIES } from './components/frogEntries';
+import en from './i18n/en.json';
+import { translate } from './i18n/translate';
 import { routes } from './routes';
+import { routesWithPage } from './test/renderApp';
 import { renderWithProviders } from './test/renderWithProviders';
 import { waitForHomeToSettle } from './test/settle';
 
-function renderAt(url: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [url] });
+function renderAt(url: string, routeList = routes) {
+  const router = createMemoryRouter(routeList, { initialEntries: [url] });
   renderWithProviders(<RouterProvider router={router} />, { withRouter: false });
   return router;
 }
@@ -41,6 +45,22 @@ describe('routes', () => {
     renderAt('/does-not-exist');
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+  });
+
+  it('shows the error page, inside the layout, when a page throws', () => {
+    function Boom(): never {
+      throw new Error('boom');
+    }
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {}); // React logs the caught error
+    try {
+      renderAt('/boom', routesWithPage({ path: 'boom', element: <Boom /> }));
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 2, name: en.error.heading })).toBeInTheDocument();
+      expect(screen.getByText(en.error.body)).toBeInTheDocument();
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      logged.mockRestore();
+    }
   });
 
   it.each([
@@ -77,7 +97,9 @@ describe('routes', () => {
   it('shows a frog liked in the library in Your Favorites on the home page, pressed in both places', async () => {
     const user = userEvent.setup();
     const router = renderAt('/frog-library');
-    const heart = screen.getByRole('button', { name: "Favorite Fowler's Toad" });
+    const title = translate(en, FROG_ENTRIES[2].titleKey);
+    const heartName = translate(en, 'favorites.toggle', { title });
+    const heart = screen.getByRole('button', { name: heartName });
     await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
     await user.click(heart);
     expect(heart).toHaveAttribute('aria-pressed', 'true');
@@ -85,10 +107,10 @@ describe('routes', () => {
     await act(() => router.navigate('/'));
     const panel = within(screen.getByRole('complementary', { name: 'Favorites' }));
     const list = await within(await panel.findByRole('tabpanel', { name: 'Your Favorites' })).findByRole('list');
-    expect(within(list).getByRole('button', { name: "Fowler's Toad" })).toBeInTheDocument();
-    expect(within(list).getByRole('button', { name: "Favorite Fowler's Toad" })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(list).getByRole('button', { name: title })).toBeInTheDocument();
+    expect(within(list).getByRole('button', { name: heartName })).toHaveAttribute('aria-pressed', 'true');
 
     await act(() => router.navigate('/frog-library'));
-    expect(screen.getByRole('button', { name: "Favorite Fowler's Toad" })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: heartName })).toHaveAttribute('aria-pressed', 'true');
   });
 });

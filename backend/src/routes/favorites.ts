@@ -1,6 +1,7 @@
 import { Router, type Response } from 'express';
 import type { Db } from '../db.js';
-import { ensureVisitorId, readVisitorId } from '../visitor.js';
+import { randomUUID } from 'node:crypto';
+import { readVisitorId, setVisitorCookie } from '../visitor.js';
 
 export const TOP_FAVORITES = 10; // how many frogs All Time Favorites shows (not how many exist)
 const FROG_ID = /^[a-z0-9]{1,32}$/; // the frogs.id format: junk never reaches the database
@@ -57,7 +58,7 @@ export function favoritesRouter(
   router.put('/favorites/:entryId', async (req, res) => {
     const { entryId } = req.params;
     if (!(await frogExists(db, entryId))) return unknownFrog(res);
-    const visitor = ensureVisitorId(req, res, { secure: cookieSecure, secret: visitorSecret });
+    const visitor = readVisitorId(req, visitorSecret) ?? randomUUID();
     try {
       await db.query('INSERT INTO favorites (visitor_id, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [
         visitor,
@@ -67,6 +68,7 @@ export function favoritesRouter(
       if ((err as { code?: string }).code === FOREIGN_KEY_VIOLATION) return unknownFrog(res);
       throw err;
     }
+    setVisitorCookie(res, visitor, { secure: cookieSecure, secret: visitorSecret });
     res.json({ entryId, favorited: true, count: await countFor(db, entryId) });
   });
 

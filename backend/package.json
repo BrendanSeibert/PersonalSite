@@ -10,6 +10,9 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "compression": "1.8.2",
     "express": "^5.3.0",

@@ -12,6 +12,8 @@ type Props = {
   // Runs while the card is open, given the wrapper; return a cleanup. It runs in the same commit
   // that opens the card, before the card is painted or scrolled into view, so a caller can size
   // things around the open card first (the spinner caps it at the screen's bottom edge).
+  // Must keep the same identity between renders (a module-level function, or useCallback): it is an
+  // effect dependency, so a new function re-runs it on every render.
   whileOpen?: (wrapper: HTMLDivElement) => (() => void) | void;
 };
 

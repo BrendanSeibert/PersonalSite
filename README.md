@@ -235,7 +235,7 @@ docker build -t ex3 .
 | Job | What it runs |
 | --- | --- |
 | `backend` | `npm ci`, `npm audit --omit=dev --audit-level=high`, `npm test`, `npm run build` |
-| `frontend` | the same, plus the browser tests and `scripts/check-dist.sh` |
+| `frontend` | the same, plus lint, the browser tests, `scripts/check-dist.test.sh` and `scripts/check-dist.sh` |
 | `integration` | the integration test stack |
 | `image` | `scripts/smoke.sh` |
 
@@ -252,7 +252,8 @@ A high or critical vulnerability in a shipped package fails the build. Dependabo
 - The pages are Home (`/`), the Frog Library (`/frog-library`) and About (`/about`).
 - Every page's URL lives in `frontend/src/paths.ts` (`PATHS`). The routes and the nav bar both read it, so changing a URL is one line.
 - A new page needs a route in `routes.tsx`; exactly one `<main tabIndex={-1}>`, **with a name** (`aria-label`, from the same key as its title; after each navigation, Back and Forward included, `AppLayout` scrolls to the top and focuses that `<main>`, so a screen reader says e.g. "Frog Library, main landmark"); a `usePageTitle()` call (`usePageTitle('frogLibrary.heading')` gives the tab title "Frog Library · Brendan Seibert", and with no key it is the site name alone, as on Home; the format is `app.pageTitle` in `en.json`); and, if it belongs in the nav bar, an item in `NAV_ITEMS` in `Navbar.tsx`. `AppLayout` sets only the page language, not the title.
-- A link that opens a new tab uses `NewTabLink` in `HomePage.tsx`, or adds the same screen-reader-only text (`<span className="visually-hidden"> {t('link.newTab')}</span>`, with the leading space). A link to a PDF uses `link.newTabPdf`.
+- A link that opens a new tab uses `NewTabLink` (`components/NewTabLink.tsx`). It adds `target="_blank"`, `rel="noopener noreferrer"` and the screen-reader-only "opens in a new tab" text; pass `pdf` for a PDF link, and the page's own link class as `className` (it has no styles of its own).
+- If a page fails to render, `ErrorPage` replaces it (the nav bar stays), instead of React Router's built-in error screen.
 - On wide screens the home page's columns read Left, Middle, Right on screen, but the DOM and Tab order run Middle, Left, Right. This is deliberate: the columns are independent, and the DOM order is the right reading order on a phone (WCAG 1.3.2 and 2.4.3 still pass).
 - The nav bar is links only: every item in `NAV_ITEMS` must have a `to` (an item without one fails to compile).
 - The nav bar hides the link to the page you are on: no Home on the home page, no Frog Library on the library, no About on the About page. On any other URL, all three links show.
@@ -272,11 +273,12 @@ EX3/
 ├── docker-compose.prod.yml    optional self-hosted stack: app + db + Caddy
 ├── Caddyfile                  with it: automatic HTTPS, reverse proxy to the app
 ├── .github/                   workflows/ci.yml (tests, audit, build, smoke), dependabot.yml
-├── scripts/                   check-dist.sh (no inline script/style or source maps), smoke.sh (image smoke test)
+├── scripts/                   check-dist.sh (no inline script/style or source maps), check-dist.test.sh (its fixture test), smoke.sh (image smoke test)
 ├── backend/
 │   ├── Dockerfile
 │   ├── src/
-│   │   ├── server.ts          starts the server, handles clean shutdown
+│   │   ├── server.ts          starts the server (thin wiring)
+│   │   ├── lifecycle.ts       migrate-or-exit at startup, clean shutdown (testable)
 │   │   ├── app.ts             builds the Express app (no side effects, easy to test)
 │   │   ├── config.ts          validates environment variables
 │   │   ├── db.ts              creates the PostgreSQL connection pool; the shared Db type
@@ -312,10 +314,13 @@ EX3/
         │   ├── useCardExpansion.ts   those rules as a hook; ExpandableFrogCard.tsx uses it (spinner and panel)
         │   ├── FavoriteButton.tsx    the heart: a toggle button; useFavorite.ts holds its state and saves
         │   ├── FavoritesPanel.tsx    the home page's right column: Your Favorites / All Time Favorites
-        │   └── FavoritesStatus.tsx   announces a heart that couldn't be saved (in AppLayout, every page)
-        ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage;
+        │   ├── favoritesTabs.ts      the panel's two tabs and their keyboard rule (pure)
+        │   ├── FavoritesStatus.tsx   announces a heart that couldn't be saved (in AppLayout, every page)
+        │   └── NewTabLink.tsx        a link that opens a new tab, with the screen-reader warning
+        ├── pages/             HomePage, FrogLibraryPage and AboutPage (each + browser tests), NotFoundPage, ErrorPage;
         │                      contactLinks.ts (the email address and profile URLs behind the About Me links)
         └── test/              test setup (jsdom and browser), MSW server and handlers, favoritesFake.ts, renderWithProviders,
+                               renderApp.tsx and browserHelpers.ts (shared by the browser tests),
                                viewports.ts (the viewport table shared by the browser tests),
                                axe.ts (expectNoAxeViolations), textSpacing.ts (the WCAG 1.4.12 overrides)
 ```

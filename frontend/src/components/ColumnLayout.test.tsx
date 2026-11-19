@@ -19,11 +19,9 @@ describe('ColumnLayout', () => {
   it('writes the columns in mobile order: middle, left, right', () => {
     const { container } = renderLayout();
     const children = [...container.querySelector('.column-layout')!.children];
-    expect(children.map((child) => child.classList[1])).toEqual([
-      'column-layout-middle',
-      'column-layout-left',
-      'column-layout-right',
-    ]);
+    const which = (el: Element) =>
+      ['column-layout-middle', 'column-layout-left', 'column-layout-right'].find((c) => el.classList.contains(c));
+    expect(children.map(which)).toEqual(['column-layout-middle', 'column-layout-left', 'column-layout-right']);
   });
 
   it('makes the middle the main landmark and the sides labelled complementary landmarks', () => {

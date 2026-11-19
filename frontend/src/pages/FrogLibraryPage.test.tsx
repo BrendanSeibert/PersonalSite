@@ -30,7 +30,6 @@ describe('FrogLibraryPage', () => {
     renderWithProviders(<FrogLibraryPage />);
     const listItems = items();
     expect(listItems).toHaveLength(FROG_ENTRIES.length);
-    expect(FROG_ENTRIES.length).toBe(19);
 
     listItems.forEach((item, i) => {
       const entry = FROG_ENTRIES[i];
@@ -64,11 +63,14 @@ describe('FrogLibraryPage', () => {
   it('favorites a frog when its heart is pressed', async () => {
     const user = userEvent.setup();
     renderWithProviders(<FrogLibraryPage />);
-    const heart = screen.getByRole('button', { name: "Favorite Fowler's Toad" });
+    const third = FROG_ENTRIES[2];
+    const heart = screen.getByRole('button', {
+      name: translate(en, 'favorites.toggle', { title: translate(en, third.titleKey) }),
+    });
     await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
     await user.click(heart);
     expect(heart).toHaveAttribute('aria-pressed', 'true');
-    await waitFor(() => expect(favoriteRequests).toEqual(['PUT entry03']));
+    await waitFor(() => expect(favoriteRequests).toEqual([`PUT ${third.id}`]));
   });
 
   it('renders the entries it is given', () => {

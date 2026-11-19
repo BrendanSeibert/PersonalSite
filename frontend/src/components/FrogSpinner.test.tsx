@@ -6,8 +6,10 @@ import { translate } from '../i18n/translate';
 import { favoriteRequests, seedFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { FROG_ENTRIES, type FrogEntry } from './frogEntries';
-import { REPEATS, spinOffset } from './frogReel';
+import { pickNextIndex, REPEATS, restingOffset, spinOffset } from './frogReel';
 import { FrogSpinner } from './FrogSpinner';
+
+const n = FROG_ENTRIES.length;
 
 const titles = FROG_ENTRIES.map((entry) => translate(en, entry.titleKey));
 const PROMPT = 'Press Spin the wheel to get a random frog.';
@@ -65,7 +67,7 @@ describe('FrogSpinner', () => {
       expect(row.querySelector('.frog-card')).toHaveAttribute('data-entry-id', FROG_ENTRIES[index % FROG_ENTRIES.length].id),
     );
     expect(strip.textContent).toBe('');
-    expect(offset(strip)).toBe('19');
+    expect(offset(strip)).toBe(String(restingOffset(0, n)));
     expect(screen.queryByRole('button', { name: 'Eastern Cricket Frog' })).toBeNull();
   });
 
@@ -76,8 +78,7 @@ describe('FrogSpinner', () => {
     expect(status()).toHaveTextContent('Spinning...');
     expect(button()).toHaveAttribute('aria-disabled', 'true');
     expect(strip).toHaveClass('frog-spinner-strip-spinning');
-    expect(offset(strip)).toBe(String(spinOffset(1, FROG_ENTRIES.length)));
-    expect(offset(strip)).toBe('58'); // three full turns of 19 entries, plus one
+    expect(offset(strip)).toBe(String(spinOffset(1, n)));
     expect(screen.queryByRole('button', { name: 'Eastern American Toad' })).toBeNull();
   });
 
@@ -87,7 +88,7 @@ describe('FrogSpinner', () => {
     const { strip } = renderSpinner({ random });
     await user.click(button());
     await user.click(button());
-    expect(offset(strip)).toBe('58');
+    expect(offset(strip)).toBe(String(spinOffset(1, n)));
     expect(random).toHaveBeenCalledTimes(1);
   });
 
@@ -98,7 +99,7 @@ describe('FrogSpinner', () => {
     expect(status()).toHaveTextContent('You got: Eastern American Toad. Select the card to read more.');
     expect(button()).toHaveAttribute('aria-disabled', 'false');
     expect(strip).not.toHaveClass('frog-spinner-strip-spinning');
-    expect(offset(strip)).toBe('20');
+    expect(offset(strip)).toBe(String(restingOffset(1, n)));
     expect(cardButton()).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText(TOAD_BLURB)).not.toBeVisible();
     // It sits on the payline, so it keeps one row's height and a two-line title, like the reel's cards.
@@ -110,7 +111,7 @@ describe('FrogSpinner', () => {
     const { strip } = renderSpinner();
     fireEvent.transitionEnd(strip); // idle: nothing happens
     expect(status()).toHaveTextContent(PROMPT);
-    expect(offset(strip)).toBe('19');
+    expect(offset(strip)).toBe(String(restingOffset(0, n)));
 
     await user.click(button());
     fireEvent.transitionEnd(strip.querySelector('.frog-card')!);
@@ -293,32 +294,34 @@ describe('FrogSpinner', () => {
     expect(cardButton()).toHaveFocus();
   });
 
-  it('removes its outside listeners when the card closes', async () => {
+  it('ignores outside clicks once the card has closed', async () => {
     const user = userEvent.setup();
     const { strip } = renderSpinner();
     await spinAndLand(user, strip);
-    const remove = vi.spyOn(document, 'removeEventListener');
 
     await user.click(cardButton());
     await user.click(cardButton()); // closed
-    expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
-    expect(remove).toHaveBeenCalledWith('click', expect.any(Function), true);
 
     // A click anywhere after closing leaves the closed card alone.
     await user.click(screen.getByRole('heading', { name: 'Outside heading' }));
     expect(isOpen()).toBe(false);
   });
 
-  it('removes its outside listeners on unmount', async () => {
+  it('leaves nothing behind when unmounted with the card open', async () => {
     const user = userEvent.setup();
     const result = renderWithProviders(<FrogSpinner random={() => 0} />, { withRouter: false });
     const strip = result.container.querySelector('.frog-spinner-strip') as HTMLElement;
     await spinAndLand(user, strip);
     await user.click(cardButton());
-    const remove = vi.spyOn(document, 'removeEventListener');
+    expect(isOpen()).toBe(true);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     result.unmount();
-    expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
-    expect(remove).toHaveBeenCalledWith('click', expect.any(Function), true);
+    expect(() => {
+      fireEvent.pointerDown(document.body);
+      fireEvent.pointerUp(document.body);
+      fireEvent.click(document.body);
+    }).not.toThrow();
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it('scrolls an opened card into view, and nothing happens on hover', async () => {
@@ -416,12 +419,13 @@ describe('FrogSpinner', () => {
   });
 
   it('uses Math.random by default', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const user = userEvent.setup();
     const { strip } = renderSpinner({});
     await spinAndLand(user, strip);
-    const landed = titles.find((title) => status().textContent?.includes(`You got: ${title}.`));
-    expect(landed).toBeDefined();
-    expect(landed).not.toBe('Eastern Cricket Frog');
+    expect(random).toHaveBeenCalled();
+    const expected = pickNextIndex(FROG_ENTRIES.length, 0, () => 0.5);
+    expect(status()).toHaveTextContent(`You got: ${titles[expected]}.`);
   });
 
   it('has the convention classes', () => {

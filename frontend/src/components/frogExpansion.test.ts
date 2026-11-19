@@ -4,6 +4,13 @@ import { nextExpansion, type Expansion, type ExpansionEvent } from './frogExpans
 const activate = (pointerType: string): ExpansionEvent => ({ type: 'activate', pointerType });
 const dismiss: ExpansionEvent = { type: 'dismiss' };
 
+const STATES: Expansion[] = ['closed', 'open'];
+// A new Expansion member fails tsc -b here until it is added to this record and to STATES.
+const _exhaustive: Record<Expansion, true> = { closed: true, open: true };
+void _exhaustive;
+const POINTER_TYPES = ['mouse', 'touch', 'pen', '']; // '' is a keyboard-made click (frogExpansion.ts)
+const EVENTS: ExpansionEvent[] = [...POINTER_TYPES.map(activate), dismiss];
+
 // [state, event, expected]: every state × every event.
 const TABLE: Array<[Expansion, ExpansionEvent, Expansion]> = [
   // Touch always opens; mouse, pen and keyboard toggle.
@@ -26,7 +33,12 @@ describe('nextExpansion', () => {
     expect(nextExpansion(state, event)).toBe(expected);
   });
 
-  it('covers every state × event combination', () => {
-    expect(TABLE).toHaveLength(2 * (4 + 1));
+  it('has a row for every state × event combination', () => {
+    const rows = new Set(TABLE.map(([state, event]) => `${state}|${JSON.stringify(event)}`));
+    for (const state of STATES) {
+      for (const event of EVENTS) {
+        expect(rows).toContain(`${state}|${JSON.stringify(event)}`);
+      }
+    }
   });
 });

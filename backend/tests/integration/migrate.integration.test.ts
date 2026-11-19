@@ -1,15 +1,19 @@
+import { readdir } from 'node:fs/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
 import { createPool } from '../../src/db.js';
-import { migrate } from '../../src/migrate.js';
+import { MIGRATIONS_DIR, migrate } from '../../src/migrate.js';
 import { resetToSeed } from './dbReset.js';
 
 const pool = createPool(loadConfig(process.env).DATABASE_URL);
-const FILES = ['001_create_frogs.sql', '002_seed_frogs.sql', '003_create_favorites.sql', '004_remove_entry20.sql'];
+let FILES: string[] = [];
+let afterMigrate: { id: string; position: number }[] = [];
 
 beforeAll(async () => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
+  FILES = (await readdir(MIGRATIONS_DIR)).filter((f) => /^\d{3}_[a-z0-9_]+\.sql$/.test(f)).sort();
   await migrate(pool);
+  afterMigrate = await frogIds();
 });
 
 beforeEach(async () => {
@@ -30,7 +34,7 @@ describe('migrate, against a real PostgreSQL', () => {
     expect(await migrate(pool)).toEqual([]);
     const { rows } = await pool.query<{ name: string }>('SELECT name FROM schema_migrations ORDER BY name');
     expect(rows.map((r) => r.name)).toEqual(FILES);
-    expect(await frogIds()).toHaveLength(19);
+    expect(await frogIds()).toEqual(afterMigrate);
   });
 
   it('is safe to run from two processes at once (the advisory lock)', async () => {
@@ -42,10 +46,15 @@ describe('migrate, against a real PostgreSQL', () => {
     }
   });
 
-  it('creates the tables, keys and index, and leaves entry01 to entry19 (positions 1 to 19) once entry20 is removed', async () => {
-    expect(await frogIds()).toEqual(
-      Array.from({ length: 19 }, (_, i) => ({ id: `entry${String(i + 1).padStart(2, '0')}`, position: i + 1 })),
-    );
+  it('creates the tables, keys and index, and leaves valid frog rows once entry20 is removed', async () => {
+    // Positions need not be contiguous: a frog added after entry20 was removed leaves a gap on purpose.
+    expect(afterMigrate.length).toBeGreaterThan(0);
+    const ids = afterMigrate.map((f) => f.id);
+    const positions = afterMigrate.map((f) => f.position);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(positions).size).toBe(positions.length);
+    expect(positions.every((p) => p > 0)).toBe(true);
+    expect(ids).not.toContain('entry20');
     const { rows: keys } = await pool.query<{ table_name: string; constraint_type: string }>(
       `SELECT table_name, constraint_type FROM information_schema.table_constraints
        WHERE table_name IN ('frogs', 'favorites') AND constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
@@ -72,6 +81,6 @@ describe('migrate, against a real PostgreSQL', () => {
     const ids = (await frogIds()).map((f) => f.id);
     expect(ids).toContain('entry21');
     expect(ids).not.toContain('entry05');
-    expect(ids).toHaveLength(19);
+    expect(ids).toHaveLength(afterMigrate.length);
   });
 });

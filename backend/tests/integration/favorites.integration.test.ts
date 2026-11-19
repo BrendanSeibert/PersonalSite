@@ -91,7 +91,9 @@ describe('favorites, against a real PostgreSQL', () => {
     const res = await request(app).put('/api/favorites/entry07').set('Cookie', 'ex3_visitor=not-a-uuid');
     expect(res.status).toBe(200);
     // The cookie is <uuid>.<signature>; the database stores only the UUID.
-    const issued = /ex3_visitor=([^.;]+)\.[^;]+/.exec(String(res.headers['set-cookie']))![1];
+    const match = /ex3_visitor=([^.;]+)\.[^;]+/.exec(String(res.headers['set-cookie']));
+    expect(match).not.toBeNull();
+    const issued = match![1];
     expect(issued).not.toBe('not-a-uuid');
     const { rows } = await pool.query('SELECT visitor_id FROM favorites');
     expect(rows).toEqual([{ visitor_id: issued }]);

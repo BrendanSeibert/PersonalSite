@@ -19,7 +19,6 @@ describe('usePageTitle', () => {
   it('is the site name alone with no page key (the home page)', () => {
     renderTitle();
     expect(document.title).toBe(en.app.title);
-    expect(document.title).toBe('Brendan Seibert');
   });
 
   it('is "<page> · <site>" with a page key, from en.json', () => {

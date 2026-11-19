@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { server } from '../test/server';
-import { fetchMyFavorites, fetchTopFavorites, saveFavorite } from './favorites';
+import { ApiError, fetchMyFavorites, fetchTopFavorites, saveFavorite } from './favorites';
 
 describe('favorites API client', () => {
   it('fetches your favorites, dropping ids it has no frog for', async () => {
@@ -67,5 +67,8 @@ describe('favorites API client', () => {
   ] as const)('throws on a failed %s, naming the status', async (method, call, path) => {
     server.use(http.all(`/api/favorites/${path}`, () => new HttpResponse(null, { status: 500 })));
     await expect(call()).rejects.toThrow(`${method} /api/favorites/${path} failed with status 500`);
+    const error = await call().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(500);
   });
 });

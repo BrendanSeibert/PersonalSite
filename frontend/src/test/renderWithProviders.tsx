@@ -14,6 +14,10 @@ type Options = {
   strict?: boolean;
 };
 
+// Renders `ui` the way main.tsx does: i18n, a fresh TanStack QueryClient (no retries, so a failed
+// request fails at once), and a MemoryRouter at `route`, unless withRouter is false because the
+// thing rendered brings its own router (then `route` is ignored). Returns RTL's result plus the
+// QueryClient, so a test can wait on query state instead of sleeping.
 export function renderWithProviders(
   ui: ReactElement,
   { route = '/', withRouter = true, dictionary, strict = false }: Options = {},
@@ -26,5 +30,5 @@ export function renderWithProviders(
       <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
     </I18nProvider>
   );
-  return render(strict ? <StrictMode>{tree}</StrictMode> : tree);
+  return { ...render(strict ? <StrictMode>{tree}</StrictMode> : tree), queryClient };
 }

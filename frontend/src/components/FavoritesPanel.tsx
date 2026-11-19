@@ -3,14 +3,13 @@ import { useI18n } from '../context/I18nContext';
 import { ExpandableFrogCard } from './ExpandableFrogCard';
 import { FROG_ENTRIES, type EntryId, type FrogEntry } from './frogEntries';
 import { visibleFavorites } from './favoritesList';
+import { MODES, nextTab, type Mode } from './favoritesTabs';
 import { useMyFavorites, useTopFavorites } from './useFavorite';
 import { useStoredFlag } from './useStoredFlag';
 import './FavoritesPanel.scss';
 
 export const MODE_STORAGE_KEY = 'ex3.favoritesMode';
 
-const MODES = ['mine', 'allTime'] as const;
-type Mode = (typeof MODES)[number];
 const TAB_LABEL = { mine: 'favorites.mine.tab', allTime: 'favorites.allTime.tab' } as const;
 
 type Item = { entry: FrogEntry; likes?: number };
@@ -20,8 +19,7 @@ type Props = {
 
 // The home page's right column: Your Favorites (default) or All Time Favorites, chosen with the
 // tabs across its top, which serve as its header (the WAI-ARIA tabs pattern, with automatic
-// activation). Cards open and
-// close exactly like the spinner's landed card.
+// activation). Cards open and close exactly like the spinner's landed card.
 export function FavoritesPanel({ entries = FROG_ENTRIES }: Props) {
   const { t } = useI18n();
   const headingId = useId();
@@ -33,29 +31,23 @@ export function FavoritesPanel({ entries = FROG_ENTRIES }: Props) {
   const current: Mode = allTime ? 'allTime' : 'mine';
   const mine = useMyFavorites();
   const top = useTopFavorites(allTime); // fetched only while All Time is shown
-  // Every frog shown in Your Favorites since the mode was opened: an unliked card stays until you
-  // switch modes or reload (Decision 6.4).
+  // Every frog shown in Your Favorites since the tab was opened. A card you unlike stays (with an
+  // empty heart) until you switch tabs or reload, so a mis-tap is one tap to undo and keyboard focus
+  // is never lost; liking a frog elsewhere adds it at once.
   const [shown, setShown] = useState<ReadonlySet<EntryId>>(() => new Set());
   // Adjusted during render, not in an effect: React re-renders at once, before anything is painted.
   const showing = !allTime && mine.data ? mine.data : [];
   if (showing.some((id) => !shown.has(id))) setShown(new Set([...shown, ...showing]));
 
   function select(mode: Mode) {
-    if (mode === current) return; // re-clicking the open tab keeps the unliked cards (Decision 3)
+    if (mode === current) return; // re-clicking the open tab is not a switch: keep the unliked cards
     setShown(new Set());
     setAllTime(mode === 'allTime');
   }
 
   // Roving focus: arrows wrap, Home and End jump; selection follows focus (automatic activation).
   function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    const index = MODES.indexOf(current);
-    const targets: Partial<Record<string, Mode>> = {
-      ArrowRight: MODES[(index + 1) % MODES.length],
-      ArrowLeft: MODES[(index - 1 + MODES.length) % MODES.length],
-      Home: MODES[0],
-      End: MODES[MODES.length - 1],
-    };
-    const next = targets[event.key];
+    const next = nextTab(current, event.key);
     if (!next) return;
     event.preventDefault();
     select(next);

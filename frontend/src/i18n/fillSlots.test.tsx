@@ -24,6 +24,10 @@ describe('fillSlots', () => {
     expect(html('Hi {missing}!', {})).toBe('Hi {missing}!');
   });
 
+  it('leaves a placeholder named like an Object.prototype member as written', () => {
+    expect(html('x {toString} y', {})).toBe('x {toString} y');
+  });
+
   it('never treats text as markup', () => {
     expect(html('<b>not bold</b> {x}', { x: 'plain' })).toBe('&lt;b&gt;not bold&lt;/b&gt; plain');
   });

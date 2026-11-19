@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import en from './en.json';
 import { translate, type Dictionary, type TranslationKey } from './translate';
 
@@ -29,6 +29,10 @@ describe('translate', () => {
     expect(translate(dictionary, 'sample.greeting')).toBe('Hello {name}');
   });
 
+  it('leaves a placeholder named like an Object.prototype member as written', () => {
+    expect(translate({ a: 'x {constructor} y' }, 'a', {})).toBe('x {constructor} y');
+  });
+
   it('does not treat param values as placeholders or replacement patterns', () => {
     expect(translate(dictionary, 'sample.greeting', { name: '$& {name}' })).toBe('Hello $& {name}');
   });
@@ -56,12 +60,9 @@ describe('translate', () => {
 });
 
 describe('TranslationKey', () => {
-  it('only accepts keys that exist in en.json', () => {
-    const valid: TranslationKey = 'navbar.home';
-    // @ts-expect-error a mistyped key must fail to compile
-    const invalid: TranslationKey = 'navbar.hme';
-
-    expect([valid, invalid]).toHaveLength(2);
+  it('only accepts keys that exist in en.json (checked by tsc -b in npm test)', () => {
+    expectTypeOf<'navbar.home'>().toExtend<TranslationKey>();
+    expectTypeOf<'navbar.hme'>().not.toExtend<TranslationKey>();
   });
 });
 

@@ -26,6 +26,7 @@ function renderLayout(dictionary?: Dictionary) {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks(); // also when a test fails before its end, so no scrollTo spy leaks
   document.title = '';
   document.documentElement.lang = '';
 });
@@ -71,7 +72,6 @@ describe('AppLayout, on navigation', () => {
     await renderApp('/', { strict });
     expect(screen.getByRole('main')).not.toHaveFocus();
     expect(scrollTo).not.toHaveBeenCalled();
-    scrollTo.mockRestore();
   });
 
   it('scrolls to the top and focuses the new page’s <main> after each navigation', async () => {
@@ -91,7 +91,6 @@ describe('AppLayout, on navigation', () => {
     expect(home).toHaveClass('column-layout-middle');
     expect(home).toHaveFocus();
     expect(scrollTo).toHaveBeenCalledTimes(2);
-    scrollTo.mockRestore();
   });
 
   it('does the same for the About page, which renders one <main tabIndex={-1}>', async () => {
@@ -105,7 +104,6 @@ describe('AppLayout, on navigation', () => {
     expect(about).toHaveFocus();
     expect(scrollTo).toHaveBeenCalledTimes(1);
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
-    scrollTo.mockRestore();
   });
 
   it('does the same on Back', async () => {
@@ -119,7 +117,6 @@ describe('AppLayout, on navigation', () => {
     expect(screen.getByRole('main')).toHaveClass('column-layout-middle');
     expect(screen.getByRole('main')).toHaveFocus();
     expect(scrollTo).toHaveBeenCalledTimes(2);
-    scrollTo.mockRestore();
   });
 
   it('does nothing when only the hash changes', async () => {
@@ -130,6 +127,5 @@ describe('AppLayout, on navigation', () => {
     expect(router.state.location.hash).toBe('#entry07');
     expect(screen.getByRole('main')).not.toHaveFocus();
     expect(scrollTo).not.toHaveBeenCalled();
-    scrollTo.mockRestore();
   });
 });

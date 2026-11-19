@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import en from '../i18n/en.json';
 import { answerFavorites } from '../test/favoritesFake';
 import { renderWithProviders } from '../test/renderWithProviders';
 import { server } from '../test/server';
@@ -40,7 +41,7 @@ describe('FavoritesStatus', () => {
     await waitFor(() => expect(heart).toHaveAttribute('aria-disabled', 'false'));
 
     await user.click(heart);
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent("Couldn't save your favorite. Please try again."));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(en.favorites.saveFailed));
     await waitFor(() => expect(heart).toHaveAttribute('aria-pressed', 'false')); // rolled back
 
     fail = false;

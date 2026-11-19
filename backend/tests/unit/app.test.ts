@@ -1,3 +1,5 @@
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import type { Express, NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -113,16 +115,33 @@ describe('error handler', () => {
   });
 
   it('closes the connection when the response was already started', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const lateError = new Error('late');
     const app = createApp({
       db: okDb,
       extraRoutes: (a: Express) => {
         a.get('/late', (_req: Request, res: Response, next: NextFunction) => {
           res.status(200).write('partial');
-          next(new Error('late'));
+          next(lateError);
         });
       },
     });
-    await expect(request(app).get('/late')).rejects.toThrow();
+    const server = app.listen(0);
+    const { port } = server.address() as AddressInfo;
+    const body = await new Promise<string>((resolve) => {
+      let data = '';
+      http
+        .get(`http://127.0.0.1:${port}/late`, (res) => {
+          res.on('data', (c) => (data += c));
+          res.on('error', () => resolve(data)); // aborted
+          res.on('close', () => resolve(data));
+        })
+        .on('error', () => resolve(data));
+    });
+    server.close();
+    expect(body).toBe('partial'); // nothing was appended
+    expect(body).not.toContain('"error"');
+    // The handler took its headersSent branch: it did not run the normal path, which logs the error.
+    expect(spy).not.toHaveBeenCalledWith(lateError);
   });
 });
